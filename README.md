@@ -3,6 +3,7 @@
 A query string encoding and decoding library for Dart. Ported from [qs](https://github.com/ljharb/qs) for JavaScript.
 
 [![Test](https://github.com/techouse/qs_dart/actions/workflows/test.yml/badge.svg)](https://github.com/techouse/query_string/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/techouse/qs/graph/badge.svg?token=e8KkRgZzPf)](https://codecov.io/gh/techouse/qs)
 
 ## Usage
 
