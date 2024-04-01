@@ -2,6 +2,11 @@
 
 A query string encoding and decoding library for Dart. Ported from [qs](https://github.com/ljharb/qs) for JavaScript.
 
+[![Pub Version](https://img.shields.io/pub/v/qs_dart)](https://pub.dev/packages/qs_dart)
+[![Pub Publisher](https://img.shields.io/pub/publisher/qs_dart)](https://pub.dev/publishers/tusar.dev/packages)
+[![Pub Likes](https://img.shields.io/pub/likes/qs_dart)](https://pub.dev/packages/qs_dart/score)
+[![Pub Points](https://img.shields.io/pub/points/qs_dart)](https://pub.dev/packages/qs_dart/score)
+[![Pub Popularity](https://img.shields.io/pub/popularity/qs_dart)](https://pub.dev/packages/qs_dart/score)
 [![Test](https://github.com/techouse/qs/actions/workflows/test.yml/badge.svg)](https://github.com/techouse/qs/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/techouse/qs/graph/badge.svg?token=e8KkRgZzPf)](https://codecov.io/gh/techouse/qs)
 
