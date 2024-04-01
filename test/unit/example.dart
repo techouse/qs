@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:euc/jis.dart';
-import 'package:qs_dart/qs.dart';
+import 'package:qs_dart/qs_dart.dart';
 import 'package:test/test.dart';
 
 void main() {

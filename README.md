@@ -10,7 +10,7 @@ A query string encoding and decoding library for Dart. Ported from [qs](https://
 A simple usage example:
 
 ```dart
-import 'package:qs_dart/src/qs.dart';
+import 'package:qs_dart/qs_dart.dart';
 import 'package:test/test.dart';
 
 void main() {

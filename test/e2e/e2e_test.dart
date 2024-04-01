@@ -1,4 +1,4 @@
-import 'package:qs_dart/qs.dart' as qs;
+import 'package:qs_dart/qs_dart.dart' as qs;
 import 'package:test/test.dart';
 
 import '../fixtures/data/e2e_test_cases.dart';
