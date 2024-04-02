@@ -3,10 +3,10 @@ import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/qs.dart';
 
 Map decode(
-  dynamic str, [
+  dynamic input, [
   DecodeOptions options = const DecodeOptions(),
 ]) =>
-    QS.decode(str, options);
+    QS.decode(input, options);
 
 String encode(
   Object? object, [
