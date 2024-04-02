@@ -50,8 +50,8 @@ void main() {
         }),
       );
 
-      /// By default, when nesting [Map]s qs will only parse up to 5 children deep.
-      /// This means if you attempt to parse a string like 'a[b][c][d][e][f][g][h][i]=j'
+      /// By default, when nesting [Map]s QS will only decode up to 5 children deep.
+      /// This means if you attempt to decode a string like 'a[b][c][d][e][f][g][h][i]=j'
       /// your resulting [Map] will be:
       expect(
         QS.decode('a[b][c][d][e][f][g][h][i]=j'),
@@ -71,7 +71,7 @@ void main() {
       );
 
       /// This depth can be overridden by setting the [DecodeOptions.depth].
-      /// The depth limit helps mitigate abuse when qs is used to parse user input,
+      /// The depth limit helps mitigate abuse when [QS] is used to parse user input,
       /// and it is recommended to keep it a reasonably small number:
       expect(
         QS.decode(

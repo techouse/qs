@@ -1,4 +1,4 @@
-/// An enum of all available duplicate handling strategies.
+/// An enum of all available duplicate key handling strategies.
 enum Duplicates {
   combine,
   first,

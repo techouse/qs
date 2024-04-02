@@ -70,7 +70,7 @@ expect(
 );
 ```
 
-By default, when nesting `Map`s qs will only parse up to 5 children deep. This means if you attempt to parse a string 
+By default, when nesting `Map`s QS will only parse up to 5 children deep. This means if you attempt to parse a string 
 like 'a[b][c][d][e][f][g][h][i]=j' your resulting `Map` will be:
 
 ```dart
@@ -110,7 +110,7 @@ expect(
 );
 ```
 
-The depth limit helps mitigate abuse when qs is used to parse user input, and it is recommended to keep it a reasonably 
+The depth limit helps mitigate abuse when QS is used to parse user input, and it is recommended to keep it a reasonably 
 small number.
 
 For similar reasons, by default **QS** will only parse up to 1000 parameters. This can be overridden by passing 
