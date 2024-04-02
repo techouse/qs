@@ -50,23 +50,73 @@ final class EncodeOptions with EquatableMixin {
           'Invalid filter',
         );
 
+  /// Set to [true] to add a question mark `?` prefix to the encoded output.
   final bool addQueryPrefix;
+
+  /// Set to [true] to use dot [Map] notation in the encoded output.
   final bool allowDots;
+
+  /// Set to [true] to allow empty [List]s in the encoded output.
   final bool allowEmptyLists;
+
+  /// The [List] encoding format to use.
   final ListFormat listFormat;
+
+  /// The character encoding to use.
   final Encoding charset;
+
+  /// Set to [true] to announce the character by including an `utf8=✓` parameter
+  /// with the proper encoding of the checkmark, similar to what Ruby on Rails
+  /// and others do when submitting forms.
   final bool charsetSentinel;
+
+  /// The delimiter to use when joining key-value pairs in the encoded output.
   final String delimiter;
+
+  /// Set to [false] to disable encoding.
   final bool encode;
+
+  /// Encode [Map] keys using dot notation by setting [encodeDotInKeys] to [true]:
+  ///
+  /// Caveat: When [encodeValuesOnly] is [true] as well as [encodeDotInKeys],
+  /// only dots in keys and nothing else will be encoded.
   final bool encodeDotInKeys;
+
+  /// Encoding can be disabled for keys by setting the [encodeValuesOnly] to [true]
   final bool encodeValuesOnly;
+
+  /// The encoding format to use.
+  /// The default [format] is [Format.rfc3986] which encodes `' '` to `%20`
+  /// which is backward compatible.
+  /// You can also set [format] to [Format.rfc1738] which encodes `' '` to `+`.
   final Format format;
+
+  /// Set to [true] to completely skip encoding keys with `null` values
   final bool skipNulls;
+
+  /// Set to [true] to distinguish between `null` values and empty [String]s.
+  /// This way the encoded string `null` values will have no `=` sign.
   final bool strictNullHandling;
+
+  /// When [listFormat] is set to [ListFormat.comma], you can also set
+  /// [commaRoundTrip] option to [true] or [false], to append `[]` on
+  /// single-item [List]s, so that they can round trip through a parse.
   final bool? commaRoundTrip;
+
+  /// Set a [Sorter] to affect the order of parameter keys.
   final Sorter? sort;
+
+  /// Use the [filter] option to restrict which keys will be included in the encoded output.
+  /// If you pass a [Function], it will be called for each key to obtain the replacement value.
+  /// If you pass a [List], it will be used to select properties and [List] indices to be encoded.
   final dynamic filter;
+
+  /// If you only want to override the serialization of [DateTime] objects,
+  /// you can provide a custom [DateSerializer].
   final DateSerializer? _serializeDate;
+
+  /// Set an [Encoder] to affect the encoding of values.
+  /// Note: the [encoder] option does not apply if [encode] is `false`
   final Encoder? _encoder;
 
   /// Convenience getter for accessing the [format]'s [Format.formatter]

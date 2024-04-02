@@ -548,8 +548,6 @@ void main() {
 
     /// You may encode the dot notation in the keys of [Map] with option [EncodeOptions.encodeDotInKeys] by setting it to `true`:
     ///
-    /// Note: It implies [EncodeOptions.allowDots], so `encode` will error if you set `EncodeOptions.decodeDotInKeys` to `true`,
-    /// and [EncodeOptions.allowDots] to `false`.
     /// Caveat: when [EncodeOptions.encodeValuesOnly] is `true` as well as [EncodeOptions.encodeDotInKeys], only dots in
     /// keys and nothing else will be encoded.
     expect(
@@ -565,7 +563,7 @@ void main() {
       equals('name%252Eobj.first=John&name%252Eobj.last=Doe'),
     );
 
-    /// You may allow empty array values by setting the [EncodeOptions.allowEmptyLists]
+    /// You may allow empty [List] values by setting the [EncodeOptions.allowEmptyLists]
     /// option to `true`:
     expect(
       QS.encode(
@@ -847,7 +845,7 @@ void main() {
     );
 
     /// You can use the [EncodeOptions.charsetSentinel] option to announce the character by including an `utf8=✓` parameter with
-    /// the proper encoding if the checkmark, similar to what Ruby on Rails and others do when submitting forms.
+    /// the proper encoding of the checkmark, similar to what Ruby on Rails and others do when submitting forms.
     expect(
       QS.encode(
         {
