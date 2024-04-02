@@ -44,6 +44,9 @@ jobs:
         run: dart format lib test --output=none --set-exit-if-changed .
       - name: Analyze the project's Dart code
         run: dart analyze lib test --fatal-infos
+      - name: Run the project's tests in Chrome
+        run: dart test --platform chrome
+        continue-on-error: true
       - name: Install coverage dependencies
         run: |
           dart pub global activate coverage
