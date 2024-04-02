@@ -1,5 +1,5 @@
 import 'dart:convert' show latin1, utf8, Encoding;
-import 'dart:typed_data';
+import 'dart:typed_data' show ByteBuffer;
 
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
@@ -15,7 +15,10 @@ part 'extensions/decode.dart';
 
 part 'extensions/encode.dart';
 
+/// A query string decoder (parser) and encoder (stringifier) class.
 final class QS {
+  /// Decodes a [String] or [Map] into a [Map].
+  /// Providing custom [options] will override the default behavior.
   static Map decode(
     dynamic input, [
     DecodeOptions options = const DecodeOptions(),
@@ -53,6 +56,8 @@ final class QS {
     return Utils.compact(obj);
   }
 
+  /// Encodes an [Object] into a query [String].
+  /// Providing custom [options] will override the default behavior.
   static String encode(
     Object? object, [
     EncodeOptions options = const EncodeOptions(),
