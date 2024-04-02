@@ -179,34 +179,38 @@ extension _$Encode on QS {
       sideChannel[object] = step;
       final WeakMap valueSideChannel = WeakMap();
       valueSideChannel.add(key: _sentinel, value: sideChannel);
-      Utils.pushToArray(
-        values,
-        _encode(
-          value,
-          undefined: valueUndefined,
-          prefix: keyPrefix,
-          generateArrayPrefix: generateArrayPrefix,
-          commaRoundTrip: commaRoundTrip,
-          allowEmptyArrays: allowEmptyArrays,
-          strictNullHandling: strictNullHandling,
-          skipNulls: skipNulls,
-          encodeDotInKeys: encodeDotInKeys,
-          encoder: generateArrayPrefix == ListFormat.comma.generator &&
-                  encodeValuesOnly &&
-                  obj is Iterable
-              ? null
-              : encoder,
-          serializeDate: serializeDate,
-          filter: filter,
-          sort: sort,
-          allowDots: allowDots,
-          format: format,
-          formatter: formatter,
-          encodeValuesOnly: encodeValuesOnly,
-          charset: charset,
-          sideChannel: valueSideChannel,
-        ),
+
+      final encoded = _encode(
+        value,
+        undefined: valueUndefined,
+        prefix: keyPrefix,
+        generateArrayPrefix: generateArrayPrefix,
+        commaRoundTrip: commaRoundTrip,
+        allowEmptyArrays: allowEmptyArrays,
+        strictNullHandling: strictNullHandling,
+        skipNulls: skipNulls,
+        encodeDotInKeys: encodeDotInKeys,
+        encoder: generateArrayPrefix == ListFormat.comma.generator &&
+                encodeValuesOnly &&
+                obj is Iterable
+            ? null
+            : encoder,
+        serializeDate: serializeDate,
+        filter: filter,
+        sort: sort,
+        allowDots: allowDots,
+        format: format,
+        formatter: formatter,
+        encodeValuesOnly: encodeValuesOnly,
+        charset: charset,
+        sideChannel: valueSideChannel,
       );
+
+      if (encoded is Iterable) {
+        values.addAll(encoded);
+      } else {
+        values.add(encoded);
+      }
     }
 
     return values;

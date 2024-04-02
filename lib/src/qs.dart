@@ -107,31 +107,34 @@ final class QS {
         continue;
       }
 
-      Utils.pushToArray(
-        keys,
-        _$Encode._encode(
-          obj[key],
-          undefined: !obj.containsKey(key),
-          prefix: key,
-          generateArrayPrefix: options.listFormat.generator,
-          commaRoundTrip: commaRoundTrip,
-          allowEmptyArrays: options.allowEmptyLists,
-          strictNullHandling: options.strictNullHandling,
-          skipNulls: options.skipNulls,
-          encodeDotInKeys: options.encodeDotInKeys,
-          encoder: options.encode ? options.encoder : null,
-          serializeDate: options.serializeDate,
-          filter: options.filter,
-          sort: options.sort,
-          allowDots: options.allowDots,
-          format: options.format,
-          formatter: options.formatter,
-          encodeValuesOnly: options.encodeValuesOnly,
-          charset: options.charset,
-          addQueryPrefix: options.addQueryPrefix,
-          sideChannel: sideChannel,
-        ),
+      final encoded = _$Encode._encode(
+        obj[key],
+        undefined: !obj.containsKey(key),
+        prefix: key,
+        generateArrayPrefix: options.listFormat.generator,
+        commaRoundTrip: commaRoundTrip,
+        allowEmptyArrays: options.allowEmptyLists,
+        strictNullHandling: options.strictNullHandling,
+        skipNulls: options.skipNulls,
+        encodeDotInKeys: options.encodeDotInKeys,
+        encoder: options.encode ? options.encoder : null,
+        serializeDate: options.serializeDate,
+        filter: options.filter,
+        sort: options.sort,
+        allowDots: options.allowDots,
+        format: options.format,
+        formatter: options.formatter,
+        encodeValuesOnly: options.encodeValuesOnly,
+        charset: options.charset,
+        addQueryPrefix: options.addQueryPrefix,
+        sideChannel: sideChannel,
       );
+
+      if (encoded is Iterable) {
+        keys.addAll(encoded);
+      } else {
+        keys.add(encoded);
+      }
     }
 
     final String joined = keys.join(options.delimiter);

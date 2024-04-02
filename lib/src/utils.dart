@@ -411,11 +411,6 @@ final class Utils {
   static dynamic maybeMap<T>(dynamic val, T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
-  static void pushToArray(List arr, dynamic valueOrArray) =>
-      valueOrArray is Iterable
-          ? arr.addAll(valueOrArray)
-          : arr.add(valueOrArray);
-
   static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) =>
       (val is String && (skipNulls ? val.isNotEmpty : true)) ||
       val is num ||
