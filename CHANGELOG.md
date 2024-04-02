@@ -1,3 +1,7 @@
+## 1.0.1
+
+- [CHORE] add documentation
+
 ## 1.0.0+1
 
 - [FIX] fix repository url in pubspec.yaml
