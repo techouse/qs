@@ -35,9 +35,9 @@ extension _$Decode on QS {
     if (options.charsetSentinel) {
       for (i = 0; i < parts.length; ++i) {
         if (parts.elementAt(i).startsWith('utf8=')) {
-          if (parts.elementAt(i) == Utils.charsetSentinel) {
+          if (parts.elementAt(i) == Sentinel.charset.toString()) {
             charset = utf8;
-          } else if (parts.elementAt(i) == Utils.isoSentinel) {
+          } else if (parts.elementAt(i) == Sentinel.iso.toString()) {
             charset = latin1;
           }
           skipIndex = i;

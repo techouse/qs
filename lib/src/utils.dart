@@ -12,17 +12,6 @@ import 'package:qs_dart/src/models/undefined.dart';
 part 'constants/hex_table.dart';
 
 final class Utils {
-  static void compactQueue(List<Map> queue) {
-    while (queue.length > 1) {
-      final Map item = queue.removeLast();
-      final dynamic obj = item['obj'][item['prop']];
-
-      if (obj is List) {
-        item['obj'][item['prop']] = obj.whereNotUndefined();
-      }
-    }
-  }
-
   static dynamic merge(
     dynamic target,
     dynamic source, [
@@ -361,11 +350,22 @@ final class Utils {
       }
     }
 
-    compactQueue(queue);
+    _compactQueue(queue);
 
     removeUndefinedFromMap(value);
 
     return value;
+  }
+
+  static void _compactQueue(List<Map> queue) {
+    while (queue.length > 1) {
+      final Map item = queue.removeLast();
+      final dynamic obj = item['obj'][item['prop']];
+
+      if (obj is List) {
+        item['obj'][item['prop']] = obj.whereNotUndefined();
+      }
+    }
   }
 
   @visibleForTesting
@@ -429,17 +429,4 @@ final class Utils {
       (val is String && val.isEmpty) ||
       (val is Iterable && val.isEmpty) ||
       (val is Map && val.isEmpty);
-
-  /// This is what browsers will submit when the ✓ character occurs in an
-  /// application/x-www-form-urlencoded body and the encoding of the page containing
-  /// the form is iso-8859-1, or when the submitted form has an accept-charset
-  /// attribute of iso-8859-1. Presumably also with other charsets that do not contain
-  /// the ✓ character, such as us-ascii.
-  static const String isoSentinel =
-      r'utf8=%26%2310003%3B'; // encodeURIComponent('&#10003;')
-
-  /// These are the percent-encoded utf-8 octets representing a checkmark,
-  /// indicating that the request actually is utf-8 encoded.
-  static const String charsetSentinel =
-      r'utf8=%E2%9C%93'; // encodeURIComponent('✓')
 }

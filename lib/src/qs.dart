@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
+import 'package:qs_dart/src/enums/sentinel.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
@@ -11,6 +12,7 @@ import 'package:qs_dart/src/utils.dart';
 import 'package:weak_map/weak_map.dart';
 
 part 'extensions/decode.dart';
+
 part 'extensions/encode.dart';
 
 final class QS {
@@ -139,10 +141,10 @@ final class QS {
       if (options.charset == latin1) {
         /// encodeURIComponent('&#10003;')
         /// the "numeric entity" representation of a checkmark
-        prefix += '${Utils.isoSentinel}&';
+        prefix += '${Sentinel.iso}&';
       } else if (options.charset == utf8) {
         /// encodeURIComponent('✓')
-        prefix += '${Utils.charsetSentinel}&';
+        prefix += '${Sentinel.charset}&';
       } else {
         throw ArgumentError.value(
           options.charset,
