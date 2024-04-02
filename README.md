@@ -9,6 +9,10 @@ A query string encoding and decoding library for Dart. Ported from [qs](https://
 [![Pub Popularity](https://img.shields.io/pub/popularity/qs_dart)](https://pub.dev/packages/qs_dart/score)
 [![Test](https://github.com/techouse/qs/actions/workflows/test.yml/badge.svg)](https://github.com/techouse/qs/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/techouse/qs/graph/badge.svg?token=e8KkRgZzPf)](https://codecov.io/gh/techouse/qs)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3630ce1150f840e08c94f40754d24688)](https://app.codacy.com/gh/techouse/qs/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![GitHub](https://img.shields.io/github/license/techouse/qs)](LICENSE)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/techouse)](https://github.com/sponsors/techouse)
+[![GitHub Repo stars](https://img.shields.io/github/stars/techouse/qs)](https://github.com/techouse/alfred_workflow/stargazers)
 
 ## Usage
 
