@@ -13,6 +13,7 @@ typedef Encoder = String Function(
 typedef DateSerializer = String Function(DateTime date);
 typedef Sorter = int Function(dynamic a, dynamic b);
 
+/// An options that configure the output of [QS.encode].
 final class EncodeOptions with EquatableMixin {
   const EncodeOptions({
     this.addQueryPrefix = false,
