@@ -62,7 +62,7 @@ extension _$Decode on QS {
         val = options.strictNullHandling ? null : '';
       } else {
         key = options.decoder(part.substring(0, pos), charset: charset);
-        val = Utils.maybeMap<dynamic>(
+        val = Utils.apply<dynamic>(
           _parseArrayValue(part.substring(pos + 1), options),
           (dynamic val) => options.decoder(val, charset: charset),
         );

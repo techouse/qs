@@ -408,7 +408,7 @@ final class Utils {
         if (b is Iterable<T>) ...b else b,
       ];
 
-  static dynamic maybeMap<T>(dynamic val, T Function(T) fn) =>
+  static dynamic apply<T>(dynamic val, T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
   static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) =>

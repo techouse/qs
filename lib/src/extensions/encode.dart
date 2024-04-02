@@ -59,7 +59,7 @@ extension _$Encode on QS {
       obj = serializeDate?.call(obj) ?? obj.toIso8601String();
     } else if (generateArrayPrefix == ListFormat.comma.generator &&
         obj is Iterable) {
-      obj = Utils.maybeMap(
+      obj = Utils.apply(
         obj,
         (value) => value is DateTime
             ? (serializeDate?.call(value) ?? value.toIso8601String())
@@ -93,7 +93,7 @@ extension _$Encode on QS {
     if (generateArrayPrefix == ListFormat.comma.generator && obj is Iterable) {
       // we need to join elements in
       if (encodeValuesOnly && encoder != null) {
-        obj = Utils.maybeMap<String>(obj, encoder);
+        obj = Utils.apply<String>(obj, encoder);
       }
 
       if ((obj as Iterable).isNotEmpty) {
