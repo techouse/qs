@@ -11,6 +11,7 @@ import 'package:qs_dart/src/models/undefined.dart';
 
 part 'constants/hex_table.dart';
 
+@internal
 final class Utils {
   static dynamic merge(
     dynamic target,
