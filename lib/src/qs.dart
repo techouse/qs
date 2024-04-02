@@ -1,4 +1,5 @@
 import 'dart:convert' show latin1, utf8, Encoding;
+import 'dart:typed_data';
 
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';

@@ -147,9 +147,6 @@ final class Utils {
     });
   }
 
-  static Map<K, V> assign<K, V>(Map<K, V> target, Map<K, V> source) =>
-      target..addAll(source);
-
   /// A Dart representation the deprecated JavaScript escape function
   /// https://developer.mozilla.org/en-US/docs/web/javascript/reference/global_objects/escape
   @internal
@@ -371,6 +368,7 @@ final class Utils {
     return value;
   }
 
+  @visibleForTesting
   static void removeUndefinedFromList(dynamic value) {
     if (value is List) {
       for (int i = 0; i < value.length; i++) {
@@ -389,6 +387,7 @@ final class Utils {
     }
   }
 
+  @visibleForTesting
   static void removeUndefinedFromMap(Map obj) {
     final Iterable keys = obj.keys;
     for (int i = 0; i < keys.length; i++) {
@@ -403,8 +402,6 @@ final class Utils {
       }
     }
   }
-
-  static bool isBuffer(dynamic obj) => obj is ByteBuffer;
 
   static List<T> combine<T>(dynamic a, dynamic b) => <T>[
         if (a is Iterable<T>) ...a else a,

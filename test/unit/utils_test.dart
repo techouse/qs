@@ -384,16 +384,6 @@ void main() {
       });
     });
 
-    test('assign', () {
-      final Map<String, int> target = {'a': 1, 'b': 2};
-      final Map<String, int> source = {'b': 3, 'c': 4};
-      final Map<String, int> result = Utils.assign(target, source);
-
-      expect(result, equals(target));
-      expect(target, equals({'a': 1, 'b': 3, 'c': 4}));
-      expect(source, equals({'b': 3, 'c': 4}));
-    });
-
     group('combine', () {
       test('both arrays', () {
         const List<int> a = [1];

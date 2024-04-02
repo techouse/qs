@@ -75,7 +75,7 @@ extension _$Encode on QS {
       obj = '';
     }
 
-    if (Utils.isNonNullishPrimitive(obj, skipNulls) || Utils.isBuffer(obj)) {
+    if (Utils.isNonNullishPrimitive(obj, skipNulls) || obj is ByteBuffer) {
       if (encoder != null) {
         final String keyValue = encodeValuesOnly ? prefix : encoder(prefix);
         return ['${formatter(keyValue)}=${formatter(encoder(obj))}'];
