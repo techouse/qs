@@ -1,5 +1,6 @@
 typedef ListFormatGenerator = String Function(String prefix, [String? key]);
 
+/// An enum of all available list format options.
 enum ListFormat {
   brackets(_brackets),
   comma(_comma),

@@ -1,3 +1,4 @@
+/// An enum of all available sentinels.
 enum Sentinel {
   /// This is what browsers will submit when the ✓ character occurs in an
   /// application/x-www-form-urlencoded body and the encoding of the page containing
