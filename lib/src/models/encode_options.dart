@@ -16,6 +16,11 @@ typedef Sorter = int Function(dynamic a, dynamic b);
 /// An options that configure the output of [QS.encode].
 final class EncodeOptions with EquatableMixin {
   const EncodeOptions({
+    Encoder? encoder,
+    DateSerializer? serializeDate,
+    ListFormat? listFormat,
+    @Deprecated('Use listFormat instead') bool? indices,
+    bool? allowDots,
     this.addQueryPrefix = false,
     this.allowEmptyLists = false,
     this.charset = utf8,
@@ -30,11 +35,6 @@ final class EncodeOptions with EquatableMixin {
     this.strictNullHandling = false,
     this.commaRoundTrip,
     this.sort,
-    bool? allowDots,
-    ListFormat? listFormat,
-    @Deprecated('Use listFormat instead') bool? indices,
-    DateSerializer? serializeDate,
-    Encoder? encoder,
   })  : allowDots = allowDots ?? encodeDotInKeys || false,
         listFormat = listFormat ??
             (indices == false ? ListFormat.repeat : null) ??
@@ -46,7 +46,7 @@ final class EncodeOptions with EquatableMixin {
           'Invalid charset',
         ),
         assert(
-          filter == null || filter is Function || filter is List,
+          filter == null || filter is Function || filter is Iterable,
           'Invalid filter',
         );
 
@@ -69,8 +69,12 @@ final class EncodeOptions with EquatableMixin {
   final DateSerializer? _serializeDate;
   final Encoder? _encoder;
 
+  /// Convenience getter for accessing the [format]'s [Format.formatter]
   Formatter get formatter => format.formatter;
 
+  /// Encodes a [value] to a [String].
+  ///
+  /// Uses the provided [encoder] if available, otherwise uses [Utils.encode].
   String encoder(dynamic value, {Encoding? charset, Format? format}) =>
       _encoder?.call(
         value,
@@ -83,9 +87,14 @@ final class EncodeOptions with EquatableMixin {
         format: format ?? this.format,
       );
 
+  /// Serializes a [DateTime] instance to a [String].
+  ///
+  /// Uses the provided [serializeDate] function if available, otherwise uses
+  /// [DateTime.toIso8601String].
   String serializeDate(DateTime date) =>
       _serializeDate?.call(date) ?? date.toIso8601String();
 
+  /// Returns a new [EncodeOptions] instance with updated values.
   EncodeOptions copyWith({
     bool? addQueryPrefix,
     bool? allowDots,

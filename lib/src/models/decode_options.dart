@@ -10,12 +10,13 @@ typedef Decoder = dynamic Function(String? value, {Encoding? charset});
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
+    Decoder? decoder,
+    bool? decodeDotInKeys,
     this.allowEmptyLists = false,
     this.listLimit = 20,
     this.charset = utf8,
     this.charsetSentinel = false,
     this.comma = false,
-    bool? decodeDotInKeys,
     this.delimiter = '&',
     this.depth = 5,
     this.duplicates = Duplicates.combine,
@@ -24,7 +25,6 @@ final class DecodeOptions with EquatableMixin {
     this.parameterLimit = 1000,
     this.parseLists = true,
     this.strictNullHandling = false,
-    Decoder? decoder,
   })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
         decodeDotInKeys = decodeDotInKeys ?? true,
         _decoder = decoder,
@@ -50,6 +50,7 @@ final class DecodeOptions with EquatableMixin {
   final bool strictNullHandling;
   final Decoder? _decoder;
 
+  /// The decoder function to use.
   dynamic decoder(String? value, {Encoding? charset}) => _decoder is Function
       ? _decoder?.call(value, charset: charset)
       : Utils.decode(value, charset: charset);
