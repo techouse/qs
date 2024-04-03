@@ -50,8 +50,8 @@ void main() {
         }),
       );
 
-      /// By default, when nesting [Map]s qs will only parse up to 5 children deep.
-      /// This means if you attempt to parse a string like 'a[b][c][d][e][f][g][h][i]=j'
+      /// By default, when nesting [Map]s QS will only decode up to 5 children deep.
+      /// This means if you attempt to decode a string like 'a[b][c][d][e][f][g][h][i]=j'
       /// your resulting [Map] will be:
       expect(
         QS.decode('a[b][c][d][e][f][g][h][i]=j'),
@@ -71,7 +71,7 @@ void main() {
       );
 
       /// This depth can be overridden by setting the [DecodeOptions.depth].
-      /// The depth limit helps mitigate abuse when qs is used to parse user input,
+      /// The depth limit helps mitigate abuse when [QS] is used to parse user input,
       /// and it is recommended to keep it a reasonably small number:
       expect(
         QS.decode(
@@ -548,8 +548,6 @@ void main() {
 
     /// You may encode the dot notation in the keys of [Map] with option [EncodeOptions.encodeDotInKeys] by setting it to `true`:
     ///
-    /// Note: It implies [EncodeOptions.allowDots], so `encode` will error if you set `EncodeOptions.decodeDotInKeys` to `true`,
-    /// and [EncodeOptions.allowDots] to `false`.
     /// Caveat: when [EncodeOptions.encodeValuesOnly] is `true` as well as [EncodeOptions.encodeDotInKeys], only dots in
     /// keys and nothing else will be encoded.
     expect(
@@ -565,7 +563,7 @@ void main() {
       equals('name%252Eobj.first=John&name%252Eobj.last=Doe'),
     );
 
-    /// You may allow empty array values by setting the [EncodeOptions.allowEmptyLists]
+    /// You may allow empty [List] values by setting the [EncodeOptions.allowEmptyLists]
     /// option to `true`:
     expect(
       QS.encode(
@@ -847,7 +845,7 @@ void main() {
     );
 
     /// You can use the [EncodeOptions.charsetSentinel] option to announce the character by including an `utf8=✓` parameter with
-    /// the proper encoding if the checkmark, similar to what Ruby on Rails and others do when submitting forms.
+    /// the proper encoding of the checkmark, similar to what Ruby on Rails and others do when submitting forms.
     expect(
       QS.encode(
         {
