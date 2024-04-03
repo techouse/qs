@@ -90,7 +90,7 @@ final class DecodeOptions with EquatableMixin {
   /// option.
   final num parameterLimit;
 
-  /// Change the duplicate ket handling strategy
+  /// Change the duplicate key handling strategy
   final Duplicates duplicates;
 
   /// Set to [true] to ignore the leading question mark query prefix in the encoded input.
