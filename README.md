@@ -1,6 +1,8 @@
 # qs_dart
 
-A query string encoding and decoding library for Dart. Ported from [qs](https://github.com/ljharb/qs) for JavaScript.
+A query string encoding and decoding library for Dart.
+
+Ported from [qs](https://www.npmjs.com/package/qs) for JavaScript.
 
 [![Pub Version](https://img.shields.io/pub/v/qs_dart)](https://pub.dev/packages/qs_dart)
 [![Pub Publisher](https://img.shields.io/pub/publisher/qs_dart)](https://pub.dev/publishers/tusar.dev/packages)
