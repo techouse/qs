@@ -76,7 +76,7 @@ expect(
 );
 ```
 
-By default, when nesting `Map`s QS will only parse up to 5 children deep. This means if you attempt to parse a string 
+By default, when nesting `Map`s QS will only decode up to 5 children deep. This means if you attempt to decode a string 
 like 'a[b][c][d][e][f][g][h][i]=j' your resulting `Map` will be:
 
 ```dart
@@ -698,10 +698,6 @@ expect(
 ```
 
 You may encode the dot notation in the keys of `Map` with option `EncodeOptions.encodeDotInKeys` by setting it to `true`:
-**Note:** It implies `EncodeOptions.allowDots`, so `encode` will error if you set `EncodeOptions.decodeDotInKeys` to `true`,
-and `EncodeOptions.allowDots` to `false`.
-**Caveat:** when `EncodeOptions.encodeValuesOnly` is `true` as well as `EncodeOptions.encodeDotInKeys`, only dots in 
-keys and nothing else will be encoded.
 
 ```dart
 expect(
@@ -718,7 +714,10 @@ expect(
 );
 ```
 
-You may allow empty array values by setting the `EncodeOptions.allowEmptyLists` option to `true`:
+**Caveat:** when `EncodeOptions.encodeValuesOnly` is `true` as well as `EncodeOptions.encodeDotInKeys`, only dots in 
+keys and nothing else will be encoded.
+
+You may allow empty `List` values by setting the `EncodeOptions.allowEmptyLists` option to `true`:
 
 ```dart
 expect(
@@ -1051,7 +1050,7 @@ expect(
 ```
 
 You can use the `EncodeOptions.charsetSentinel` option to announce the character by including an `utf8=✓` parameter with
-the proper encoding if the checkmark, similar to what Ruby on Rails and others do when submitting forms.
+the proper encoding of the checkmark, similar to what Ruby on Rails and others do when submitting forms.
 
 ```dart
 expect(
