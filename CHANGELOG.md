@@ -1,3 +1,7 @@
+## 1.0.1+2
+
+- [CHORE] update documentation
+
 ## 1.0.1+1
 
 - [CHORE] lower meta dependency from ^1.11.0 to ^1.9.1
