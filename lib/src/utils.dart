@@ -225,29 +225,17 @@ final class Utils {
     Encoding charset = utf8,
     Format? format = Format.rfc3986,
   }) {
-    assert(
-      value is String ||
-          value is StringBuffer ||
-          value is ByteBuffer ||
-          value is num ||
-          value is bool ||
-          value is BigInt ||
-          value is Uri ||
-          value == null,
-      '$value is not a String, num, bool, BigInt, Uri, or null',
-    );
-
     final String? str = value is ByteBuffer
         ? charset.decode(value.asUint8List())
         : value?.toString();
 
-    if (str == null || str.isEmpty) {
+    if (str?.isEmpty ?? true) {
       return '';
     }
 
     if (charset == latin1) {
       // ignore: deprecated_member_use_from_same_package
-      return Utils.escape(str, format: format).replaceAllMapped(
+      return Utils.escape(str!, format: format).replaceAllMapped(
         RegExp(r'%u[0-9a-f]{4}', caseSensitive: false),
         (Match match) =>
             '%26%23${int.parse(match.group(0)!.substring(2), radix: 16)}%3B',
@@ -256,7 +244,7 @@ final class Utils {
 
     final StringBuffer buffer = StringBuffer();
 
-    for (int i = 0; i < str.length; ++i) {
+    for (int i = 0; i < str!.length; ++i) {
       int c = str.codeUnitAt(i);
 
       switch (c) {
