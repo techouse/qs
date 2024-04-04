@@ -4,14 +4,12 @@ import 'dart:convert' show Encoding, latin1, utf8;
 import 'dart:typed_data' show ByteBuffer, Uint8List;
 
 import 'package:euc/jis.dart';
-import 'package:qs_dart/src/enums/format.dart';
-import 'package:qs_dart/src/enums/list_format.dart';
-import 'package:qs_dart/src/models/encode_options.dart';
-import 'package:qs_dart/src/qs.dart';
+import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
 import '../fixtures/data/empty_test_cases.dart';
+import '../fixtures/dummy_enum.dart';
 
 void main() {
   group('encode', () {
@@ -3003,6 +3001,120 @@ void main() {
         ),
         equals('[][0]=2&[][1]=3&[a]=2'),
       );
+    });
+  });
+
+  group('encode non-Strings', () {
+    test('encodes a null value', () {
+      expect(QS.encode({'a': null}), equals('a='));
+    });
+
+    test('encodes a boolean value', () {
+      expect(QS.encode({'a': true}), equals('a=true'));
+      expect(QS.encode({'a': false}), equals('a=false'));
+    });
+
+    test('encodes a number value', () {
+      expect(QS.encode({'a': 0}), equals('a=0'));
+      expect(QS.encode({'a': 1}), equals('a=1'));
+      expect(QS.encode({'a': 1.1}), equals('a=1.1'));
+    });
+
+    test('encodes a buffer value', () {
+      expect(QS.encode({'a': utf8.encode('test').buffer}), equals('a=test'));
+    });
+
+    test('encodes a date value', () {
+      final DateTime now = DateTime.now();
+      final String str = 'a=${Uri.encodeComponent(now.toIso8601String())}';
+      expect(QS.encode({'a': now}), equals(str));
+    });
+
+    test('encodes a Duration', () {
+      final Duration duration = Duration(
+          days: 1,
+          hours: 2,
+          minutes: 3,
+          seconds: 4,
+          milliseconds: 5,
+          microseconds: 6);
+      final String str = 'a=${Uri.encodeComponent(duration.toString())}';
+      expect(QS.encode({'a': duration}), equals(str));
+    });
+
+    test('encodes a BigInt', () {
+      final BigInt bigInt = BigInt.from(1234567890123456789);
+      final String str = 'a=${Uri.encodeComponent(bigInt.toString())}';
+      expect(QS.encode({'a': bigInt}), equals(str));
+    });
+
+    test('encodes a list value', () {
+      expect(
+          QS.encode({
+            'a': [1, 2, 3]
+          }),
+          equals('a%5B0%5D=1&a%5B1%5D=2&a%5B2%5D=3'));
+    });
+
+    test('encodes a map value', () {
+      expect(
+          QS.encode({
+            'a': {'b': 'c'}
+          }),
+          equals('a%5Bb%5D=c'));
+    });
+
+    test('encodes a Uri', () {
+      expect(
+        QS.encode({'a': Uri.parse('https://example.com?foo=bar&baz=qux')}),
+        equals('a=https%3A%2F%2Fexample.com%3Ffoo%3Dbar%26baz%3Dqux'),
+      );
+    });
+
+    test('encodes a map with a null map as a child', () {
+      final Map<String, dynamic> obj = {
+        'a': {},
+      };
+      obj['a']['b'] = 'c';
+      expect(QS.encode(obj), equals('a%5Bb%5D=c'));
+    });
+
+    test('encodes a map with an enum as a child', () {
+      final Map<String, dynamic> obj = {
+        'a': DummyEnum.lorem,
+        'b': 'foo',
+        'c': 1,
+        'd': 1.234,
+        'e': true,
+      };
+      expect(
+        QS.encode(obj),
+        equals('a=lorem&b=foo&c=1&d=1.234&e=true'),
+      );
+    });
+
+    // does not encode
+    // Symbol
+    test('does not encode a Symbol', () {
+      expect(QS.encode({'a': #a}), equals(''));
+    });
+
+    // Record
+    test('does not encode a Record', () {
+      expect(QS.encode({'a': ('b', 'c')}), equals(''));
+
+      ({int a, String b}) rec = (a: 1, b: 'a');
+      expect(QS.encode({'a': rec}), equals(''));
+    });
+
+    // Future
+    test('does not encode a Future', () {
+      expect(QS.encode({'a': Future.value('b')}), equals(''));
+    });
+
+    // Undefined
+    test('does not encode a Undefined', () {
+      expect(QS.encode({'a': const Undefined()}), equals(''));
     });
   });
 }

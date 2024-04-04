@@ -2,10 +2,11 @@
 
 import 'dart:convert' show latin1, utf8;
 
-import 'package:qs_dart/src/enums/format.dart';
-import 'package:qs_dart/src/models/undefined.dart';
+import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
+
+import '../fixtures/dummy_enum.dart';
 
 void main() {
   group('Utils', () {
@@ -23,6 +24,31 @@ void main() {
       expect(
         Utils.encode('foo(bar)', format: Format.rfc1738),
         equals('foo(bar)'),
+      );
+      expect(DummyEnum.lorem, isA<Enum>());
+      expect(Utils.encode(DummyEnum.lorem), equals('lorem'));
+      expect(
+        Utils.encode({
+          'foo': 'bar',
+          'baz': [
+            {'a': 'b'},
+            {'c': DummyEnum.dolor},
+          ],
+        }),
+        equals(
+          '%7Bfoo%3A%20bar%2C%20baz%3A%20%5B%7Ba%3A%20b%7D%2C%20%7Bc%3A%20dolor%7D%5D%7D',
+        ),
+      );
+      expect(
+        Utils.encode({
+          'filters': {
+            'name': 'foo',
+            'example': DummyEnum.lorem,
+          }
+        }),
+        equals(
+          '%7Bfilters%3A%20%7Bname%3A%20foo%2C%20example%3A%20lorem%7D%7D',
+        ),
       );
     });
 

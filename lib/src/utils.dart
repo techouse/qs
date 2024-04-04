@@ -225,29 +225,17 @@ final class Utils {
     Encoding charset = utf8,
     Format? format = Format.rfc3986,
   }) {
-    assert(
-      value is String ||
-          value is StringBuffer ||
-          value is ByteBuffer ||
-          value is num ||
-          value is bool ||
-          value is BigInt ||
-          value is Uri ||
-          value == null,
-      '$value is not a String, num, bool, BigInt, Uri, or null',
-    );
-
     final String? str = value is ByteBuffer
         ? charset.decode(value.asUint8List())
         : value?.toString();
 
-    if (str == null || str.isEmpty) {
+    if (str?.isEmpty ?? true) {
       return '';
     }
 
     if (charset == latin1) {
       // ignore: deprecated_member_use_from_same_package
-      return Utils.escape(str, format: format).replaceAllMapped(
+      return Utils.escape(str!, format: format).replaceAllMapped(
         RegExp(r'%u[0-9a-f]{4}', caseSensitive: false),
         (Match match) =>
             '%26%23${int.parse(match.group(0)!.substring(2), radix: 16)}%3B',
@@ -256,7 +244,7 @@ final class Utils {
 
     final StringBuffer buffer = StringBuffer();
 
-    for (int i = 0; i < str.length; ++i) {
+    for (int i = 0; i < str!.length; ++i) {
       int c = str.codeUnitAt(i);
 
       switch (c) {
@@ -413,12 +401,38 @@ final class Utils {
   static dynamic apply<T>(dynamic val, T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
-  static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) =>
-      (val is String && (skipNulls ? val.isNotEmpty : true)) ||
-      val is num ||
-      val is bool ||
-      val is BigInt ||
-      (val is Uri && (skipNulls ? val.toString().isNotEmpty : true));
+  static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) {
+    if (val is String) {
+      return skipNulls ? val.isNotEmpty : true;
+    }
+
+    if (val is num ||
+        val is BigInt ||
+        val is bool ||
+        val is Enum ||
+        val is DateTime ||
+        val is Duration) {
+      return true;
+    }
+
+    if (val is Uri) {
+      return skipNulls ? val.toString().isNotEmpty : true;
+    }
+
+    if (val is Object) {
+      if (val is Iterable ||
+          val is Map ||
+          val is Symbol ||
+          val is Record ||
+          val is Future ||
+          val is Undefined) {
+        return false;
+      }
+      return true;
+    }
+
+    return false;
+  }
 
   static bool isEmpty(dynamic val) =>
       val == null ||
