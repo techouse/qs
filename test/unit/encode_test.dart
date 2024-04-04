@@ -3042,11 +3042,14 @@ void main() {
       expect(QS.encode({'a': duration}), equals(str));
     });
 
-    test('encodes a BigInt', () {
-      final BigInt bigInt = BigInt.from(1234567890123456789);
-      final String str = 'a=${Uri.encodeComponent(bigInt.toString())}';
-      expect(QS.encode({'a': bigInt}), equals(str));
-    });
+    test(
+      'encodes a BigInt',
+      () {
+        final BigInt bigInt = BigInt.from(1234567890123456);
+        final String str = 'a=${Uri.encodeComponent(bigInt.toString())}';
+        expect(QS.encode({'a': bigInt}), equals(str));
+      },
+    );
 
     test('encodes a list value', () {
       expect(
