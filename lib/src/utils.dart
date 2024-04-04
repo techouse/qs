@@ -422,14 +422,13 @@ final class Utils {
     if (val is Object) {
       if (val is Iterable ||
           val is Map ||
-          val is Runes ||
           val is Symbol ||
           val is Record ||
           val is Future ||
-          val is Never ||
           val is Undefined) {
         return false;
       }
+      return true;
     }
 
     return false;

@@ -4,10 +4,7 @@ import 'dart:convert' show Encoding, latin1, utf8;
 import 'dart:typed_data' show ByteBuffer, Uint8List;
 
 import 'package:euc/jis.dart';
-import 'package:qs_dart/src/enums/format.dart';
-import 'package:qs_dart/src/enums/list_format.dart';
-import 'package:qs_dart/src/models/encode_options.dart';
-import 'package:qs_dart/src/qs.dart';
+import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
@@ -3033,6 +3030,24 @@ void main() {
       expect(QS.encode({'a': now}), equals(str));
     });
 
+    test('encodes a Duration', () {
+      final Duration duration = Duration(
+          days: 1,
+          hours: 2,
+          minutes: 3,
+          seconds: 4,
+          milliseconds: 5,
+          microseconds: 6);
+      final String str = 'a=${Uri.encodeComponent(duration.toString())}';
+      expect(QS.encode({'a': duration}), equals(str));
+    });
+
+    test('encodes a BigInt', () {
+      final BigInt bigInt = BigInt.from(1234567890123456789);
+      final String str = 'a=${Uri.encodeComponent(bigInt.toString())}';
+      expect(QS.encode({'a': bigInt}), equals(str));
+    });
+
     test('encodes a list value', () {
       expect(
           QS.encode({
@@ -3047,6 +3062,13 @@ void main() {
             'a': {'b': 'c'}
           }),
           equals('a%5Bb%5D=c'));
+    });
+
+    test('encodes a Uri', () {
+      expect(
+        QS.encode({'a': Uri.parse('https://example.com?foo=bar&baz=qux')}),
+        equals('a=https%3A%2F%2Fexample.com%3Ffoo%3Dbar%26baz%3Dqux'),
+      );
     });
 
     test('encodes a map with a null map as a child', () {
@@ -3069,6 +3091,30 @@ void main() {
         QS.encode(obj),
         equals('a=lorem&b=foo&c=1&d=1.234&e=true'),
       );
+    });
+
+    // does not encode
+    // Symbol
+    test('does not encode a Symbol', () {
+      expect(QS.encode({'a': #a}), equals(''));
+    });
+
+    // Record
+    test('does not encode a Record', () {
+      expect(QS.encode({'a': ('b', 'c')}), equals(''));
+
+      ({int a, String b}) rec = (a: 1, b: 'a');
+      expect(QS.encode({'a': rec}), equals(''));
+    });
+
+    // Future
+    test('does not encode a Future', () {
+      expect(QS.encode({'a': Future.value('b')}), equals(''));
+    });
+
+    // Undefined
+    test('does not encode a Undefined', () {
+      expect(QS.encode({'a': const Undefined()}), equals(''));
     });
   });
 }
