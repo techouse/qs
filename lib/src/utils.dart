@@ -401,12 +401,39 @@ final class Utils {
   static dynamic apply<T>(dynamic val, T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
-  static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) =>
-      (val is String && (skipNulls ? val.isNotEmpty : true)) ||
-      val is num ||
-      val is bool ||
-      val is BigInt ||
-      (val is Uri && (skipNulls ? val.toString().isNotEmpty : true));
+  static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) {
+    if (val is String) {
+      return skipNulls ? val.isNotEmpty : true;
+    }
+
+    if (val is num ||
+        val is BigInt ||
+        val is bool ||
+        val is Enum ||
+        val is DateTime ||
+        val is Duration) {
+      return true;
+    }
+
+    if (val is Uri) {
+      return skipNulls ? val.toString().isNotEmpty : true;
+    }
+
+    if (val is Object) {
+      if (val is Iterable ||
+          val is Map ||
+          val is Runes ||
+          val is Symbol ||
+          val is Record ||
+          val is Future ||
+          val is Never ||
+          val is Undefined) {
+        return false;
+      }
+    }
+
+    return false;
+  }
 
   static bool isEmpty(dynamic val) =>
       val == null ||

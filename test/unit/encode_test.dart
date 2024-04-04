@@ -12,6 +12,7 @@ import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
 import '../fixtures/data/empty_test_cases.dart';
+import '../fixtures/dummy_enum.dart';
 
 void main() {
   group('encode', () {
@@ -3002,6 +3003,71 @@ void main() {
           const EncodeOptions(encode: false, listFormat: ListFormat.indices),
         ),
         equals('[][0]=2&[][1]=3&[a]=2'),
+      );
+    });
+  });
+
+  group('encode non-Strings', () {
+    test('encodes a null value', () {
+      expect(QS.encode({'a': null}), equals('a='));
+    });
+
+    test('encodes a boolean value', () {
+      expect(QS.encode({'a': true}), equals('a=true'));
+      expect(QS.encode({'a': false}), equals('a=false'));
+    });
+
+    test('encodes a number value', () {
+      expect(QS.encode({'a': 0}), equals('a=0'));
+      expect(QS.encode({'a': 1}), equals('a=1'));
+      expect(QS.encode({'a': 1.1}), equals('a=1.1'));
+    });
+
+    test('encodes a buffer value', () {
+      expect(QS.encode({'a': utf8.encode('test').buffer}), equals('a=test'));
+    });
+
+    test('encodes a date value', () {
+      final DateTime now = DateTime.now();
+      final String str = 'a=${Uri.encodeComponent(now.toIso8601String())}';
+      expect(QS.encode({'a': now}), equals(str));
+    });
+
+    test('encodes a list value', () {
+      expect(
+          QS.encode({
+            'a': [1, 2, 3]
+          }),
+          equals('a%5B0%5D=1&a%5B1%5D=2&a%5B2%5D=3'));
+    });
+
+    test('encodes a map value', () {
+      expect(
+          QS.encode({
+            'a': {'b': 'c'}
+          }),
+          equals('a%5Bb%5D=c'));
+    });
+
+    test('encodes a map with a null map as a child', () {
+      final Map<String, dynamic> obj = {
+        'a': {},
+      };
+      obj['a']['b'] = 'c';
+      expect(QS.encode(obj), equals('a%5Bb%5D=c'));
+    });
+
+    test('encodes a map with an enum as a child', () {
+      final Map<String, dynamic> obj = {
+        'a': DummyEnum.lorem,
+        'b': 'foo',
+        'c': 1,
+        'd': 1.234,
+        'e': true,
+      };
+      expect(
+        QS.encode(obj),
+        equals('a=lorem&b=foo&c=1&d=1.234&e=true'),
       );
     });
   });
