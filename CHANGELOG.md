@@ -1,3 +1,7 @@
+## 1.0.3
+
+- [FIX] fix `Utils.isNonNullishPrimitive` method to enable encoding Enums
+
 ## 1.0.2
 
 - [FEAT] add equatability to Undefined
