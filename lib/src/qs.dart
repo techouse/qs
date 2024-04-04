@@ -23,10 +23,13 @@ final class QS {
     dynamic input, [
     DecodeOptions options = const DecodeOptions(),
   ]) {
-    assert(
-      input is String? || input is Map?,
-      'The input must be a String or a Map',
-    );
+    if (!(input is String? || input is Map?)) {
+      throw ArgumentError.value(
+        input,
+        'input',
+        'The input must be a String or a Map',
+      );
+    }
 
     if (input?.isEmpty ?? true) {
       return Map.of({});
