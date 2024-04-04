@@ -1,3 +1,8 @@
+## 1.0.2
+
+- [FEAT] add equatability to Undefined
+- [CHORE] add more tests to raise coverage
+
 ## 1.0.1+2
 
 - [CHORE] update documentation
