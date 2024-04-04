@@ -1,6 +1,6 @@
 ## 1.0.3
 
-- [FIX] fix isNonNullishPrimitive method to enable encoding Enums
+- [FIX] fix `Utils.isNonNullishPrimitive` method to enable encoding Enums
 
 ## 1.0.2
 
