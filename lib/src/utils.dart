@@ -225,6 +225,16 @@ final class Utils {
     Encoding charset = utf8,
     Format? format = Format.rfc3986,
   }) {
+    // these can not be encoded
+    if (value is Iterable ||
+        value is Map ||
+        value is Symbol ||
+        value is Record ||
+        value is Future ||
+        value is Undefined) {
+      return '';
+    }
+
     final String? str = value is ByteBuffer
         ? charset.decode(value.asUint8List())
         : value?.toString();

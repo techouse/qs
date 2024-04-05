@@ -27,28 +27,25 @@ void main() {
       );
       expect(DummyEnum.lorem, isA<Enum>());
       expect(Utils.encode(DummyEnum.lorem), equals('lorem'));
+
+      // does not encode
+      // Iterable
+      expect(Utils.encode([1, 2]), equals(''));
+      // Map
+      expect(Utils.encode({'a': 'b'}), equals(''));
+      // Symbol
+      expect(Utils.encode(#a), equals(''));
+      // Record
+      expect(Utils.encode(('a', 'b')), equals(''));
+      // Future
       expect(
-        Utils.encode({
-          'foo': 'bar',
-          'baz': [
-            {'a': 'b'},
-            {'c': DummyEnum.dolor},
-          ],
-        }),
-        equals(
-          '%7Bfoo%3A%20bar%2C%20baz%3A%20%5B%7Ba%3A%20b%7D%2C%20%7Bc%3A%20dolor%7D%5D%7D',
-        ),
+        Utils.encode(Future.value('b')),
+        equals(''),
       );
+      // Undefined
       expect(
-        Utils.encode({
-          'filters': {
-            'name': 'foo',
-            'example': DummyEnum.lorem,
-          }
-        }),
-        equals(
-          '%7Bfilters%3A%20%7Bname%3A%20foo%2C%20example%3A%20lorem%7D%7D',
-        ),
+        Utils.encode(const Undefined()),
+        equals(''),
       );
     });
 
