@@ -1,3 +1,7 @@
+## 1.0.4
+
+- [FIX] prevent `Utils.encode` method from encoding `Iterable`, `Map`, `Symbol`, `Record`, `Future` and `Undefined`
+
 ## 1.0.3
 
 - [FIX] fix `Utils.isNonNullishPrimitive` method to enable encoding Enums
