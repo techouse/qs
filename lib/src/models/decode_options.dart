@@ -6,7 +6,7 @@ import 'package:qs_dart/src/utils.dart';
 
 typedef Decoder = dynamic Function(String? value, {Encoding? charset});
 
-/// An options that configure the output of [QS.decode].
+/// Options that configure the output of [QS.decode].
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
