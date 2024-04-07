@@ -85,14 +85,11 @@ final class QS {
     }
 
     List? objKeys;
-    late final dynamic filter;
 
     if (options.filter is Function) {
-      filter = options.filter as Function;
-      obj = filter?.call('', obj);
+      obj = options.filter?.call('', obj);
     } else if (options.filter is List) {
-      filter = options.filter;
-      objKeys = filter;
+      objKeys = List.of(options.filter);
     }
 
     final bool commaRoundTrip =
