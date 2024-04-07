@@ -1,3 +1,7 @@
+## 1.0.5
+
+- [CHORE] get rid of unused `filter` variable in `QS.encode` method
+
 ## 1.0.4
 
 - [FIX] prevent `Utils.encode` method from encoding `Iterable`, `Map`, `Symbol`, `Record`, `Future` and `Undefined`
