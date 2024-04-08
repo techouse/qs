@@ -11,7 +11,7 @@ extension _$Encode on QS {
     String? prefix,
     ListFormatGenerator? generateArrayPrefix,
     bool? commaRoundTrip,
-    bool allowEmptyArrays = false,
+    bool allowEmptyLists = false,
     bool strictNullHandling = false,
     bool skipNulls = false,
     bool encodeDotInKeys = false,
@@ -132,7 +132,7 @@ extension _$Encode on QS {
             ? '$encodedPrefix[]'
             : encodedPrefix;
 
-    if (allowEmptyArrays && obj is Iterable && obj.isEmpty) {
+    if (allowEmptyLists && obj is Iterable && obj.isEmpty) {
       return '$adjustedPrefix[]';
     }
 
@@ -186,7 +186,7 @@ extension _$Encode on QS {
         prefix: keyPrefix,
         generateArrayPrefix: generateArrayPrefix,
         commaRoundTrip: commaRoundTrip,
-        allowEmptyArrays: allowEmptyArrays,
+        allowEmptyLists: allowEmptyLists,
         strictNullHandling: strictNullHandling,
         skipNulls: skipNulls,
         encodeDotInKeys: encodeDotInKeys,

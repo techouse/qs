@@ -118,7 +118,7 @@ final class QS {
         prefix: key,
         generateArrayPrefix: options.listFormat.generator,
         commaRoundTrip: commaRoundTrip,
-        allowEmptyArrays: options.allowEmptyLists,
+        allowEmptyLists: options.allowEmptyLists,
         strictNullHandling: options.strictNullHandling,
         skipNulls: options.skipNulls,
         encodeDotInKeys: options.encodeDotInKeys,
