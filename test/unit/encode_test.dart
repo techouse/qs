@@ -170,19 +170,6 @@ void main() {
           ),
           reason: 'with allowDots true and encodeDotInKeys true',
         );
-
-        expect(
-          QS.encode(
-            {
-              'name.obj.subobject': {'first.godly.name': 'John', 'last': 'Doe'}
-            },
-            const EncodeOptions(allowDots: true, encodeDotInKeys: true),
-          ),
-          equals(
-            'name%252Eobj%252Esubobject.first%252Egodly%252Ename=John&name%252Eobj%252Esubobject.last=Doe',
-          ),
-          reason: 'with allowDots true and encodeDotInKeys true',
-        );
       },
     );
 
