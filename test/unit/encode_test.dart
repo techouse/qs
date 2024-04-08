@@ -24,6 +24,14 @@ void main() {
       expect(QS.encode({'a': '𐐷'}), equals('a=%F0%90%90%B7'));
     });
 
+    test('encodes a list', () {
+      expect(QS.encode([1234]), equals('0=1234'));
+      expect(
+        QS.encode(['lorem', 1234, 'ipsum']),
+        equals('0=lorem&1=1234&2=ipsum'),
+      );
+    });
+
     test('encodes falsy values', () {
       expect(QS.encode({}), equals(''));
       expect(QS.encode(null), equals(''));
