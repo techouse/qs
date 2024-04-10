@@ -118,22 +118,6 @@ final class Utils {
         ? (target as Iterable).toList().whereNotUndefined().asMap()
         : Map.of(target);
 
-    if (target is List && source is List) {
-      for (final (int i, dynamic item) in (source as List).indexed) {
-        if ((target as List).asMap().containsKey(i)) {
-          final targetItem = (target as List)[i];
-          if (targetItem is Map && item is Map) {
-            target[i] = merge(targetItem, item, options);
-          } else {
-            (target as List).add(item);
-          }
-        } else {
-          (target as List)[i] = item;
-        }
-      }
-      return target;
-    }
-
     return source.entries.fold(mergeTarget, (Map acc, MapEntry entry) {
       acc.update(
         entry.key,
