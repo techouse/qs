@@ -352,7 +352,7 @@ void main() {
         );
       });
 
-      test('merges two lists into an list', () {
+      test('merges two lists into a list', () {
         expect(
           Utils.merge(
             {
@@ -365,6 +365,24 @@ void main() {
           equals(
             {
               'foo': ['baz', 'bar', 'xyzzy'],
+            },
+          ),
+        );
+      });
+
+      test('merges two sets into a list', () {
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
+          ),
+          equals(
+            {
+              'foo': {'baz', 'bar', 'xyzzy'},
             },
           ),
         );

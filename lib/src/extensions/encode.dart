@@ -110,8 +110,8 @@ extension _$Encode on QS {
           {'value': const Undefined()},
         ];
       }
-    } else if (filter is List) {
-      objKeys = filter;
+    } else if (filter is Iterable) {
+      objKeys = List.of(filter);
     } else {
       late final Iterable keys;
       if (obj is Map) {

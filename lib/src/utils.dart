@@ -24,11 +24,11 @@ final class Utils {
     }
 
     if (source is! Map) {
-      if (target is List) {
+      if (target is Iterable) {
         if (target.any((el) => el is Undefined)) {
           // use a SplayTreeMap to keep the keys in order
           final SplayTreeMap<int, dynamic> target_ =
-              SplayTreeMap.of(target.asMap());
+              SplayTreeMap.of(target.toList().asMap());
 
           if (source is Iterable) {
             for (final (int i, dynamic item) in source.indexed) {
@@ -40,7 +40,11 @@ final class Utils {
             target_[target_.length] = source;
           }
 
-          target = target_.values.whereNotUndefined().toList();
+          if (target is Set) {
+            target = target_.values.whereNotUndefined().toSet();
+          } else {
+            target = target_.values.whereNotUndefined().toList();
+          }
         } else {
           if (source is Iterable) {
             // check if source is a list of maps and target is a list of maps
@@ -49,7 +53,7 @@ final class Utils {
               // loop through the target list and merge the maps
               // then loop through the source list and add any new maps
               final SplayTreeMap<int, dynamic> target_ =
-                  SplayTreeMap.of(target.asMap());
+                  SplayTreeMap.of(target.toList().asMap());
               for (final (int i, dynamic item) in source.indexed) {
                 target_.update(
                   i,
@@ -62,7 +66,13 @@ final class Utils {
               target = List.of(target)..addAll(source.whereNotUndefined());
             }
           } else if (source != null) {
-            target.add(source);
+            if (target is List) {
+              target.add(source);
+            } else if (target is Set) {
+              target.add(source);
+            } else {
+              target = [target, source];
+            }
           }
         }
       } else if (target is Map) {
@@ -104,8 +114,8 @@ final class Utils {
       ];
     }
 
-    Map mergeTarget = target is List && source is! List
-        ? (target as List).whereNotUndefined().asMap()
+    Map mergeTarget = target is Iterable && source is! Iterable
+        ? (target as Iterable).toList().whereNotUndefined().asMap()
         : Map.of(target);
 
     if (target is List && source is List) {
@@ -362,7 +372,7 @@ final class Utils {
       final Map item = queue.removeLast();
       final dynamic obj = item['obj'][item['prop']];
 
-      if (obj is List) {
+      if (obj is Iterable) {
         item['obj'][item['prop']] = obj.whereNotUndefined();
       }
     }

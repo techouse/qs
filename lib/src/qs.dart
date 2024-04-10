@@ -12,7 +12,6 @@ import 'package:qs_dart/src/utils.dart';
 import 'package:weak_map/weak_map.dart';
 
 part 'extensions/decode.dart';
-
 part 'extensions/encode.dart';
 
 /// A query string decoder (parser) and encoder (stringifier) class.
@@ -72,8 +71,8 @@ final class QS {
     late Map<String, dynamic> obj;
     if (object is Map<String, dynamic>) {
       obj = {...?object as Map<String, dynamic>?};
-    } else if (object is List) {
-      obj = object.asMap().map((k, v) => MapEntry(k.toString(), v));
+    } else if (object is Iterable) {
+      obj = object.toList().asMap().map((k, v) => MapEntry(k.toString(), v));
     } else {
       obj = {};
     }
@@ -88,7 +87,7 @@ final class QS {
 
     if (options.filter is Function) {
       obj = options.filter?.call('', obj);
-    } else if (options.filter is List) {
+    } else if (options.filter is Iterable) {
       objKeys = List.of(options.filter);
     }
 
