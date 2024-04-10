@@ -340,7 +340,7 @@ void main() {
     );
 
     test(
-      'encodes an list value',
+      'encodes a list value',
       () {
         expect(
           QS.encode(
@@ -457,9 +457,9 @@ void main() {
       },
     );
 
-    group('encodes an list value with one item vs multiple items', () {
+    group('encodes a list value with one item vs multiple items', () {
       test(
-        'non-array item',
+        'non-list item',
         () {
           expect(
             QS.encode(
@@ -505,7 +505,7 @@ void main() {
       );
 
       test(
-        'array with a single item',
+        'list with a single item',
         () {
           expect(
             QS.encode(
@@ -573,7 +573,7 @@ void main() {
       );
 
       test(
-        'array with multiple items',
+        'list with multiple items',
         () {
           expect(
             QS.encode(
@@ -641,7 +641,7 @@ void main() {
       );
 
       test(
-        'array with multiple items with a comma inside',
+        'list with multiple items with a comma inside',
         () {
           expect(
             QS.encode(
@@ -909,7 +909,7 @@ void main() {
       );
     });
 
-    test('encodes comma and empty non-array values', () {
+    test('encodes comma and empty non-list values', () {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
@@ -1107,7 +1107,7 @@ void main() {
       },
     );
 
-    test('encodes an map inside an list', () {
+    test('encodes an map inside a list', () {
       expect(
         QS.encode(
           {
@@ -1248,7 +1248,7 @@ void main() {
     });
 
     test(
-      'encodes an list with mixed maps and primitives',
+      'encodes a list with mixed maps and primitives',
       () {
         expect(
           QS.encode(
@@ -1304,7 +1304,7 @@ void main() {
     );
 
     test(
-      'encodes an map inside an list with dots notation',
+      'encodes an map inside a list with dots notation',
       () {
         expect(
           QS.encode(
@@ -1582,7 +1582,7 @@ void main() {
         );
       });
 
-      test('arrayFormat default', () {
+      test('listFormat default', () {
         expect(
           QS.encode(
             {
@@ -1977,7 +1977,7 @@ void main() {
     });
 
     test(
-      'selects properties when filter=array',
+      'selects properties when filter=list',
       () {
         expect(
           QS.encode(
@@ -2557,7 +2557,7 @@ void main() {
           'b': {'c': 'd', 'e': 'f'}
         }
       };
-      final Map<String, dynamic> withArray = {
+      final Map<String, dynamic> withList = {
         'a': {
           'b': [
             {'c': 'd', 'e': 'f'}
@@ -2609,38 +2609,38 @@ void main() {
 
       expect(
         QS.encode(
-          withArray,
+          withList,
           const EncodeOptions(encode: false),
         ),
         equals('a[b][0][c]=d&a[b][0][e]=f'),
-        reason: 'array, no listFormat',
+        reason: 'list, no listFormat',
       );
 
       expect(
         QS.encode(
-          withArray,
+          withList,
           const EncodeOptions(encode: false, listFormat: ListFormat.brackets),
         ),
         equals('a[b][][c]=d&a[b][][e]=f'),
-        reason: 'array, bracket',
+        reason: 'list, bracket',
       );
 
       expect(
         QS.encode(
-          withArray,
+          withList,
           const EncodeOptions(encode: false, listFormat: ListFormat.indices),
         ),
         equals('a[b][0][c]=d&a[b][0][e]=f'),
-        reason: 'array, indices',
+        reason: 'list, indices',
       );
 
       expect(
         QS.encode(
-          withArray,
+          withList,
           const EncodeOptions(encode: false, listFormat: ListFormat.repeat),
         ),
         equals('a[b][c]=d&a[b][e]=f'),
-        reason: 'array, repeat',
+        reason: 'list, repeat',
       );
     });
 
@@ -2946,7 +2946,7 @@ void main() {
       );
     }
 
-    test('edge case with map/arrays', () {
+    test('edge case with map/lists', () {
       expect(
         QS.encode(
           {
