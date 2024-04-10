@@ -357,7 +357,7 @@ final class Utils {
       final dynamic obj = item['obj'][item['prop']];
 
       if (obj is Iterable) {
-        item['obj'][item['prop']] = obj.whereNotUndefined();
+        item['obj'][item['prop']] = obj.whereNotUndefined().toList();
       }
     }
   }
