@@ -61,9 +61,17 @@ final class Utils {
                   ifAbsent: () => item,
                 );
               }
-              target = target_.values.toList();
+              if (target is Set) {
+                target = target_.values.toSet();
+              } else {
+                target = target_.values.toList();
+              }
             } else {
-              target = List.of(target)..addAll(source.whereNotUndefined());
+              if (target is Set) {
+                target = Set.of(target)..addAll(source.whereNotUndefined());
+              } else {
+                target = List.of(target)..addAll(source.whereNotUndefined());
+              }
             }
           } else if (source != null) {
             if (target is List) {
@@ -357,7 +365,11 @@ final class Utils {
       final dynamic obj = item['obj'][item['prop']];
 
       if (obj is Iterable) {
-        item['obj'][item['prop']] = obj.whereNotUndefined().toList();
+        if (obj is Set) {
+          item['obj'][item['prop']] = obj.whereNotUndefined().toSet();
+        } else {
+          item['obj'][item['prop']] = obj.whereNotUndefined().toList();
+        }
       }
     }
   }

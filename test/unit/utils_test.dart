@@ -354,6 +354,15 @@ void main() {
 
       test('merges two lists into a list', () {
         expect(
+          Utils.merge(['foo'], ['bar', 'xyzzy']),
+          equals(['foo', 'bar', 'xyzzy']),
+        );
+        expect(
+          Utils.merge(['foo'], ['bar', 'xyzzy']),
+          isA<List>(),
+        );
+
+        expect(
           Utils.merge(
             {
               'foo': ['baz']
@@ -368,9 +377,29 @@ void main() {
             },
           ),
         );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': ['bar', 'xyzzy']
+            },
+          )['foo'],
+          isA<List>(),
+        );
       });
 
       test('merges two sets into a list', () {
+        expect(
+          Utils.merge({'foo'}, {'bar', 'xyzzy'}),
+          equals({'foo', 'bar', 'xyzzy'}),
+        );
+        expect(
+          Utils.merge({'foo'}, {'bar', 'xyzzy'}),
+          isA<Set>(),
+        );
+
         expect(
           Utils.merge(
             {
@@ -385,6 +414,104 @@ void main() {
               'foo': {'baz', 'bar', 'xyzzy'},
             },
           ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
+          )['foo'],
+          isA<Set>(),
+        );
+      });
+
+      test('merges a set into a list', () {
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar'}
+            },
+          ),
+          equals(
+            {
+              'foo': ['baz', 'bar'],
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar'}
+            },
+          )['foo'],
+          isA<List>(),
+        );
+      });
+
+      test('merges a list into a set', () {
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': ['bar']
+            },
+          ),
+          equals(
+            {
+              'foo': {'baz', 'bar'},
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': ['bar']
+            },
+          )['foo'],
+          isA<Set>(),
+        );
+      });
+
+      test('merges a set into a list', () {
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
+          ),
+          equals(
+            {
+              'foo': ['baz', 'bar', 'xyzzy'],
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
+          )['foo'],
+          isA<List>(),
         );
       });
 
@@ -404,6 +531,17 @@ void main() {
             },
           ),
         );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['bar']
+            },
+            {
+              'foo': {'baz': 'xyzzy'}
+            },
+          )['foo'],
+          isA<Map>(),
+        );
       });
 
       test('merges an list into an object', () {
@@ -421,6 +559,17 @@ void main() {
               'foo': {'bar': 'baz', 0: 'xyzzy'},
             },
           ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'bar': 'baz'}
+            },
+            {
+              'foo': ['xyzzy']
+            },
+          )['foo'],
+          isA<Map>(),
         );
       });
     });
