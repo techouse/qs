@@ -1,3 +1,12 @@
+## 1.0.6
+
+- [FEAT] add support for `Set`s
+- [CHORE] rename `_encode.allowEmptyArrays` to `_encode.allowEmptyLists`
+- [CHORE] optimize `Utils.removeUndefinedFromList` method
+- [CHORE] delete dead code in `Utils.merge` method
+- [CHORE] fix typos in documentation
+- [CHORE] add more tests
+
 ## 1.0.5
 
 - [CHORE] get rid of unused `filter` variable in `QS.encode` method
