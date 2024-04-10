@@ -200,7 +200,7 @@ void main() {
       });
 
       test(
-        'merges two objects with the same key and different array values',
+        'merges two objects with the same key and different list values',
         () {
           expect(
             Utils.merge(
@@ -233,7 +233,7 @@ void main() {
       );
 
       test(
-        'merges two objects with the same key and different values into an array',
+        'merges two objects with the same key and different values into an list',
         () {
           expect(
             Utils.merge(
@@ -267,7 +267,7 @@ void main() {
         );
       });
 
-      test('merges null into an array', () {
+      test('merges null into an list', () {
         expect(
           Utils.merge(null, [42]),
           equals([null, 42]),
@@ -285,7 +285,7 @@ void main() {
         );
       });
 
-      test('merges a standalone and an object into an array', () {
+      test('merges a standalone and an object into an list', () {
         expect(
           Utils.merge(
             {'foo': 'bar'},
@@ -304,7 +304,7 @@ void main() {
         );
       });
 
-      test('merges a standalone and two objects into an array', () {
+      test('merges a standalone and two objects into an list', () {
         expect(
           Utils.merge(
             {
@@ -329,7 +329,7 @@ void main() {
         );
       });
 
-      test('merges an object sandwiched by two standalones into an array', () {
+      test('merges an object sandwiched by two standalones into an list', () {
         expect(
           Utils.merge(
             {
@@ -352,7 +352,7 @@ void main() {
         );
       });
 
-      test('merges two arrays into an array', () {
+      test('merges two lists into an list', () {
         expect(
           Utils.merge(
             {
@@ -370,7 +370,7 @@ void main() {
         );
       });
 
-      test('merges an object into an array', () {
+      test('merges an object into an list', () {
         expect(
           Utils.merge(
             {
@@ -388,7 +388,7 @@ void main() {
         );
       });
 
-      test('merges an array into an object', () {
+      test('merges an list into an object', () {
         expect(
           Utils.merge(
             {
@@ -408,7 +408,7 @@ void main() {
     });
 
     group('combine', () {
-      test('both arrays', () {
+      test('both lists', () {
         const List<int> a = [1];
         const List<int> b = [2];
         final List<int> combined = Utils.combine(a, b);
@@ -420,7 +420,7 @@ void main() {
         expect(combined, equals([1, 2]));
       });
 
-      test('one array, one non-array', () {
+      test('one list, one non-list', () {
         const int aN = 1;
         const List<int> a = [aN];
         const int bN = 2;
@@ -443,7 +443,7 @@ void main() {
         expect(combinedABn, equals([1, 2]));
       });
 
-      test('neither is an array', () {
+      test('neither is a list', () {
         const int a = 1;
         const int b = 2;
         final List<int> combined = Utils.combine(a, b);
