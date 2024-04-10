@@ -572,6 +572,64 @@ void main() {
           isA<Map>(),
         );
       });
+
+      test('merge set with undefined with another set', () {
+        final Undefined undefined = const Undefined();
+
+        expect(
+          Utils.merge(
+            {
+              'foo': {'bar'}
+            },
+            {
+              'foo': {undefined, 'baz'}
+            },
+          ),
+          equals(
+            {
+              'foo': {'bar', 'baz'},
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'bar'}
+            },
+            {
+              'foo': {undefined, 'baz'}
+            },
+          )['foo'],
+          isA<Set>(),
+        );
+
+        expect(
+          Utils.merge(
+            {
+              'foo': {undefined, 'bar'}
+            },
+            {
+              'foo': {'baz'}
+            },
+          ),
+          equals(
+            {
+              'foo': {'bar', 'baz'},
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {undefined, 'bar'}
+            },
+            {
+              'foo': {'baz'}
+            },
+          )['foo'],
+          isA<Set>(),
+        );
+      });
     });
 
     group('combine', () {
