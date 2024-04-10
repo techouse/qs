@@ -369,21 +369,17 @@ final class Utils {
   }
 
   @visibleForTesting
-  static void removeUndefinedFromList(dynamic value) {
-    if (value is List) {
-      for (int i = 0; i < value.length; i++) {
-        final dynamic item = value[i];
-        if (item is Undefined) {
-          value.removeAt(i);
-          i--;
-        } else if (item is Map) {
-          removeUndefinedFromMap(item);
-        } else if (item is List) {
-          removeUndefinedFromList(item);
-        }
+  static void removeUndefinedFromList(List value) {
+    for (int i = 0; i < value.length; i++) {
+      final dynamic item = value[i];
+      if (item is Undefined) {
+        value.removeAt(i);
+        i--;
+      } else if (item is Map) {
+        removeUndefinedFromMap(item);
+      } else if (item is List) {
+        removeUndefinedFromList(item);
       }
-    } else if (value is Map) {
-      removeUndefinedFromMap(value);
     }
   }
 
