@@ -272,6 +272,32 @@ void main() {
           Utils.merge(null, [42]),
           equals([null, 42]),
         );
+        expect(
+          Utils.merge(null, [42]),
+          isA<List>(),
+        );
+      });
+
+      test('merges null into a set', () {
+        expect(
+          Utils.merge(null, {'foo'}),
+          equals([null, 'foo']),
+        );
+        expect(
+          Utils.merge(null, {'foo'}),
+          isA<List>(),
+        );
+      });
+
+      test('merges String into set', () {
+        expect(
+          Utils.merge({'foo'}, 'bar'),
+          equals({'foo', 'bar'}),
+        );
+        expect(
+          Utils.merge({'foo'}, 'bar'),
+          isA<Set>(),
+        );
       });
 
       test('merges two objects with the same key', () {
@@ -282,6 +308,14 @@ void main() {
               'a': ['b', 'c'],
             },
           ),
+        );
+        expect(
+          Utils.merge({'a': 'b'}, {'a': 'c'}),
+          contains('a'),
+        );
+        expect(
+          Utils.merge({'a': 'b'}, {'a': 'c'})['a'],
+          isA<List>(),
         );
       });
 
@@ -385,6 +419,17 @@ void main() {
             {
               'foo': ['bar', 'xyzzy']
             },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': ['bar', 'xyzzy']
+            },
           )['foo'],
           isA<List>(),
         );
@@ -423,6 +468,17 @@ void main() {
             {
               'foo': {'bar', 'xyzzy'}
             },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
           )['foo'],
           isA<Set>(),
         );
@@ -443,6 +499,17 @@ void main() {
               'foo': ['baz', 'bar'],
             },
           ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar'}
+            },
+          ),
+          contains('foo'),
         );
         expect(
           Utils.merge(
@@ -481,6 +548,17 @@ void main() {
             {
               'foo': ['bar']
             },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'baz'}
+            },
+            {
+              'foo': ['bar']
+            },
           )['foo'],
           isA<Set>(),
         );
@@ -501,6 +579,17 @@ void main() {
               'foo': ['baz', 'bar', 'xyzzy'],
             },
           ),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['baz']
+            },
+            {
+              'foo': {'bar', 'xyzzy'}
+            },
+          ),
+          contains('foo'),
         );
         expect(
           Utils.merge(
@@ -539,6 +628,17 @@ void main() {
             {
               'foo': {'baz': 'xyzzy'}
             },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': ['bar']
+            },
+            {
+              'foo': {'baz': 'xyzzy'}
+            },
           )['foo'],
           isA<Map>(),
         );
@@ -560,6 +660,16 @@ void main() {
             },
           ),
         );
+        expect(
+            Utils.merge(
+              {
+                'foo': {'bar': 'baz'}
+              },
+              {
+                'foo': ['xyzzy']
+              },
+            ),
+            contains('foo'));
         expect(
           Utils.merge(
             {
@@ -599,6 +709,17 @@ void main() {
             {
               'foo': {undefined, 'baz'}
             },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {'bar'}
+            },
+            {
+              'foo': {undefined, 'baz'}
+            },
           )['foo'],
           isA<Set>(),
         );
@@ -625,6 +746,97 @@ void main() {
             },
             {
               'foo': {'baz'}
+            },
+          ),
+          contains('foo'),
+        );
+        expect(
+          Utils.merge(
+            {
+              'foo': {undefined, 'bar'}
+            },
+            {
+              'foo': {'baz'}
+            },
+          )['foo'],
+          isA<Set>(),
+        );
+      });
+
+      test('merge set of Maps with another set of Maps', () {
+        expect(
+          Utils.merge(
+            {
+              {'bar': 'baz'}
+            },
+            {
+              {'baz': 'xyzzy'}
+            },
+          ),
+          equals(
+            {
+              {'bar': 'baz', 'baz': 'xyzzy'},
+            },
+          ),
+        );
+        expect(
+          Utils.merge(
+            {
+              {'bar': 'baz'}
+            },
+            {
+              {'baz': 'xyzzy'}
+            },
+          ),
+          isA<Set>(),
+        );
+
+        expect(
+          Utils.merge(
+            {
+              'foo': {
+                {'bar': 'baz'}
+              }
+            },
+            {
+              'foo': {
+                {'baz': 'xyzzy'}
+              }
+            },
+          ),
+          equals(
+            {
+              'foo': {
+                {'bar': 'baz', 'baz': 'xyzzy'},
+              },
+            },
+          ),
+        );
+        expect(
+            Utils.merge(
+              {
+                'foo': {
+                  {'bar': 'baz'}
+                }
+              },
+              {
+                'foo': {
+                  {'baz': 'xyzzy'}
+                }
+              },
+            ),
+            contains('foo'));
+        expect(
+          Utils.merge(
+            {
+              'foo': {
+                {'bar': 'baz'}
+              }
+            },
+            {
+              'foo': {
+                {'baz': 'xyzzy'}
+              }
             },
           )['foo'],
           isA<Set>(),
