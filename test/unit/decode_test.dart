@@ -12,6 +12,10 @@ import '../fixtures/data/empty_test_cases.dart';
 
 void main() {
   group('decode', () {
+    test('throws an ArgumentError if the input is not a String or a Map', () {
+      expect(() => QS.decode(123), throwsArgumentError);
+    });
+
     test('parses a simple string', () {
       expect(QS.decode('0=foo'), equals({0: 'foo'}));
       expect(QS.decode('foo=c++'), equals({'foo': 'c  '}));
@@ -1362,6 +1366,13 @@ void main() {
     });
 
     group('charset', () {
+      test('throws an AssertionError when given an unknown charset', () {
+        expect(
+          () => QS.decode('a=b', DecodeOptions(charset: ShiftJIS())),
+          throwsA(isA<AssertionError>()),
+        );
+      });
+
       const String urlEncodedCheckmarkInUtf8 = '%E2%9C%93';
       const String urlEncodedOSlashInUtf8 = '%C3%B8';
       const String urlEncodedNumCheckmark = '%26%2310003%3B';

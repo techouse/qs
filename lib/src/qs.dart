@@ -12,6 +12,7 @@ import 'package:qs_dart/src/utils.dart';
 import 'package:weak_map/weak_map.dart';
 
 part 'extensions/decode.dart';
+
 part 'extensions/encode.dart';
 
 /// A query string decoder (parser) and encoder (stringifier) class.
@@ -145,20 +146,15 @@ final class QS {
     String prefix = options.addQueryPrefix ? '?' : '';
 
     if (options.charsetSentinel) {
-      if (options.charset == latin1) {
+      prefix += switch (options.charset) {
         /// encodeURIComponent('&#10003;')
         /// the "numeric entity" representation of a checkmark
-        prefix += '${Sentinel.iso}&';
-      } else if (options.charset == utf8) {
+        latin1 => '${Sentinel.iso}&',
+
         /// encodeURIComponent('✓')
-        prefix += '${Sentinel.charset}&';
-      } else {
-        throw ArgumentError.value(
-          options.charset,
-          'charset',
-          'Invalid charset',
-        );
-      }
+        utf8 => '${Sentinel.charset}&',
+        _ => '',
+      };
     }
 
     return joined.isNotEmpty ? prefix + joined : '';
