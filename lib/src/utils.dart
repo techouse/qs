@@ -14,6 +14,8 @@ part 'constants/hex_table.dart';
 /// A collection of utility methods used by the library.
 @internal
 final class Utils {
+  static const int _segmentLimit = 1024;
+
   static dynamic merge(
     dynamic target,
     dynamic source, [
@@ -148,40 +150,46 @@ final class Utils {
   static String escape(String str, {Format? format = Format.rfc3986}) {
     final StringBuffer buffer = StringBuffer();
 
-    for (int i = 0; i < str.length; ++i) {
-      final int c = str.codeUnitAt(i);
+    for (int j = 0; j < str.length; j += _segmentLimit) {
+      final String segment = str.length >= _segmentLimit
+          ? str.substring(j, j + _segmentLimit)
+          : str;
 
-      /// These 69 characters are safe for escaping
-      /// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
-      if ((c >= 0x30 && c <= 0x39) || // 0-9
-          (c >= 0x41 && c <= 0x5A) || // A-Z
-          (c >= 0x61 && c <= 0x7A) || // a-z
-          c == 0x40 || // @
-          c == 0x2A || // *
-          c == 0x5F || // _
-          c == 0x2D || // -
-          c == 0x2B || // +
-          c == 0x2E || // .
-          c == 0x2F || // /
-          (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
-        buffer.write(str[i]);
-        continue;
+      for (int i = 0; i < segment.length; ++i) {
+        final int c = segment.codeUnitAt(i);
+
+        /// These 69 characters are safe for escaping
+        /// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
+        if ((c >= 0x30 && c <= 0x39) || // 0-9
+            (c >= 0x41 && c <= 0x5A) || // A-Z
+            (c >= 0x61 && c <= 0x7A) || // a-z
+            c == 0x40 || // @
+            c == 0x2A || // *
+            c == 0x5F || // _
+            c == 0x2D || // -
+            c == 0x2B || // +
+            c == 0x2E || // .
+            c == 0x2F || // /
+            (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
+          buffer.write(segment[i]);
+          continue;
+        }
+
+        if (c < 256) {
+          buffer.writeAll([
+            '%',
+            c.toRadixString(16).padLeft(2, '0').toUpperCase(),
+          ]);
+          continue;
+        }
+
+        buffer.writeAll(
+          [
+            '%u',
+            c.toRadixString(16).padLeft(4, '0').toUpperCase(),
+          ],
+        );
       }
-
-      if (c < 256) {
-        buffer.writeAll([
-          '%',
-          c.toRadixString(16).padLeft(2, '0').toUpperCase(),
-        ]);
-        continue;
-      }
-
-      buffer.writeAll(
-        [
-          '%u',
-          c.toRadixString(16).padLeft(4, '0').toUpperCase(),
-        ],
-      );
     }
 
     return buffer.toString();
@@ -194,29 +202,34 @@ final class Utils {
   @Deprecated('Use Uri.decodeComponent instead')
   static String unescape(String str) {
     final StringBuffer buffer = StringBuffer();
-    int i = 0;
+    for (int j = 0; j < str.length; j += _segmentLimit) {
+      final String segment = str.length >= _segmentLimit
+          ? str.substring(j, j + _segmentLimit)
+          : str.substring(j);
+      int i = 0;
 
-    while (i < str.length) {
-      final int c = str.codeUnitAt(i);
+      while (i < segment.length) {
+        final int c = segment.codeUnitAt(i);
 
-      if (c == 0x25) {
-        if (str[i + 1] == 'u') {
+        if (c == 0x25) {
+          if (segment[i + 1] == 'u') {
+            buffer.writeCharCode(
+              int.parse(segment.substring(i + 2, i + 6), radix: 16),
+            );
+            i += 6;
+            continue;
+          }
+
           buffer.writeCharCode(
-            int.parse(str.substring(i + 2, i + 6), radix: 16),
+            int.parse(segment.substring(i + 1, i + 3), radix: 16),
           );
-          i += 6;
+          i += 3;
           continue;
         }
 
-        buffer.writeCharCode(
-          int.parse(str.substring(i + 1, i + 3), radix: 16),
-        );
-        i += 3;
-        continue;
+        buffer.write(segment[i]);
+        i++;
       }
-
-      buffer.write(str[i]);
-      i++;
     }
 
     return buffer.toString();
@@ -256,46 +269,53 @@ final class Utils {
 
     final StringBuffer buffer = StringBuffer();
 
-    for (int i = 0; i < str!.length; ++i) {
-      int c = str.codeUnitAt(i);
+    for (int j = 0; j < str!.length; j += _segmentLimit) {
+      final String segment = str.length >= _segmentLimit
+          ? str.substring(j, j + _segmentLimit)
+          : str;
 
-      switch (c) {
-        case 0x2D: // -
-        case 0x2E: // .
-        case 0x5F: // _
-        case 0x7E: // ~
-        case int c when c >= 0x30 && c <= 0x39: // 0-9
-        case int c when c >= 0x41 && c <= 0x5A: // a-z
-        case int c when c >= 0x61 && c <= 0x7A: // A-Z
-        case int c
-            when format == Format.rfc1738 && (c == 0x28 || c == 0x29): // ( )
-          buffer.write(str[i]);
-          continue;
-        case int c when c < 0x80: // ASCII
-          buffer.write(hexTable[c]);
-          continue;
-        case int c when c < 0x800: // 2 bytes
-          buffer.writeAll([
-            hexTable[0xC0 | (c >> 6)],
-            hexTable[0x80 | (c & 0x3F)],
-          ]);
-          continue;
-        case int c when c < 0xD800 || c >= 0xE000: // 3 bytes
-          buffer.writeAll([
-            hexTable[0xE0 | (c >> 12)],
-            hexTable[0x80 | ((c >> 6) & 0x3F)],
-            hexTable[0x80 | (c & 0x3F)],
-          ]);
-          continue;
-        default:
-          i++;
-          c = 0x10000 + (((c & 0x3FF) << 10) | (str.codeUnitAt(i) & 0x3FF));
-          buffer.writeAll([
-            hexTable[0xF0 | (c >> 18)],
-            hexTable[0x80 | ((c >> 12) & 0x3F)],
-            hexTable[0x80 | ((c >> 6) & 0x3F)],
-            hexTable[0x80 | (c & 0x3F)],
-          ]);
+      for (int i = 0; i < segment.length; ++i) {
+        int c = segment.codeUnitAt(i);
+
+        switch (c) {
+          case 0x2D: // -
+          case 0x2E: // .
+          case 0x5F: // _
+          case 0x7E: // ~
+          case int c when c >= 0x30 && c <= 0x39: // 0-9
+          case int c when c >= 0x41 && c <= 0x5A: // a-z
+          case int c when c >= 0x61 && c <= 0x7A: // A-Z
+          case int c
+              when format == Format.rfc1738 && (c == 0x28 || c == 0x29): // ( )
+            buffer.write(segment[i]);
+            continue;
+          case int c when c < 0x80: // ASCII
+            buffer.write(hexTable[c]);
+            continue;
+          case int c when c < 0x800: // 2 bytes
+            buffer.writeAll([
+              hexTable[0xC0 | (c >> 6)],
+              hexTable[0x80 | (c & 0x3F)],
+            ]);
+            continue;
+          case int c when c < 0xD800 || c >= 0xE000: // 3 bytes
+            buffer.writeAll([
+              hexTable[0xE0 | (c >> 12)],
+              hexTable[0x80 | ((c >> 6) & 0x3F)],
+              hexTable[0x80 | (c & 0x3F)],
+            ]);
+            continue;
+          default:
+            i++;
+            c = 0x10000 +
+                (((c & 0x3FF) << 10) | (segment.codeUnitAt(i) & 0x3FF));
+            buffer.writeAll([
+              hexTable[0xF0 | (c >> 18)],
+              hexTable[0x80 | ((c >> 12) & 0x3F)],
+              hexTable[0x80 | ((c >> 6) & 0x3F)],
+              hexTable[0x80 | (c & 0x3F)],
+            ]);
+        }
       }
     }
 
