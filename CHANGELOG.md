@@ -1,3 +1,7 @@
+## 1.0.7
+
+- [FIX] disable `DecodeOptions.decodeDotInKeys` by default to restore previous behavior
+
 ## 1.0.6
 
 - [FEAT] add support for `Set`s
