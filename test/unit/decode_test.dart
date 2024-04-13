@@ -210,6 +210,26 @@ void main() {
           'name.obj.subobject': {'first.godly.name': 'John', 'last': 'Doe'}
         }),
       );
+      expect(
+        QS.decode('name%252Eobj.first=John&name%252Eobj.last=Doe'),
+        equals({'name%2Eobj.first': 'John', 'name%2Eobj.last': 'Doe'}),
+      );
+      expect(
+        QS.decode(
+          'name%252Eobj.first=John&name%252Eobj.last=Doe',
+          const DecodeOptions(decodeDotInKeys: false),
+        ),
+        equals({'name%2Eobj.first': 'John', 'name%2Eobj.last': 'Doe'}),
+      );
+      expect(
+        QS.decode(
+          'name%252Eobj.first=John&name%252Eobj.last=Doe',
+          const DecodeOptions(decodeDotInKeys: true),
+        ),
+        equals({
+          'name.obj': {'first': 'John', 'last': 'Doe'}
+        }),
+      );
     });
 
     test(

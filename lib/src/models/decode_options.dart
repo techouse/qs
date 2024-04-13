@@ -26,7 +26,7 @@ final class DecodeOptions with EquatableMixin {
     this.parseLists = true,
     this.strictNullHandling = false,
   })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
-        decodeDotInKeys = decodeDotInKeys ?? true,
+        decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
         assert(
           charset == utf8 || charset == latin1,

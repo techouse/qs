@@ -122,7 +122,7 @@ void main() {
           '  charset: Instance of \'Latin1Codec\',\n'
           '  charsetSentinel: true,\n'
           '  comma: true,\n'
-          '  decodeDotInKeys: true,\n'
+          '  decodeDotInKeys: false,\n'
           '  delimiter: ,,\n'
           '  depth: 10,\n'
           '  duplicates: combine,\n'
