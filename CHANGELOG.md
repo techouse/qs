@@ -1,3 +1,8 @@
+## 1.0.7
+
+- [FIX] disable `DecodeOptions.decodeDotInKeys` by default to restore previous behavior
+- [FIX] optimize encoding performance under large data volumes, reduce memory usage
+
 ## 1.0.6
 
 - [FEAT] add support for `Set`s
