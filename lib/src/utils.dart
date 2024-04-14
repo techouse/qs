@@ -1,5 +1,6 @@
 import 'dart:collection' show SplayTreeMap;
 import 'dart:convert' show latin1, utf8, Encoding;
+import 'dart:math';
 import 'dart:typed_data' show ByteBuffer;
 
 import 'package:collection/collection.dart' show MapEquality;
@@ -150,46 +151,40 @@ final class Utils {
   static String escape(String str, {Format? format = Format.rfc3986}) {
     final StringBuffer buffer = StringBuffer();
 
-    for (int j = 0; j < str.length; j += _segmentLimit) {
-      final String segment = str.length >= _segmentLimit
-          ? str.substring(j, j + _segmentLimit)
-          : str;
+    for (int i = 0; i < str.length; ++i) {
+      final int c = str.codeUnitAt(i);
 
-      for (int i = 0; i < segment.length; ++i) {
-        final int c = segment.codeUnitAt(i);
-
-        /// These 69 characters are safe for escaping
-        /// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
-        if ((c >= 0x30 && c <= 0x39) || // 0-9
-            (c >= 0x41 && c <= 0x5A) || // A-Z
-            (c >= 0x61 && c <= 0x7A) || // a-z
-            c == 0x40 || // @
-            c == 0x2A || // *
-            c == 0x5F || // _
-            c == 0x2D || // -
-            c == 0x2B || // +
-            c == 0x2E || // .
-            c == 0x2F || // /
-            (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
-          buffer.write(segment[i]);
-          continue;
-        }
-
-        if (c < 256) {
-          buffer.writeAll([
-            '%',
-            c.toRadixString(16).padLeft(2, '0').toUpperCase(),
-          ]);
-          continue;
-        }
-
-        buffer.writeAll(
-          [
-            '%u',
-            c.toRadixString(16).padLeft(4, '0').toUpperCase(),
-          ],
-        );
+      /// These 69 characters are safe for escaping
+      /// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
+      if ((c >= 0x30 && c <= 0x39) || // 0-9
+          (c >= 0x41 && c <= 0x5A) || // A-Z
+          (c >= 0x61 && c <= 0x7A) || // a-z
+          c == 0x40 || // @
+          c == 0x2A || // *
+          c == 0x5F || // _
+          c == 0x2D || // -
+          c == 0x2B || // +
+          c == 0x2E || // .
+          c == 0x2F || // /
+          (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
+        buffer.write(str[i]);
+        continue;
       }
+
+      if (c < 256) {
+        buffer.writeAll([
+          '%',
+          c.toRadixString(16).padLeft(2, '0').toUpperCase(),
+        ]);
+        continue;
+      }
+
+      buffer.writeAll(
+        [
+          '%u',
+          c.toRadixString(16).padLeft(4, '0').toUpperCase(),
+        ],
+      );
     }
 
     return buffer.toString();
@@ -202,34 +197,29 @@ final class Utils {
   @Deprecated('Use Uri.decodeComponent instead')
   static String unescape(String str) {
     final StringBuffer buffer = StringBuffer();
-    for (int j = 0; j < str.length; j += _segmentLimit) {
-      final String segment = str.length >= _segmentLimit
-          ? str.substring(j, j + _segmentLimit)
-          : str.substring(j);
-      int i = 0;
+    int i = 0;
 
-      while (i < segment.length) {
-        final int c = segment.codeUnitAt(i);
+    while (i < str.length) {
+      final int c = str.codeUnitAt(i);
 
-        if (c == 0x25) {
-          if (segment[i + 1] == 'u') {
-            buffer.writeCharCode(
-              int.parse(segment.substring(i + 2, i + 6), radix: 16),
-            );
-            i += 6;
-            continue;
-          }
-
+      if (c == 0x25) {
+        if (str[i + 1] == 'u') {
           buffer.writeCharCode(
-            int.parse(segment.substring(i + 1, i + 3), radix: 16),
+            int.parse(str.substring(i + 2, i + 6), radix: 16),
           );
-          i += 3;
+          i += 6;
           continue;
         }
 
-        buffer.write(segment[i]);
-        i++;
+        buffer.writeCharCode(
+          int.parse(str.substring(i + 1, i + 3), radix: 16),
+        );
+        i += 3;
+        continue;
       }
+
+      buffer.write(str[i]);
+      i++;
     }
 
     return buffer.toString();
@@ -271,7 +261,7 @@ final class Utils {
 
     for (int j = 0; j < str!.length; j += _segmentLimit) {
       final String segment = str.length >= _segmentLimit
-          ? str.substring(j, j + _segmentLimit)
+          ? str.substring(j, min(j + _segmentLimit, str.length))
           : str;
 
       for (int i = 0; i < segment.length; ++i) {
