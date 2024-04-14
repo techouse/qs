@@ -7,8 +7,6 @@ const filePath = path.join(__dirname, 'test_cases.json');
 const e2eTestCases = JSON.parse(fs.readFileSync(filePath).toString());
 
 e2eTestCases.forEach(testCase => {
-    let encoded = qs.stringify(testCase.data);
-    let decoded = qs.parse(encoded);
-    console.log('Encoded: ' + encoded);
-    console.log('Decoded: ' + JSON.stringify(decoded));
+    console.log('Encoded: ' + qs.stringify(testCase.data));
+    console.log('Decoded: ' + JSON.stringify(qs.parse(testCase.encoded)));
 });

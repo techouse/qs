@@ -6,7 +6,8 @@
   {
     "data": {
       "a": "b"
-    },    "encoded": "a=b"
+    },
+    "encoded": "a=b"
   },
   {
     "data": {
