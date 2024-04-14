@@ -1,3 +1,7 @@
+## 1.0.7+1
+
+- [FIX] fix optimization regressions introduced in v1.0.7
+
 ## 1.0.7
 
 - [FIX] disable `DecodeOptions.decodeDotInKeys` by default to restore previous behavior
