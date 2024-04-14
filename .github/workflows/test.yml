@@ -63,6 +63,7 @@ jobs:
         continue-on-error: true
         working-directory: test/comparison
         run: |
+          set -e
           npm install
 
           # Run the JavaScript and Dart scripts and save their outputs
