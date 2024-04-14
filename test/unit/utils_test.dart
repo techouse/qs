@@ -49,6 +49,11 @@ void main() {
       );
     });
 
+    test('encode huge string', () {
+      final String hugeString = 'a' * 1000000;
+      expect(Utils.encode(hugeString), equals(hugeString));
+    });
+
     test('decode', () {
       expect(Utils.decode('foo%2Bbar'), equals('foo+bar'));
       // exceptions
@@ -143,6 +148,11 @@ void main() {
       );
     });
 
+    test('escape huge string', () {
+      final String hugeString = 'äöü' * 1000000;
+      expect(Utils.escape(hugeString), equals('%E4%F6%FC' * 1000000));
+    });
+
     test('unescape', () {
       expect(Utils.unescape('abc123'), equals('abc123'));
       expect(Utils.unescape('%E4%F6%FC'), equals('äöü'));
@@ -162,6 +172,11 @@ void main() {
           'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./',
         ),
       );
+    });
+
+    test('unescape huge string', () {
+      final String hugeString = '%E4%F6%FC' * 1000000;
+      expect(Utils.unescape(hugeString), equals('äöü' * 1000000));
     });
 
     group('merge', () {
