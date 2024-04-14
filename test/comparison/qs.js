@@ -1,7 +1,10 @@
 const fs = require('fs');
+const path = require('path');
 const qs = require('qs');
 
-const e2eTestCases = JSON.parse(fs.readFileSync('test_cases.json').toString());
+// Use path.join to combine __dirname with the relative path to test_cases.json
+const filePath = path.join(__dirname, 'test_cases.json');
+const e2eTestCases = JSON.parse(fs.readFileSync(filePath).toString());
 
 e2eTestCases.forEach(testCase => {
     let encoded = qs.stringify(testCase.data);

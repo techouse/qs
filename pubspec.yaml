@@ -16,6 +16,7 @@ dev_dependencies:
   cli_script: ^1.0.0
   euc: ^1.0.6+8
   lints: ^3.0.0
+  path: ^1.8.0
   test: ^1.25.2
 
 topics:
