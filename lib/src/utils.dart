@@ -1,6 +1,6 @@
 import 'dart:collection' show SplayTreeMap;
 import 'dart:convert' show latin1, utf8, Encoding;
-import 'dart:math';
+import 'dart:math' show min;
 import 'dart:typed_data' show ByteBuffer;
 
 import 'package:collection/collection.dart' show MapEquality;
