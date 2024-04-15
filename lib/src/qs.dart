@@ -5,6 +5,7 @@ import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
+import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';

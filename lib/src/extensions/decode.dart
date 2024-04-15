@@ -61,9 +61,9 @@ extension _$Decode on QS {
         key = options.decoder(part, charset: charset);
         val = options.strictNullHandling ? null : '';
       } else {
-        key = options.decoder(part.substring(0, pos), charset: charset);
+        key = options.decoder(part.slice(0, pos), charset: charset);
         val = Utils.apply<dynamic>(
-          _parseArrayValue(part.substring(pos + 1), options),
+          _parseArrayValue(part.slice(pos + 1), options),
           (dynamic val) => options.decoder(val, charset: charset),
         );
       }
@@ -109,7 +109,7 @@ extension _$Decode on QS {
       } else {
         obj = Map.of({});
         final String cleanRoot = root.startsWith('[') && root.endsWith(']')
-            ? root.substring(1, root.length - 1)
+            ? root.slice(1, root.length - 1)
             : root;
         final String decodedRoot = options.decodeDotInKeys
             ? cleanRoot.replaceAll('%2E', '.')
@@ -163,8 +163,7 @@ extension _$Decode on QS {
 
     // Get the parent
     Match? segment = options.depth > 0 ? brackets.firstMatch(key) : null;
-    final String parent =
-        segment != null ? key.substring(0, segment.start) : key;
+    final String parent = segment != null ? key.slice(0, segment.start) : key;
 
     // Stash the parent if it exists
     final List<String> keys = [];
@@ -181,13 +180,13 @@ extension _$Decode on QS {
       if (segment != null) {
         keys.add(segment.group(1)!);
         // Update the key to start searching from the next position
-        key = key.substring(segment.end);
+        key = key.slice(segment.end);
       }
     }
 
     // If there's a remainder, just add whatever is left
     if (segment != null) {
-      keys.add('[${key.substring(segment.start)}]');
+      keys.add('[${key.slice(segment.start)}]');
     }
 
     return _parseObject(keys, val, options, valuesParsed);

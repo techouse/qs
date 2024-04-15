@@ -1,6 +1,5 @@
 import 'dart:collection' show SplayTreeMap;
 import 'dart:convert' show latin1, utf8, Encoding;
-import 'dart:math' show min;
 import 'dart:typed_data' show ByteBuffer;
 
 import 'package:collection/collection.dart' show MapEquality;
@@ -205,14 +204,14 @@ final class Utils {
       if (c == 0x25) {
         if (str[i + 1] == 'u') {
           buffer.writeCharCode(
-            int.parse(str.substring(i + 2, i + 6), radix: 16),
+            int.parse(str.slice(i + 2, i + 6), radix: 16),
           );
           i += 6;
           continue;
         }
 
         buffer.writeCharCode(
-          int.parse(str.substring(i + 1, i + 3), radix: 16),
+          int.parse(str.slice(i + 1, i + 3), radix: 16),
         );
         i += 3;
         continue;
@@ -260,9 +259,8 @@ final class Utils {
     final StringBuffer buffer = StringBuffer();
 
     for (int j = 0; j < str!.length; j += _segmentLimit) {
-      final String segment = str.length >= _segmentLimit
-          ? str.substring(j, min(j + _segmentLimit, str.length))
-          : str;
+      final String segment =
+          str.length >= _segmentLimit ? str.slice(j, j + _segmentLimit) : str;
 
       for (int i = 0; i < segment.length; ++i) {
         int c = segment.codeUnitAt(i);
