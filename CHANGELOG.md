@@ -1,3 +1,10 @@
+## 1.0.8
+
+- [FEAT] port `String.prototype.slice()` from JavaScript and use that instead of Dart's `String.substring()`
+- [CHORE] add comparison test between output of qs_dart and [qs](https://www.npmjs.com/package/qs)
+- [CHORE] update test to 1.25.3 (was 1.25.2)
+- [CHORE] update path to 1.9.0 (was 1.8.0)
+
 ## 1.0.7+1
 
 - [FIX] fix optimization regressions introduced in v1.0.7
