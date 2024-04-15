@@ -1,3 +1,7 @@
+## 1.0.8
+
+- [FEAT] port JavaScript's `String.prototype.slice()` method to Dart and use that instead of `String.substring()`
+
 ## 1.0.7+1
 
 - [FIX] fix optimization regressions introduced in v1.0.7
