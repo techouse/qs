@@ -1107,7 +1107,7 @@ void main() {
       },
     );
 
-    test('encodes an map inside a list', () {
+    test('encodes a map inside a list', () {
       expect(
         QS.encode(
           {
@@ -1304,7 +1304,7 @@ void main() {
     );
 
     test(
-      'encodes an map inside a list with dots notation',
+      'encodes a map inside a list with dots notation',
       () {
         expect(
           QS.encode(
@@ -1801,7 +1801,7 @@ void main() {
     );
 
     test(
-      'encodes an map with a null map as a child',
+      'encodes a map with a null map as a child',
       () {
         final Map<String, dynamic> obj = {
           'a': {},
@@ -1874,7 +1874,7 @@ void main() {
     );
 
     test(
-      'encodes an map using an alternative delimiter',
+      'encodes a map using an alternative delimiter',
       () {
         expect(
           QS.encode(
@@ -2912,7 +2912,7 @@ void main() {
   group('encodes empty keys', () {
     for (Map<String, dynamic> element in emptyTestCases) {
       test(
-        'encodes an map with empty string key with ${element['input']}',
+        'encodes a map with empty string key with ${element['input']}',
         () {
           expect(
             QS.encode(

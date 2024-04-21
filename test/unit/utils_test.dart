@@ -248,7 +248,7 @@ void main() {
       );
 
       test(
-        'merges two objects with the same key and different values into an list',
+        'merges two objects with the same key and different values into a list',
         () {
           expect(
             Utils.merge(
@@ -282,7 +282,7 @@ void main() {
         );
       });
 
-      test('merges null into an list', () {
+      test('merges null into a list', () {
         expect(
           Utils.merge(null, [42]),
           equals([null, 42]),
@@ -334,7 +334,7 @@ void main() {
         );
       });
 
-      test('merges a standalone and an object into an list', () {
+      test('merges a standalone and an object into a list', () {
         expect(
           Utils.merge(
             {'foo': 'bar'},
@@ -353,7 +353,7 @@ void main() {
         );
       });
 
-      test('merges a standalone and two objects into an list', () {
+      test('merges a standalone and two objects into a list', () {
         expect(
           Utils.merge(
             {
@@ -378,7 +378,7 @@ void main() {
         );
       });
 
-      test('merges an object sandwiched by two standalones into an list', () {
+      test('merges an object sandwiched by two standalones into a list', () {
         expect(
           Utils.merge(
             {
@@ -619,7 +619,7 @@ void main() {
         );
       });
 
-      test('merges an object into an list', () {
+      test('merges an object into a list', () {
         expect(
           Utils.merge(
             {
@@ -659,7 +659,7 @@ void main() {
         );
       });
 
-      test('merges an list into an object', () {
+      test('merges a list into an object', () {
         expect(
           Utils.merge(
             {

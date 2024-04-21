@@ -700,7 +700,7 @@ void main() {
       );
     });
 
-    test('correctly prunes undefined values when converting an list to an map',
+    test('correctly prunes undefined values when converting a list to a map',
         () {
       expect(
         QS.decode('a[2]=b&a[99999999]=c'),
@@ -1018,7 +1018,7 @@ void main() {
       );
     });
 
-    test('parses an map', () {
+    test('parses a map', () {
       final Map<String, dynamic> input = {
         'user[name]': {'pop[bob]': 3},
         'user[email]': null
@@ -1203,7 +1203,7 @@ void main() {
       );
     });
 
-    test('parses an map in dot notation', () {
+    test('parses a map in dot notation', () {
       expect(
         QS.decode({
           'user.name': {'pop[bob]': 3},
@@ -1220,7 +1220,7 @@ void main() {
       );
     });
 
-    test('parses an map and not child values', () {
+    test('parses a map and not child values', () {
       expect(
         QS.decode({
           'user[name]': {
