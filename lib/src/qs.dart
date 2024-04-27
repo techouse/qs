@@ -10,6 +10,7 @@ import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
+import 'package:recursive_regex/recursive_regex.dart';
 import 'package:weak_map/weak_map.dart';
 
 part 'extensions/decode.dart';
