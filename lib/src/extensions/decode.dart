@@ -159,7 +159,10 @@ extension _$Decode on QS {
         : givenKey!;
 
     // The regex chunks
-    final RegExp brackets = RegExp(r'(\[[^[\]]*])');
+    final RegExp brackets = RecursiveRegex(
+      startDelimiter: '[',
+      endDelimiter: ']',
+    );
 
     // Get the parent
     Match? segment = options.depth > 0 ? brackets.firstMatch(key) : null;
@@ -178,7 +181,7 @@ extension _$Decode on QS {
         i < options.depth) {
       i += 1;
       if (segment != null) {
-        keys.add(segment.group(1)!);
+        keys.add(segment.group(0)!);
         // Update the key to start searching from the next position
         key = key.slice(segment.end);
       }
