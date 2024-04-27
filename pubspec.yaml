@@ -1,6 +1,6 @@
 name: qs_dart
 description: A query string encoding and decoding library for Dart. Ported from qs for JavaScript.
-version: 1.0.8+1
+version: 1.0.9
 repository: https://github.com/techouse/qs
 
 environment:
@@ -18,7 +18,7 @@ dev_dependencies:
   euc: ^1.0.6+8
   lints: ^3.0.0
   path: ^1.9.0
-  test: ^1.25.3
+  test: ^1.25.4
 
 topics:
   - url
