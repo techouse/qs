@@ -1,3 +1,7 @@
+## 1.0.8+1
+
+- [CHORE] update readme / documentation
+
 ## 1.0.8
 
 - [FEAT] port `String.prototype.slice()` from JavaScript and use that instead of Dart's `String.substring()`
