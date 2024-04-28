@@ -63,6 +63,12 @@ jobs:
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: install_dart_dependencies
+        name: Install Dart dependencies
+        run: dart pub get
       - name: Run the project's tests in Chrome
         run: dart test --platform chrome
         continue-on-error: true
