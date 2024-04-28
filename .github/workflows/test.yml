@@ -16,8 +16,74 @@ env:
 permissions: read-all
 
 jobs:
+  analyze:
+    name: "Analyze"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v4
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart;commands:codegen-test"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: install
+        name: Install dependencies
+        run: dart pub get
+      - name: Check the formatting of one or more Dart files
+        run: dart format lib test --output=none --set-exit-if-changed .
+      - name: Analyze the project's Dart code
+        run: dart analyze lib test --fatal-infos
   test:
     name: "Test"
+    needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v4
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart;commands:codegen-test"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Run the project's tests in Chrome
+        run: dart test --platform chrome
+        continue-on-error: true
+      - name: Install coverage dependencies
+        run: |
+          dart pub global activate coverage
+          dart pub global activate remove_from_coverage
+      - name: Collect and report coverage
+        run: |
+          dart pub global run coverage:test_with_coverage
+          dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: techouse/qs
+          file: ./coverage/lcov.info
+          verbose: true
+  ensure_compatibility:
+    name: "Ensure compatibility with qs"
+    needs: analyze
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
@@ -41,46 +107,23 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: install
-        name: Install dependencies
+      - id: install_dart_dependencies
+        name: Install Dart dependencies
         run: dart pub get
-      - name: Check the formatting of one or more Dart files
-        run: dart format lib test --output=none --set-exit-if-changed .
-      - name: Analyze the project's Dart code
-        run: dart analyze lib test --fatal-infos
-      - name: Run the project's tests in Chrome
-        run: dart test --platform chrome
-        continue-on-error: true
-      - name: Install coverage dependencies
-        run: |
-          dart pub global activate coverage
-          dart pub global activate remove_from_coverage
-      - name: Collect and report coverage
-        run: |
-          dart pub global run coverage:test_with_coverage
-          dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
-      - name: Run a comparison test between qs_dart and qs for JavaScript
-        continue-on-error: true
+      - id: install_node_dependencies
+        name: Install Node dependencies
         working-directory: test/comparison
+        run: npm install
+      - name: Run a comparison test between qs_dart and qs for JavaScript
+        working-directory: test/comparison
+        continue-on-error: true
         run: |
           set -e
-          npm install
-
-          # Run the JavaScript and Dart scripts and save their outputs
           node_output=$(node qs.js)
           dart_output=$(dart run qs.dart)
-
-          # Compare the outputs
           if [ "$node_output" == "$dart_output" ]; then
               echo "The outputs are identical."
           else
               echo "The outputs are different."
               exit 1
           fi
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: techouse/qs
-          file: ./coverage/lcov.info
-          verbose: true
