@@ -48,6 +48,11 @@ jobs:
     name: "Test"
     needs: analyze
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - platform: chrome
+          - platform: vm
     steps:
       - name: Cache Pub hosted dependencies
         uses: actions/cache@v4
@@ -66,21 +71,24 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: install_dart_dependencies
-        name: Install Dart dependencies
+      - id: install
+        name: Install dependencies
         run: dart pub get
       - name: Run the project's tests in Chrome
+        if: ${{ matrix.platform == 'chrome' }}
         run: dart test --platform chrome
-        continue-on-error: true
       - name: Install coverage dependencies
+        if: ${{ matrix.platform == 'vm' }}
         run: |
           dart pub global activate coverage
           dart pub global activate remove_from_coverage
       - name: Collect and report coverage
+        if: ${{ matrix.platform == 'vm' }}
         run: |
           dart pub global run coverage:test_with_coverage
           dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
       - name: Upload coverage
+        if: ${{ matrix.platform == 'vm' }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
