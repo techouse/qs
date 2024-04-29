@@ -1,3 +1,7 @@
+## 1.0.10
+
+- [CHORE] add [documentation](https://techouse.github.io/qs/)
+
 ## 1.0.9
 
 - [FIX] incorrect parsing of nested params with closing square bracket `]` in the property name ([#12](https://github.com/techouse/qs/pull/12))
