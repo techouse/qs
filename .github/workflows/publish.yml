@@ -98,3 +98,10 @@ jobs:
         if: ${{ always() }}
         run: |
           rm -rf $CHANGELOG_PATH
+
+  docs:
+    uses: ./.github/workflows/docs.yml
+    needs: [ test, publish ]
+    permissions:
+      contents: write
+    secrets: inherit
