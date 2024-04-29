@@ -1,3 +1,4 @@
+/// A query string decoder (parser) and encoder (stringifier).
 library qs_dart;
 
 export 'src/enums/duplicates.dart';

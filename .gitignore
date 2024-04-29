@@ -8,3 +8,6 @@ pubspec.lock
 
 # Coverage
 coverage/
+
+# Docs
+doc/

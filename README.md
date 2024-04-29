@@ -48,7 +48,7 @@ Map decode(
 ]);
 ```
 
-**QS** allows you to create nested `Map`s within your query strings, by surrounding the name of sub-keys with 
+[decode] allows you to create nested [Map]s within your query strings, by surrounding the name of sub-keys with 
 square brackets `[]`. For example, the string `'foo[bar]=baz'` converts to:
 
 ```dart
@@ -67,7 +67,7 @@ expect(
 );
 ```
 
-You can also nest your `Map`s, like 'foo[bar][baz]=foobarbaz':
+You can also nest your [Map]s, like `'foo[bar][baz]=foobarbaz'`:
 
 ```dart
 expect(
@@ -76,8 +76,8 @@ expect(
 );
 ```
 
-By default, when nesting `Map`s QS will only decode up to 5 children deep. This means if you attempt to decode a string 
-like 'a[b][c][d][e][f][g][h][i]=j' your resulting `Map` will be:
+By default, when nesting [Map]s [decode] will only decode up to 5 children deep. This means if you attempt to decode
+a string like `'a[b][c][d][e][f][g][h][i]=j'` your resulting [Map] will be:
 
 ```dart
 expect(
@@ -100,7 +100,7 @@ expect(
 );
 ```
 
-This depth can be overridden by passing a depth option to `DecodeOptions.depth`:
+This depth can be overridden by passing a depth option to [DecodeOptions.depth]:
 
 ```dart
 expect(
@@ -116,11 +116,11 @@ expect(
 );
 ```
 
-The depth limit helps mitigate abuse when QS is used to parse user input, and it is recommended to keep it a reasonably 
-small number.
+The depth limit helps mitigate abuse when [decode] is used to parse user input, and it is recommended to keep it a
+reasonably small number.
 
-For similar reasons, by default **QS** will only parse up to 1000 parameters. This can be overridden by passing 
-a `DecodeOptions.parameterLimit` option:
+For similar reasons, by default [decode] will only parse up to **1000** parameters. This can be overridden by passing 
+a [DecodeOptions.parameterLimit] option:
 
 ```dart
 expect(
@@ -132,7 +132,7 @@ expect(
 );
 ```
 
-To bypass the leading question mark, use `DecodeOptions.ignoreQueryPrefix`:
+To bypass the leading question mark, use [DecodeOptions.ignoreQueryPrefix]:
 
 ```dart
 expect(
@@ -146,7 +146,7 @@ expect(
 );
 ```
 
-An optional `DecodeOptions.delimiter` can also be passed:
+An optional [DecodeOptions.delimiter] can also be passed:
 
 ```dart
 expect(
@@ -158,7 +158,7 @@ expect(
 );
 ```
 
-`DecodeOptions.delimiter` can be a regular expression too:
+[DecodeOptions.delimiter] can be a [RegExp] too:
 
 ```dart
 expect(
@@ -170,7 +170,7 @@ expect(
 );
 ```
 
-Option `DecodeOptions.allowDots` can be used to enable dot notation:
+Option [DecodeOptions.allowDots] can be used to enable dot notation:
 
 ```dart
 expect(
@@ -182,9 +182,9 @@ expect(
 );
 ```
 
-Option `DecodeOptions.decodeDotInKeys` can be used to decode dots in keys
+Option [DecodeOptions.decodeDotInKeys] can be used to decode dots in keys
 
-**Note:** it implies `DecodeOptions.allowDots`, so `decode` will error if you set `DecodeOptions.decodeDotInKeys` 
+**Note:** it implies [DecodeOptions.allowDots], so [decode] will error if you set [DecodeOptions.decodeDotInKeys] 
 to `true`, and `DecodeOptions.allowDots` to `false`.
 
 ```dart
@@ -199,7 +199,7 @@ expect(
 );
 ```
 
-Option `DecodeOptions.allowEmptyLists` can be used to allowing empty list values in `Map`
+Option [DecodeOptions.allowEmptyLists] can be used to allow empty [List] values in a [Map].
 
 ```dart
 expect(
@@ -214,7 +214,7 @@ expect(
 );
 ```
 
-Option `DecodeOptions.duplicates` can be used to change the behavior when duplicate keys are encountered
+Option [DecodeOptions.duplicates] can be used to change the behavior when duplicate keys are encountered.
 
 ```dart
 expect(
@@ -252,7 +252,7 @@ expect(
 ```
 
 If you have to deal with legacy browsers or services, there's also support for decoding percent-encoded octets as
-`latin1`:
+[latin1]:
 
 ```dart
 expect(
@@ -269,13 +269,13 @@ form as utf-8. Additionally, the server can check the value against wrong encodi
 that a query string or `application/x-www-form-urlencoded` body was *not* sent as utf-8, eg. if the form had an 
 `accept-charset` parameter or the containing page had a different character set.
 
-**QS** supports this mechanism via the `DecodeOptions.charsetSentinel` option.
-If specified, the `utf8` parameter will be omitted from the returned `Map`.
-It will be used to switch to `latin1`/`utf-8` mode depending on how the checkmark is encoded.
+**QS** supports this mechanism via the [DecodeOptions.charsetSentinel] option.
+If specified, the `utf8` parameter will be omitted from the returned [Map].
+It will be used to switch to [latin1] or [utf8] mode depending on how the checkmark is encoded.
 
-**Important**: When you specify both the `DecodeOptions.charset` option and the `DecodeOptions.charsetSentinel` option, 
-the `DecodeOptions.charset` will be overridden when the request contains a `utf8` parameter from which the actual charset 
-can be deduced. In that sense the `DecodeOptions.charset` will behave as the default charset rather than the authoritative 
+**Important**: When you specify both the [DecodeOptions.charset] option and the [DecodeOptions.charsetSentinel] option, 
+the [DecodeOptions.charset] will be overridden when the request contains a `utf8` parameter from which the actual charset 
+can be deduced. In that sense the [DecodeOptions.charset] will behave as the default charset rather than the authoritative 
 charset.
 
 ```dart
@@ -302,8 +302,8 @@ expect(
 );
 ```
 
-If you want to decode the `&#...;` syntax to the actual character, you can specify the `DecodeOptions.interpretNumericEntities`
-option as well:
+If you want to decode the [`&#...;`](https://www.w3schools.com/html/html_entities.asp) syntax to the actual character,
+you can specify the [DecodeOptions.interpretNumericEntities] option as well:
 
 ```dart
 expect(
@@ -318,11 +318,11 @@ expect(
 );
 ```
 
-It also works when the charset has been detected in `DecodeOptions.charsetSentinel` mode.
+It also works when the charset has been detected in [DecodeOptions.charsetSentinel] mode.
 
 ### Decoding Lists
 
-**QS** can also decode `List`s using a similar `[]` notation:
+[decode] can also decode [List]s using a similar `[]` notation:
 
 ```dart
 expect(
@@ -344,9 +344,9 @@ expect(
 );
 ```
 
-Note that the only difference between an index in a `List` and a key in a `Map` is that the value between the brackets
-must be a number to create a `List`. When creating `List`s with specific indices, **QS** will compact a sparse 
-`List` to only the existing values preserving their order:
+Note that the only difference between an index in a [List] and a key in a [Map] is that the value between the brackets
+must be a number to create a [List]. When creating [List]s with specific indices, [decode] will compact a sparse 
+[List] to only the existing values preserving their order:
 
 ```dart
 expect(
@@ -374,10 +374,10 @@ expect(
 );
 ```
 
-**QS** will also limit specifying indices in a `List` to a maximum index of `20`.
-Any `List` members with an index of greater than `20` will instead be converted to a `Map` with the index as the key.
+[decode] will also limit specifying indices in a [List] to a maximum index of **20**.
+Any [List] members with an index of greater than **20** will instead be converted to a [Map] with the index as the key.
 This is needed to handle cases when someone sent, for example, `a[999999999]` and it will take significant time to iterate 
-over this huge `List`.
+over this huge [List].
 
 ```dart
 expect(
@@ -388,7 +388,7 @@ expect(
 );
 ```
 
-This limit can be overridden by passing an `DecodeOptions.listLimit` option:
+This limit can be overridden by passing an [DecodeOptions.listLimit] option:
 
 ```dart
 expect(
@@ -402,7 +402,7 @@ expect(
 );
 ```
 
-To disable List parsing entirely, set `DecodeOptions.parseLists` to `false`.
+To disable List parsing entirely, set [DecodeOptions.parseLists] to `false`.
 
 ```dart
 expect(
@@ -416,7 +416,7 @@ expect(
 );
 ```
 
-If you mix notations, **QS** will merge the two items into a `Map`:
+If you mix notations, [decode] will merge the two items into a [Map]:
 
 ```dart
 expect(
@@ -427,7 +427,7 @@ expect(
 );
 ```
 
-You can also create `List`s of `Map`s:
+You can also create [List]s of [Map]s:
 
 ```dart
 expect(
@@ -440,7 +440,7 @@ expect(
 );
 ```
 
-Some people use comma to join array, **QS** can parse it:
+Some people use commas to join [List]s, [decode] can parse it by setting the [DecodeOptions.comma] option to `true`:
 
 ```dart
 expect(
@@ -454,11 +454,11 @@ expect(
 );
 ```
 
-(_**QS** cannot convert nested `Map`s, such as `'a={b:1},{c:d}'`_)
+(_[decode] cannot convert nested [Map]s, such as `'a={b:1},{c:d}'`_)
 
 ### Decoding primitive/scalar values (`num`, `bool`, `null`, etc.)
 
-By default, all values are parsed as `String`s.
+By default, all values are parsed as [String]s.
 
 ```dart
 expect(
@@ -480,7 +480,7 @@ String encode(
 ]);
 ```
 
-When encoding, **QS** by default URI encodes output. `Map`s are stringified as you would expect:
+[encode] will by default URI encode the output. [Map]s are stringified as you would expect:
 
 ```dart
 expect(
@@ -493,7 +493,7 @@ expect(
 );
 ```
 
-This encoding can be disabled by setting the `EncodeOptions.encode` option to `false`:
+This encoding can be disabled by setting the [EncodeOptions.encode] option to `false`:
 
 ```dart
 expect(
@@ -507,7 +507,7 @@ expect(
 );
 ```
 
-Encoding can be disabled for keys by setting the `EncodeOptions.encodeValuesOnly` option to `true`:
+Encoding can be disabled for keys by setting the [EncodeOptions.encodeValuesOnly] option to `true`:
 
 ```dart
 expect(
@@ -526,7 +526,7 @@ expect(
 );
 ```
 
-This encoding can also be replaced by a custom `Encoder` set as `EncodeOptions.encoder` option:
+This encoding can also be replaced by a custom [Encoder] set as [EncodeOptions.encoder] option:
 
 ```dart
 expect(
@@ -550,9 +550,9 @@ expect(
 );
 ```
 
-_(Note: the `EncodeOptions.encoder` option does not apply if `EncodeOptions.encode` is `false`)_
+_(Note: the [EncodeOptions.encoder] option does not apply if [EncodeOptions.encode] is `false`)_
 
-Similar to `EncodeOptions.encoder` there is a `DecodeOptions.decoder` option for `decode` to override decoding of 
+Similar to [EncodeOptions.encoder] there is a [DecodeOptions.decoder] option for [decode] to override decoding of 
 properties and values:
 
 ```dart
@@ -571,7 +571,7 @@ expect(
 Examples beyond this point will be shown as though the output is not URI encoded for clarity.
 Please note that the return values in these cases *will* be URI encoded during real usage.
 
-When `List`s are encoded, they follow the `EncodeOptions.listFormat` option, which defaults to `ListFormat.indices`:
+When [List]s are encoded, they follow the [EncodeOptions.listFormat] option, which defaults to [ListFormat.indices]:
 
 ```dart
 expect(
@@ -585,8 +585,8 @@ expect(
 );
 ```
 
-You may override this by setting the `EncodeOptions.indices` option to `false`, or to be more explicit, the
-`EncodeOptions.listFormat` option to `ListFormat.repeat`:
+You may override this by setting the [EncodeOptions.indices] option to `false`, or to be more explicit, the
+[EncodeOptions.listFormat] option to [ListFormat.repeat]:
 
 ```dart
 expect(
@@ -603,7 +603,7 @@ expect(
 );
 ```
 
-You may use the `EncodeOptions.listFormat` option to specify the format of the output `List`:
+You may use the [EncodeOptions.listFormat] option to specify the format of the output [List]:
 
 ```dart
 expect(
@@ -659,10 +659,10 @@ expect(
 );
 ```
 
-**Note:** When using `EncodeOptions.listFormat` set to `ListFormat.comma`, you can also pass the `EncodeOptions.commaRoundTrip`
-option set to `true` or `false`, to append `[]` on single-item `List`s, so that they can round trip through a parse.
+**Note:** When using [EncodeOptions.listFormat] set to [ListFormat.comma], you can also pass the [EncodeOptions.commaRoundTrip]
+option set to `true` or `false`, to append `[]` on single-item [List]s, so that they can round trip through a parse.
 
-When `Map`s are encoded, by default they use bracket notation:
+When [Map]s are encoded, by default they use bracket notation:
 
 ```dart
 expect(
@@ -678,7 +678,7 @@ expect(
 );
 ```
 
-You may override this to use dot notation by setting the `EncodeOptions.allowDots` option to `true`:
+You may override this to use dot notation by setting the [EncodeOptions.allowDots] option to `true`:
 
 ```dart
 expect(
@@ -697,7 +697,7 @@ expect(
 );
 ```
 
-You may encode the dot notation in the keys of `Map` with option `EncodeOptions.encodeDotInKeys` by setting it to `true`:
+You may encode the dot notation in the keys of [Map] with option [EncodeOptions.encodeDotInKeys] by setting it to `true`:
 
 ```dart
 expect(
@@ -714,10 +714,10 @@ expect(
 );
 ```
 
-**Caveat:** when `EncodeOptions.encodeValuesOnly` is `true` as well as `EncodeOptions.encodeDotInKeys`, only dots in 
+**Caveat:** when [EncodeOptions.encodeValuesOnly] is `true` as well as [EncodeOptions.encodeDotInKeys], only dots in 
 keys and nothing else will be encoded.
 
-You may allow empty `List` values by setting the `EncodeOptions.allowEmptyLists` option to `true`:
+You may allow empty [List] values by setting the [EncodeOptions.allowEmptyLists] option to `true`:
 
 ```dart
 expect(
@@ -748,7 +748,7 @@ expect(
 );
 ```
 
-Key with no values (such as an empty `Map` or `List`) will return nothing:
+Key with no values (such as an empty [Map] or [List]) will return nothing:
 
 ```dart
 expect(
@@ -797,7 +797,7 @@ expect(
 );
 ```
 
-Properties that are `Undefined` will be omitted entirely:
+Properties that are [Undefined] will be omitted entirely:
 
 ```dart
 expect(
@@ -841,8 +841,8 @@ expect(
 );
 ```
 
-If you only want to override the serialization of `DateTime` objects, you can provide a custom `DateSerializer` in the
-`EncodeOptions.serializeDate` option:
+If you only want to override the serialization of [DateTime] objects, you can provide a custom [DateSerializer] in the
+[EncodeOptions.serializeDate] option:
 
 ```dart
 expect(
@@ -869,7 +869,7 @@ expect(
 );
 ```
 
-You may use the `EncodeOptions.sort` option to affect the order of parameter keys:
+You may use the [EncodeOptions.sort] option to affect the order of parameter keys:
 
 ```dart
 expect(
@@ -888,9 +888,9 @@ expect(
 );
 ```
 
-Finally, you can use the `EncodeOptions.filter` option to restrict which keys will be included in the encoded output.
-If you pass a `Function`, it will be called for each key to obtain the replacement value.
-Otherwise, if you pass a `List`, it will be used to select properties and `List` indices to be encoded:
+Finally, you can use the [EncodeOptions.filter] option to restrict which keys will be included in the encoded output.
+If you pass a [Function], it will be called for each key to obtain the replacement value.
+Otherwise, if you pass a [List], it will be used to select properties and [List] indices to be encoded:
 
 ```dart
 expect(
@@ -975,7 +975,7 @@ expect(
 );
 ```
 
-To distinguish between `null` values and empty `String`s use the `EncodeOptions.strictNullHandling` flag. 
+To distinguish between `null` values and empty [String]s use the [EncodeOptions.strictNullHandling] flag. 
 In the result string the `null` values have no `=` sign:
 
 ```dart
@@ -991,7 +991,7 @@ expect(
 );
 ```
 
-To decode values without `=` back to `null` use the `DecodeOptions.strictNullHandling` flag:
+To decode values without `=` back to `null` use the [DecodeOptions.strictNullHandling] flag:
 
 ```dart
 expect(
@@ -1006,7 +1006,7 @@ expect(
 );
 ```
 
-To completely skip rendering keys with `null` values, use the `EncodeOptions.skipNulls` flag:
+To completely skip rendering keys with `null` values, use the [EncodeOptions.skipNulls] flag:
 
 ```dart
 expect(
@@ -1021,7 +1021,7 @@ expect(
 );
 ```
 
-If you're communicating with legacy systems, you can switch to `latin1` using the `charset` option:
+If you're communicating with legacy systems, you can switch to [latin1] using the [EncodeOptions.charset] option:
 
 ```dart
 expect(
@@ -1035,7 +1035,7 @@ expect(
 );
 ```
 
-Characters that don't exist in `latin1` will be converted to numeric entities, similar to what browsers do:
+Characters that don't exist in [latin1] will be converted to numeric entities, similar to what browsers do:
 
 ```dart
 expect(
@@ -1049,7 +1049,7 @@ expect(
 );
 ```
 
-You can use the `EncodeOptions.charsetSentinel` option to announce the character by including an `utf8=✓` parameter with
+You can use the [EncodeOptions.charsetSentinel] option to announce the character by including an `utf8=✓` parameter with
 the proper encoding of the checkmark, similar to what Ruby on Rails and others do when submitting forms.
 
 ```dart
@@ -1078,8 +1078,8 @@ expect(
 
 ### Dealing with special character sets
 
-By default, the encoding and decoding of characters is done in `utf8`, and `latin1` support is also built in via 
-the `EncodeOptions.charset` and `DecodeOptions.charset` parameter, respectively.
+By default, the encoding and decoding of characters is done in [utf8], and [latin1] support is also built in via 
+the [EncodeOptions.charset] and [DecodeOptions.charset] parameter, respectively.
 
 If you wish to encode query strings to a different character set (i.e.
 [Shift JIS](https://en.wikipedia.org/wiki/Shift_JIS)) you can use the [euc](https://pub.dev/packages/euc) package
@@ -1142,8 +1142,8 @@ expect(
 
 ### RFC 3986 and RFC 1738 space encoding
 
-The default `EncodeOptions.format` is `Format.rfc3986` which encodes `' '` to `%20` which is backward compatible.
-You can also set the `EncodeOptions.format` to `Format.rfc1738` which encodes `' '` to `+`.
+The default [EncodeOptions.format] is [Format.rfc3986] which encodes `' '` to `%20` which is backward compatible.
+You can also set the [EncodeOptions.format] to [Format.rfc1738] which encodes `' '` to `+`.
 
 ```dart
 expect(

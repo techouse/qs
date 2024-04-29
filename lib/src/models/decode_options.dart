@@ -33,10 +33,10 @@ final class DecodeOptions with EquatableMixin {
           'Invalid charset',
         );
 
-  /// Set to [true] to decode dot [Map] notation in the encoded input.
+  /// Set to `true` to decode dot [Map] notation in the encoded input.
   final bool allowDots;
 
-  /// Set to [true] to allow empty [List] values inside [Map]s in the encoded input.
+  /// Set to `true` to allow empty [List] values inside [Map]s in the encoded input.
   final bool allowEmptyLists;
 
   /// [QS] will limit specifying indices in a [List] to a maximum index of `20`.
@@ -64,15 +64,15 @@ final class DecodeOptions with EquatableMixin {
   /// charset.
   final bool charsetSentinel;
 
-  /// Set to [true] to parse the input as a comma-separated value.
+  /// Set to `true` to parse the input as a comma-separated value.
   ///
   /// Note: nested [Map]s, such as `'a={b:1},{c:d}'` are not supported.
   final bool comma;
 
-  /// Set to [true] to decode dots in keys.
+  /// Set to `true` to decode dots in keys.
   ///
   /// Note: it implies [allowDots], so [QS.decode] will error if you set
-  /// [decodeDotInKeys] to [true], and [allowDots] to [false].
+  /// [decodeDotInKeys] to `true`, and [allowDots] to `false`.
   final bool decodeDotInKeys;
 
   /// The delimiter to use when splitting key-value pairs in the encoded input.
@@ -93,13 +93,13 @@ final class DecodeOptions with EquatableMixin {
   /// Change the duplicate key handling strategy
   final Duplicates duplicates;
 
-  /// Set to [true] to ignore the leading question mark query prefix in the encoded input.
+  /// Set to `true` to ignore the leading question mark query prefix in the encoded input.
   final bool ignoreQueryPrefix;
 
-  /// Set to [true] to interpret HTML numeric entities (`&#...;`) in the encoded input.
+  /// Set to `true` to interpret HTML numeric entities (`&#...;`) in the encoded input.
   final bool interpretNumericEntities;
 
-  /// To disable [List] parsing entirely, set [parseLists] to [false].
+  /// To disable [List] parsing entirely, set [parseLists] to `false`.
   final bool parseLists;
 
   /// Set to true to decode values without `=` to `null`.

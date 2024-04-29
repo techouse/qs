@@ -50,13 +50,13 @@ final class EncodeOptions with EquatableMixin {
           'Invalid filter',
         );
 
-  /// Set to [true] to add a question mark `?` prefix to the encoded output.
+  /// Set to `true` to add a question mark `?` prefix to the encoded output.
   final bool addQueryPrefix;
 
-  /// Set to [true] to use dot [Map] notation in the encoded output.
+  /// Set to `true` to use dot [Map] notation in the encoded output.
   final bool allowDots;
 
-  /// Set to [true] to allow empty [List]s in the encoded output.
+  /// Set to `true` to allow empty [List]s in the encoded output.
   final bool allowEmptyLists;
 
   /// The [List] encoding format to use.
@@ -65,7 +65,7 @@ final class EncodeOptions with EquatableMixin {
   /// The character encoding to use.
   final Encoding charset;
 
-  /// Set to [true] to announce the character by including an `utf8=✓` parameter
+  /// Set to `true` to announce the character by including an `utf8=✓` parameter
   /// with the proper encoding of the checkmark, similar to what Ruby on Rails
   /// and others do when submitting forms.
   final bool charsetSentinel;
@@ -73,16 +73,16 @@ final class EncodeOptions with EquatableMixin {
   /// The delimiter to use when joining key-value pairs in the encoded output.
   final String delimiter;
 
-  /// Set to [false] to disable encoding.
+  /// Set to `false` to disable encoding.
   final bool encode;
 
-  /// Encode [Map] keys using dot notation by setting [encodeDotInKeys] to [true]:
+  /// Encode [Map] keys using dot notation by setting [encodeDotInKeys] to `true`:
   ///
-  /// Caveat: When [encodeValuesOnly] is [true] as well as [encodeDotInKeys],
+  /// Caveat: When [encodeValuesOnly] is `true` as well as [encodeDotInKeys],
   /// only dots in keys and nothing else will be encoded.
   final bool encodeDotInKeys;
 
-  /// Encoding can be disabled for keys by setting the [encodeValuesOnly] to [true]
+  /// Encoding can be disabled for keys by setting the [encodeValuesOnly] to `true`
   final bool encodeValuesOnly;
 
   /// The encoding format to use.
@@ -91,15 +91,15 @@ final class EncodeOptions with EquatableMixin {
   /// You can also set [format] to [Format.rfc1738] which encodes `' '` to `+`.
   final Format format;
 
-  /// Set to [true] to completely skip encoding keys with `null` values
+  /// Set to `true` to completely skip encoding keys with `null` values
   final bool skipNulls;
 
-  /// Set to [true] to distinguish between `null` values and empty [String]s.
+  /// Set to `true` to distinguish between `null` values and empty [String]s.
   /// This way the encoded string `null` values will have no `=` sign.
   final bool strictNullHandling;
 
   /// When [listFormat] is set to [ListFormat.comma], you can also set
-  /// [commaRoundTrip] option to [true] or [false], to append `[]` on
+  /// [commaRoundTrip] option to `true` or `false`, to append `[]` on
   /// single-item [List]s, so that they can round trip through a parse.
   final bool? commaRoundTrip;
 
