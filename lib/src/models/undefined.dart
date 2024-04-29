@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Internal model to distinguish between [null] and not set value
+/// Internal model to distinguish between `null` and not set value
 final class Undefined with EquatableMixin {
   const Undefined();
 
