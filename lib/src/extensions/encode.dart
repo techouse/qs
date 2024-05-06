@@ -56,7 +56,10 @@ extension _$Encode on QS {
     if (filter is Function) {
       obj = filter.call(prefix, obj);
     } else if (obj is DateTime) {
-      obj = serializeDate?.call(obj) ?? obj.toIso8601String();
+      obj = switch (serializeDate) {
+        null => obj.toIso8601String(),
+        _ => serializeDate(obj),
+      };
     } else if (generateArrayPrefix == ListFormat.comma.generator &&
         obj is Iterable) {
       obj = Utils.apply(

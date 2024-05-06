@@ -10,7 +10,7 @@ typedef Encoder = String Function(
   Encoding? charset,
   Format? format,
 });
-typedef DateSerializer = String Function(DateTime date);
+typedef DateSerializer = String? Function(DateTime date);
 typedef Sorter = int Function(dynamic a, dynamic b);
 
 /// Options that configure the output of [QS.encode].
@@ -141,8 +141,9 @@ final class EncodeOptions with EquatableMixin {
   ///
   /// Uses the provided [serializeDate] function if available, otherwise uses
   /// [DateTime.toIso8601String].
-  String serializeDate(DateTime date) =>
-      _serializeDate?.call(date) ?? date.toIso8601String();
+  String? serializeDate(DateTime date) => _serializeDate != null
+      ? _serializeDate!.call(date)
+      : date.toIso8601String();
 
   /// Returns a new [EncodeOptions] instance with updated values.
   EncodeOptions copyWith({
