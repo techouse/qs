@@ -1,3 +1,8 @@
+## 1.1.0
+
+- [FEAT] `DateSerializer` now returns `String` or `null`
+- [CHORE] add more tests
+
 ## 1.0.10
 
 - [CHORE] add [documentation](https://techouse.github.io/qs/)
