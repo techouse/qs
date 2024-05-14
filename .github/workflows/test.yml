@@ -96,6 +96,7 @@ jobs:
           file: ./coverage/lcov.info
           verbose: true
       - name: Upload coverage to Codacy
+        if: ${{ matrix.platform == 'vm' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
