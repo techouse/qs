@@ -87,7 +87,7 @@ jobs:
         run: |
           dart pub global run coverage:test_with_coverage
           dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
-      - name: Upload coverage
+      - name: Upload coverage to Codecov
         if: ${{ matrix.platform == 'vm' }}
         uses: codecov/codecov-action@v4
         with:
@@ -95,6 +95,11 @@ jobs:
           slug: techouse/qs
           file: ./coverage/lcov.info
           verbose: true
+      - name: Upload coverage to Codacy
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage/lcov.info
   ensure_compatibility:
     name: "Ensure compatibility with qs"
     needs: analyze
