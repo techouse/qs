@@ -87,11 +87,12 @@ final class Utils {
         }
       } else if (target is Map) {
         if (source is Iterable) {
-          target = Map.of(target)
-            ..addAll({
-              for (final (int i, dynamic item) in source.indexed)
-                if (item is! Undefined) i: item
-            });
+          target = <String, dynamic>{
+            for (final MapEntry entry in target.entries)
+              entry.key.toString(): entry.value,
+            for (final (int i, dynamic item) in source.indexed)
+              if (item is! Undefined) i.toString(): item
+          };
         }
       } else if (source != null) {
         if (target is! Iterable && source is Iterable) {
@@ -105,9 +106,9 @@ final class Utils {
 
     if (target == null || target is! Map) {
       if (target is Iterable) {
-        return Map.of({
+        return Map<String, dynamic>.of({
           for (final (int i, dynamic item) in target.indexed)
-            if (item is! Undefined) i: item,
+            if (item is! Undefined) i.toString(): item,
           ...source,
         });
       }
@@ -124,13 +125,16 @@ final class Utils {
       ];
     }
 
-    Map mergeTarget = target is Iterable && source is! Iterable
-        ? (target as Iterable).toList().whereNotUndefined().asMap()
-        : Map.of(target);
+    Map<String, dynamic> mergeTarget = target is Iterable && source is! Iterable
+        ? {
+            for (final (int i, dynamic item) in (target as Iterable).indexed)
+              if (item is! Undefined) i.toString(): item
+          }
+        : Map<String, dynamic>.of(target as Map<String, dynamic>);
 
     return source.entries.fold(mergeTarget, (Map acc, MapEntry entry) {
       acc.update(
-        entry.key,
+        entry.key.toString(),
         (value) => merge(
           value,
           entry.value,
@@ -332,8 +336,8 @@ final class Utils {
     }
   }
 
-  static Map compact(Map value) {
-    final List<Map> queue = [
+  static Map<String, dynamic> compact(Map<String, dynamic> value) {
+    final List<Map<String, dynamic>> queue = [
       {
         'obj': {'o': value},
         'prop': 'o',

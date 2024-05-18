@@ -244,8 +244,8 @@ const List<Map<String, dynamic>> emptyTestCases = [
       'repeat': '=a&=b& =1'
     },
     'noEmptyKeys': {
-      0: 'a',
-      1: 'b',
+      '0': 'a',
+      '1': 'b',
       ' ': ['1']
     }
   },
@@ -256,8 +256,8 @@ const List<Map<String, dynamic>> emptyTestCases = [
       'a': ['1', '2']
     },
     'noEmptyKeys': {
-      0: 'a',
-      1: 'b',
+      '0': 'a',
+      '1': 'b',
       'a': ['1', '2']
     },
     'stringifyOutput': {
@@ -292,6 +292,6 @@ const List<Map<String, dynamic>> emptyTestCases = [
       'indices': '[0]=a&[1]=b',
       'repeat': '=a&=b'
     },
-    'noEmptyKeys': {0: 'a', 1: 'b'}
+    'noEmptyKeys': {'0': 'a', '1': 'b'}
   }
 ];

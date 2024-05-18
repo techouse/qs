@@ -182,8 +182,8 @@ void main() {
     group('merge', () {
       test('merges SplayTreeMap with List', () {
         expect(
-          Utils.merge({0: 'a'}, [const Undefined(), 'b']),
-          equals({0: 'a', 1: 'b'}),
+          Utils.merge({'0': 'a'}, [const Undefined(), 'b']),
+          equals({'0': 'a', '1': 'b'}),
         );
       });
 
@@ -369,8 +369,8 @@ void main() {
           equals(
             {
               'foo': {
-                0: 'bar',
-                1: {'first': '123'},
+                '0': 'bar',
+                '1': {'first': '123'},
                 'second': '456'
               }
             },
@@ -631,7 +631,7 @@ void main() {
           ),
           equals(
             {
-              'foo': {0: 'bar', 'baz': 'xyzzy'},
+              'foo': {'0': 'bar', 'baz': 'xyzzy'},
             },
           ),
         );
@@ -671,7 +671,7 @@ void main() {
           ),
           equals(
             {
-              'foo': {'bar': 'baz', 0: 'xyzzy'},
+              'foo': {'bar': 'baz', '0': 'xyzzy'},
             },
           ),
         );

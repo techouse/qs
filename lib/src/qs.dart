@@ -19,43 +19,45 @@ part 'extensions/encode.dart';
 
 /// A query string decoder (parser) and encoder (stringifier) class.
 final class QS {
-  /// Decodes a [String] or [Map] into a [Map].
+  /// Decodes a [String] or [Map<String, dynamic>] into a [Map<String, dynamic>].
   /// Providing custom [options] will override the default behavior.
-  static Map decode(
+  static Map<String, dynamic> decode(
     dynamic input, [
     DecodeOptions options = const DecodeOptions(),
   ]) {
-    if (!(input is String? || input is Map?)) {
+    if (!(input is String? || input is Map<String, dynamic>?)) {
       throw ArgumentError.value(
         input,
         'input',
-        'The input must be a String or a Map',
+        'The input must be a String or a Map<String, dynamic>',
       );
     }
 
     if (input?.isEmpty ?? true) {
-      return Map.of({});
+      return <String, dynamic>{};
     }
 
-    Map? tempObj = input is String
+    Map<String, dynamic>? tempObj = input is String
         ? _$Decode._parseQueryStringValues(input, options)
         : input;
-    Map obj = {};
+    Map<String, dynamic> obj = {};
 
     // Iterate over the keys and setup the new object
-    for (final MapEntry entry in tempObj?.entries ?? List.empty()) {
-      final newObj = _$Decode._parseKeys(
-        entry.key,
-        entry.value,
-        options,
-        input is String,
-      );
+    if (tempObj?.isNotEmpty ?? false) {
+      for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
+        final newObj = _$Decode._parseKeys(
+          entry.key,
+          entry.value,
+          options,
+          input is String,
+        );
 
-      obj = Utils.merge(
-        obj,
-        newObj,
-        options,
-      );
+        obj = Utils.merge(
+          obj,
+          newObj,
+          options,
+        );
+      }
     }
 
     return Utils.compact(obj);

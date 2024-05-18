@@ -3,7 +3,7 @@ import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/qs.dart';
 
 /// Convenience method for [QS.decode]
-Map decode(
+Map<String, dynamic> decode(
   dynamic input, [
   DecodeOptions options = const DecodeOptions(),
 ]) =>

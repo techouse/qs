@@ -26,4 +26,6 @@ extension StringExtension on String {
     }
     return substring(start, min(end, length));
   }
+
+  bool get isNumeric => double.tryParse(this) != null;
 }
