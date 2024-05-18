@@ -130,7 +130,10 @@ final class Utils {
             for (final (int i, dynamic item) in (target as Iterable).indexed)
               if (item is! Undefined) i.toString(): item
           }
-        : Map<String, dynamic>.of(target as Map<String, dynamic>);
+        : {
+            for (final MapEntry entry in target.entries)
+              entry.key.toString(): entry.value
+          };
 
     return source.entries.fold(mergeTarget, (Map acc, MapEntry entry) {
       acc.update(
