@@ -9,4 +9,5 @@ export 'src/methods.dart' show decode, encode;
 export 'src/models/decode_options.dart';
 export 'src/models/encode_options.dart';
 export 'src/models/undefined.dart';
+export 'src/uri.dart';
 export 'src/qs.dart';
