@@ -1,3 +1,9 @@
+## 1.2.0
+
+- [FEAT] `QS.decode` returns `Map<String, dynamic>` instead of `Map<dynamic, dynamic>` ([#17](https://github.com/techouse/qs/pull/17))
+- [FEAT] add `Uri` extension ([#18](https://github.com/techouse/qs/pull/18)) 
+- [FIX] fix decoding encoded square brackets in key names
+
 ## 1.1.0
 
 - [FEAT] `DateSerializer` now returns `String` or `null`
