@@ -20,7 +20,9 @@ extension _$Decode on QS {
     final Map<String, dynamic> obj = {};
 
     final String cleanStr =
-        options.ignoreQueryPrefix ? str.replaceFirst('?', '') : str;
+        (options.ignoreQueryPrefix ? str.replaceFirst('?', '') : str)
+            .replaceAll(RegExp(r'%5B', caseSensitive: false), '[')
+            .replaceAll(RegExp(r'%5D', caseSensitive: false), ']');
     final num? limit = options.parameterLimit == double.infinity
         ? null
         : options.parameterLimit;
