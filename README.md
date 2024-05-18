@@ -36,13 +36,29 @@ void main() {
       equals('a=c'),
     );
   });
+  
+  test('Uri Extension usage', () {
+    expect(
+      Uri.parse('https://test.local/example?a[b][c]=d').queryParametersQs(),
+      equals({
+        'a': {
+          'b': {'c': 'd'}
+        }
+      }),
+    );
+    
+    expect(
+      Uri.https('test.local', '/example', {'a': '1', 'b': '2'}).toStringQs(), 
+      equals('https://test.local/example?a=1&b=2'),
+    );
+  });
 }
 ```
 
 ### Decoding Maps
 
 ```dart
-Map decode(
+Map<String, dynamic> decode(
   dynamic str, [
   DecodeOptions options = const DecodeOptions(),
 ]);
