@@ -383,7 +383,7 @@ over this huge [List].
 expect(
   QS.decode('a[100]=b'),
   equals({
-    'a': {100: 'b'}
+    'a': {'100': 'b'}
   }),
 );
 ```
@@ -397,7 +397,7 @@ expect(
     const DecodeOptions(listLimit: 0),
   ),
   equals({
-    'a': {1: 'b'}
+    'a': {'1': 'b'}
   }),
 );
 ```
@@ -411,7 +411,7 @@ expect(
     const DecodeOptions(parseLists: false),
   ),
   equals({
-    'a': {0: 'b'}
+    'a': {'0': 'b'}
   }),
 );
 ```
@@ -422,7 +422,7 @@ If you mix notations, [decode] will merge the two items into a [Map]:
 expect(
   QS.decode('a[0]=b&a[b]=c'),
   equals({
-    'a': {0: 'b', 'b': 'c'}
+    'a': {'0': 'b', 'b': 'c'}
   }),
 );
 ```
