@@ -17,7 +17,7 @@ void main() {
     });
 
     test('parses a simple string', () {
-      expect(QS.decode('0=foo'), equals({0: 'foo'}));
+      expect(QS.decode('0=foo'), equals({'0': 'foo'}));
       expect(QS.decode('foo=c++'), equals({'foo': 'c  '}));
       expect(
         QS.decode('a[>=]=23'),
@@ -471,7 +471,7 @@ void main() {
       expect(
         QS.decode('a[1]=c', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': {1: 'c'}
+          'a': {'1': 'c'}
         }),
       );
       expect(
@@ -492,7 +492,7 @@ void main() {
       expect(
         QS.decode('a[21]=a', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {21: 'a'}
+          'a': {'21': 'a'}
         }),
       );
 
@@ -505,7 +505,7 @@ void main() {
       expect(
         QS.decode('a[21]=a'),
         equals({
-          'a': {21: 'a'}
+          'a': {'21': 'a'}
         }),
       );
     });
@@ -561,31 +561,31 @@ void main() {
       expect(
         QS.decode('foo[0]=bar&foo[bad]=baz'),
         equals({
-          'foo': {0: 'bar', 'bad': 'baz'}
+          'foo': {'0': 'bar', 'bad': 'baz'}
         }),
       );
       expect(
         QS.decode('foo[bad]=baz&foo[0]=bar'),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar'}
+          'foo': {'bad': 'baz', '0': 'bar'}
         }),
       );
       expect(
         QS.decode('foo[bad]=baz&foo[]=bar'),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar'}
+          'foo': {'bad': 'baz', '0': 'bar'}
         }),
       );
       expect(
         QS.decode('foo[]=bar&foo[bad]=baz'),
         equals({
-          'foo': {0: 'bar', 'bad': 'baz'}
+          'foo': {'0': 'bar', 'bad': 'baz'}
         }),
       );
       expect(
         QS.decode('foo[bad]=baz&foo[]=bar&foo[]=foo'),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar', 1: 'foo'}
+          'foo': {'bad': 'baz', '0': 'bar', '1': 'foo'}
         }),
       );
       expect(
@@ -664,28 +664,28 @@ void main() {
         QS.decode(
             'foo.bad=baz&foo[0]=bar', const DecodeOptions(allowDots: true)),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar'}
+          'foo': {'bad': 'baz', '0': 'bar'}
         }),
       );
       expect(
         QS.decode(
             'foo.bad=baz&foo[]=bar', const DecodeOptions(allowDots: true)),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar'}
+          'foo': {'bad': 'baz', '0': 'bar'}
         }),
       );
       expect(
         QS.decode(
             'foo[]=bar&foo.bad=baz', const DecodeOptions(allowDots: true)),
         equals({
-          'foo': {0: 'bar', 'bad': 'baz'}
+          'foo': {'0': 'bar', 'bad': 'baz'}
         }),
       );
       expect(
         QS.decode('foo.bad=baz&foo[]=bar&foo[]=foo',
             const DecodeOptions(allowDots: true)),
         equals({
-          'foo': {'bad': 'baz', 0: 'bar', 1: 'foo'}
+          'foo': {'bad': 'baz', '0': 'bar', '1': 'foo'}
         }),
       );
       expect(
@@ -705,7 +705,7 @@ void main() {
       expect(
         QS.decode('a[2]=b&a[99999999]=c'),
         equals({
-          'a': {2: 'b', 99999999: 'c'}
+          'a': {'2': 'b', '99999999': 'c'}
         }),
       );
     });
@@ -889,13 +889,13 @@ void main() {
     });
 
     test('continues parsing when no parent is found', () {
-      expect(QS.decode('[]=&a=b'), equals({0: '', 'a': 'b'}));
+      expect(QS.decode('[]=&a=b'), equals({'0': '', 'a': 'b'}));
       expect(
         QS.decode(
           '[]&a=b',
           const DecodeOptions(strictNullHandling: true),
         ),
-        equals({0: null, 'a': 'b'}),
+        equals({'0': null, 'a': 'b'}),
       );
       expect(QS.decode('[foo]=bar'), equals({'foo': 'bar'}));
     });
@@ -945,7 +945,7 @@ void main() {
       expect(
         QS.decode('a[0]=b', const DecodeOptions(listLimit: -1)),
         equals({
-          'a': {0: 'b'}
+          'a': {'0': 'b'}
         }),
       );
       expect(
@@ -958,26 +958,26 @@ void main() {
       expect(
         QS.decode('a[-1]=b', const DecodeOptions(listLimit: -1)),
         equals({
-          'a': {-1: 'b'}
+          'a': {'-1': 'b'}
         }),
       );
       expect(
         QS.decode('a[-1]=b', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': {-1: 'b'}
+          'a': {'-1': 'b'}
         }),
       );
 
       expect(
         QS.decode('a[0]=b&a[1]=c', const DecodeOptions(listLimit: -1)),
         equals({
-          'a': {0: 'b', 1: 'c'}
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
         QS.decode('a[0]=b&a[1]=c', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': {0: 'b', 1: 'c'}
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
     });
@@ -989,7 +989,7 @@ void main() {
           const DecodeOptions(parseLists: false),
         ),
         equals({
-          'a': {0: 'b', 1: 'c'}
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
@@ -998,7 +998,7 @@ void main() {
           const DecodeOptions(parseLists: false),
         ),
         equals({
-          'a': {0: 'b'}
+          'a': {'0': 'b'}
         }),
       );
     });
@@ -1339,7 +1339,7 @@ void main() {
 
       final Map<String, dynamic> expectedlist = {};
       expectedlist['a'] = {};
-      expectedlist['a'][0] = 'b';
+      expectedlist['a']['0'] = 'b';
       expectedlist['a']['c'] = 'd';
       expect(
         QS.decode('a[]=b&a[c]=d'),

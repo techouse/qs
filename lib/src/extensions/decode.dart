@@ -13,11 +13,11 @@ extension _$Decode on QS {
           ? val.split(',')
           : val;
 
-  static Map _parseQueryStringValues(
+  static Map<String, dynamic> _parseQueryStringValues(
     String str, [
     DecodeOptions options = const DecodeOptions(),
   ]) {
-    final Map obj = {};
+    final Map<String, dynamic> obj = {};
 
     final String cleanStr =
         options.ignoreQueryPrefix ? str.replaceFirst('?', '') : str;
@@ -107,7 +107,7 @@ extension _$Decode on QS {
             ? List<dynamic>.empty(growable: true)
             : [if (leaf is Iterable) ...leaf else leaf];
       } else {
-        obj = Map.of({});
+        obj = <String, dynamic>{};
         final String cleanRoot = root.startsWith('[') && root.endsWith(']')
             ? root.slice(1, root.length - 1)
             : root;
@@ -116,7 +116,7 @@ extension _$Decode on QS {
             : cleanRoot;
         final int? index = int.tryParse(decodedRoot);
         if (!options.parseLists && decodedRoot == '') {
-          obj = Map.of({0: leaf});
+          obj = <String, dynamic>{'0': leaf};
         } else if (index != null &&
             index >= 0 &&
             root != decodedRoot &&
@@ -130,7 +130,7 @@ extension _$Decode on QS {
           );
           obj[index] = leaf;
         } else {
-          obj[index ?? decodedRoot] = leaf;
+          obj[index?.toString() ?? decodedRoot] = leaf;
         }
       }
 

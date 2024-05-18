@@ -7,17 +7,21 @@ import 'package:test/test.dart';
 void main() {
   group('SplayTreeMap', () {
     test('indices are ordered in value', () {
-      final SplayTreeMap<int, String> array =
-          SplayTreeMap<int, String>.from({1: 'a', 0: 'b', 2: 'c'});
+      final SplayTreeMap<String, String> array =
+          SplayTreeMap<String, String>.from({
+        '1': 'a',
+        '0': 'b',
+        '2': 'c',
+      });
 
       expect(array.values, ['b', 'a', 'c']);
     });
 
     test('indices are ordered in value 2', () {
-      final SplayTreeMap<int, String> array = SplayTreeMap<int, String>();
-      array[1] = 'c';
-      array[0] = 'b';
-      array[2] = 'd';
+      final SplayTreeMap<String, String> array = SplayTreeMap<String, String>();
+      array['1'] = 'c';
+      array['0'] = 'b';
+      array['2'] = 'd';
 
       expect(array.values, ['b', 'c', 'd']);
     });
