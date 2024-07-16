@@ -260,6 +260,22 @@ void main() {
       );
     });
 
+    test(
+      'allowEmptyLists + strictNullHandling',
+      () {
+        expect(
+          QS.decode(
+            'testEmptyList[]',
+            const DecodeOptions(
+              strictNullHandling: true,
+              allowEmptyLists: true,
+            ),
+          ),
+          equals({'testEmptyList': []}),
+        );
+      },
+    );
+
     test('parses a single nested string', () {
       expect(
         QS.decode('a[b]=c'),

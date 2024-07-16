@@ -457,6 +457,22 @@ void main() {
       },
     );
 
+    test(
+      'allowEmptyLists + strictNullHandling',
+      () {
+        expect(
+          QS.encode(
+            {'testEmptyList': []},
+            const EncodeOptions(
+              strictNullHandling: true,
+              allowEmptyLists: true,
+            ),
+          ),
+          equals('testEmptyList[]'),
+        );
+      },
+    );
+
     group('encodes a list value with one item vs multiple items', () {
       test(
         'non-list item',
