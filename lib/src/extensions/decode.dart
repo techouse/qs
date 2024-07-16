@@ -105,7 +105,8 @@ extension _$Decode on QS {
       final String root = chain[i];
 
       if (root == '[]' && options.parseLists) {
-        obj = options.allowEmptyLists && leaf == ''
+        obj = options.allowEmptyLists &&
+                (leaf == '' || (options.strictNullHandling && leaf == null))
             ? List<dynamic>.empty(growable: true)
             : [if (leaf is Iterable) ...leaf else leaf];
       } else {
