@@ -1,3 +1,7 @@
+## 1.2.1
+
+- [FIX] Fix `QS.decode` output when both `strictNullHandling` and `allowEmptyLists` are set to `true` ([#21](https://github.com/techouse/qs/pull/21))
+
 ## 1.2.0
 
 - [FEAT] `QS.decode` returns `Map<String, dynamic>` instead of `Map<dynamic, dynamic>` ([#17](https://github.com/techouse/qs/pull/17))
