@@ -132,8 +132,25 @@ expect(
 );
 ```
 
+You can configure [decode] to throw an error when parsing nested input beyond this depth using
+[DecodeOptions.strictDepth] (defaults to false):
+
+```dart
+expect(
+  () => QS.decode(
+    'a[b][c][d][e][f][g][h][i]=j',
+    const DecodeOptions(
+      depth: 1,
+      strictDepth: true,
+    ),
+  ),
+  throwsA(isA<RangeError>()),
+);
+```
+
 The depth limit helps mitigate abuse when [decode] is used to parse user input, and it is recommended to keep it a
-reasonably small number.
+reasonably small number. [DecodeOptions.strictDepth] adds a layer of protection by throwing a [RangeError] when the
+limit is exceeded, allowing you to catch and handle such cases.
 
 For similar reasons, by default [decode] will only parse up to **1000** parameters. This can be overridden by passing 
 a [DecodeOptions.parameterLimit] option:

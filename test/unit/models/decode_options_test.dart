@@ -109,6 +109,7 @@ void main() {
         interpretNumericEntities: true,
         parameterLimit: 100,
         parseLists: false,
+        strictDepth: false,
         strictNullHandling: true,
       );
 
@@ -130,6 +131,7 @@ void main() {
           '  interpretNumericEntities: true,\n'
           '  parameterLimit: 100,\n'
           '  parseLists: false,\n'
+          '  strictDepth: false,\n'
           '  strictNullHandling: true\n'
           ')',
         ),
