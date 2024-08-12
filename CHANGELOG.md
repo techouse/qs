@@ -1,3 +1,7 @@
+## 1.2.2
+
+- [FEAT] add `DecodeOptions.strictDepth` option to throw when input is beyond depth ([#22](https://github.com/techouse/qs/pull/22))
+
 ## 1.2.1
 
 - [FIX] Fix `QS.decode` output when both `strictNullHandling` and `allowEmptyLists` are set to `true` ([#21](https://github.com/techouse/qs/pull/21))
