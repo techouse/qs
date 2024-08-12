@@ -1614,9 +1614,136 @@ void main() {
       'duplicates: last',
       () {
         expect(
-          QS.decode('foo=bar&foo=baz',
-              const DecodeOptions(duplicates: Duplicates.last)),
+          QS.decode(
+            'foo=bar&foo=baz',
+            const DecodeOptions(duplicates: Duplicates.last),
+          ),
           equals({'foo': 'baz'}),
+        );
+      },
+    );
+  });
+
+  group('strictDepth option - throw cases', () {
+    test(
+      'throws an exception for multiple nested objects with strictDepth: true',
+      () {
+        expect(
+          () => QS.decode(
+            'a[b][c][d][e][f][g][h][i]=j',
+            const DecodeOptions(depth: 1, strictDepth: true),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
+
+    test(
+      'throws an exception for multiple nested lists with strictDepth: true',
+      () {
+        expect(
+          () => QS.decode(
+            'a[0][1][2][3][4]=b',
+            const DecodeOptions(depth: 3, strictDepth: true),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
+
+    test(
+      'throws an exception for nested maps and lists with strictDepth: true',
+      () {
+        expect(
+          () => QS.decode(
+            'a[b][c][0][d][e]=f',
+            const DecodeOptions(depth: 3, strictDepth: true),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
+
+    test(
+      'throws an exception for different types of values with strictDepth: true',
+      () {
+        expect(
+          () => QS.decode(
+            'a[b][c][d][e]=true&a[b][c][d][f]=42',
+            const DecodeOptions(depth: 3, strictDepth: true),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
+  });
+
+  group('strictDepth option - non-throw cases', () {
+    test('when depth is 0 and strictDepth true, do not throw', () {
+      expect(
+        () => QS.decode(
+          'a[b][c][d][e]=true&a[b][c][d][f]=42',
+          const DecodeOptions(depth: 0, strictDepth: true),
+        ),
+        returnsNormally,
+      );
+    });
+
+    test(
+      'parses successfully when depth is within the limit with strictDepth: true',
+      () {
+        expect(
+          QS.decode(
+            'a[b]=c',
+            const DecodeOptions(depth: 1, strictDepth: true),
+          ),
+          equals({
+            'a': {'b': 'c'}
+          }),
+        );
+      },
+    );
+
+    test(
+      'does not throw an exception when depth exceeds the limit with strictDepth: false',
+      () {
+        expect(
+          QS.decode(
+              'a[b][c][d][e][f][g][h][i]=j', const DecodeOptions(depth: 1)),
+          equals({
+            'a': {
+              'b': {'[c][d][e][f][g][h][i]': 'j'}
+            }
+          }),
+        );
+      },
+    );
+
+    test(
+      'parses successfully when depth is within the limit with strictDepth: false',
+      () {
+        expect(
+          QS.decode('a[b]=c', const DecodeOptions(depth: 1)),
+          equals({
+            'a': {'b': 'c'}
+          }),
+        );
+      },
+    );
+
+    test(
+      'does not throw when depth is exactly at the limit with strictDepth: true',
+      () {
+        expect(
+          QS.decode(
+            'a[b][c]=d',
+            const DecodeOptions(depth: 2, strictDepth: true),
+          ),
+          equals({
+            'a': {
+              'b': {'c': 'd'}
+            }
+          }),
         );
       },
     );

@@ -190,8 +190,13 @@ extension _$Decode on QS {
       }
     }
 
-    // If there's a remainder, just add whatever is left
+    // If there's a remainder, check strictDepth option for throw, else just add whatever is left
     if (segment != null) {
+      if (options.strictDepth) {
+        throw RangeError(
+          'Input depth exceeded depth option of ${options.depth} and strictDepth is true',
+        );
+      }
       keys.add('[${key.slice(segment.start)}]');
     }
 

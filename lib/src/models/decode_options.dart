@@ -24,6 +24,7 @@ final class DecodeOptions with EquatableMixin {
     this.interpretNumericEntities = false,
     this.parameterLimit = 1000,
     this.parseLists = true,
+    this.strictDepth = false,
     this.strictNullHandling = false,
   })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
         decodeDotInKeys = decodeDotInKeys ?? false,
@@ -102,6 +103,10 @@ final class DecodeOptions with EquatableMixin {
   /// To disable [List] parsing entirely, set [parseLists] to `false`.
   final bool parseLists;
 
+  /// Set to `true` to add a layer of protection by throwing an error when the
+  /// limit is exceeded, allowing you to catch and handle such cases.
+  final bool strictDepth;
+
   /// Set to true to decode values without `=` to `null`.
   final bool strictNullHandling;
 
@@ -130,6 +135,7 @@ final class DecodeOptions with EquatableMixin {
     num? parameterLimit,
     bool? parseLists,
     bool? strictNullHandling,
+    bool? strictDepth,
     Decoder? decoder,
   }) =>
       DecodeOptions(
@@ -149,6 +155,7 @@ final class DecodeOptions with EquatableMixin {
         parameterLimit: parameterLimit ?? this.parameterLimit,
         parseLists: parseLists ?? this.parseLists,
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
+        strictDepth: strictDepth ?? this.strictDepth,
         decoder: decoder ?? _decoder,
       );
 
@@ -168,6 +175,7 @@ final class DecodeOptions with EquatableMixin {
       '  interpretNumericEntities: $interpretNumericEntities,\n'
       '  parameterLimit: $parameterLimit,\n'
       '  parseLists: $parseLists,\n'
+      '  strictDepth: $strictDepth,\n'
       '  strictNullHandling: $strictNullHandling\n'
       ')';
 
@@ -187,6 +195,7 @@ final class DecodeOptions with EquatableMixin {
         interpretNumericEntities,
         parameterLimit,
         parseLists,
+        strictDepth,
         strictNullHandling,
         _decoder,
       ];
