@@ -74,7 +74,11 @@ extension _$Decode on QS {
           !Utils.isEmpty(val) &&
           options.interpretNumericEntities &&
           charset == latin1) {
-        val = _interpretNumericEntities(val);
+        val = _interpretNumericEntities(
+          val is Iterable
+              ? val.map((e) => e.toString()).join(',')
+              : val.toString(),
+        );
       }
 
       if (part.contains('[]=')) {

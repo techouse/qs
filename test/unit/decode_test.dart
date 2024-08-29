@@ -1540,6 +1540,26 @@ void main() {
       );
 
       test(
+        '`interpretNumericEntities` with comma:true and iso-8859-1 charset does not crash',
+        () {
+          expect(
+            QS.decode(
+              'b&a[]=1,$urlEncodedNumSmiley',
+              const DecodeOptions(
+                comma: true,
+                charset: latin1,
+                interpretNumericEntities: true,
+              ),
+            ),
+            equals({
+              'b': '',
+              'a': ['1,☺']
+            }),
+          );
+        },
+      );
+
+      test(
         'does not interpret numeric entities when the charset is utf-8, even when `interpretNumericEntities`',
         () {
           expect(
