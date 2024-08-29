@@ -3014,7 +3014,7 @@ void main() {
       );
     });
 
-    test('stringifies non-string keys', () {
+    test('encodes non-String keys', () {
       expect(
         QS.encode(
           {
@@ -3022,7 +3022,7 @@ void main() {
             'false': {},
           },
           const EncodeOptions(
-            filter: ['a', false],
+            filter: ['a', false, null],
             allowDots: true,
             encodeDotInKeys: true,
           ),
