@@ -3013,6 +3013,23 @@ void main() {
         equals('[][0]=2&[][1]=3&[a]=2'),
       );
     });
+
+    test('stringifies non-string keys', () {
+      expect(
+        QS.encode(
+          {
+            'a': 'b',
+            'false': {},
+          },
+          const EncodeOptions(
+            filter: ['a', false],
+            allowDots: true,
+            encodeDotInKeys: true,
+          ),
+        ),
+        equals('a=b'),
+      );
+    });
   });
 
   group('encode non-Strings', () {
