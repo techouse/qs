@@ -1,3 +1,7 @@
+## 1.2.4
+
+- [CHORE] update [lints](https://pub.dev/packages/lints) to 5.0.0 (was 4.0.0)
+
 ## 1.2.3
 
 - [FIX] `QS.decode`: avoid a crash with `interpretNumericEntities: true`, `comma: true`, and `charset: latin1`
