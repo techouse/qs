@@ -1,5 +1,5 @@
 /// A query string decoder (parser) and encoder (stringifier).
-library qs_dart;
+library;
 
 export 'src/enums/duplicates.dart';
 export 'src/enums/format.dart';
