@@ -89,7 +89,7 @@ jobs:
           dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
       - name: Upload coverage to Codecov
         if: ${{ matrix.platform == 'vm' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: techouse/qs
