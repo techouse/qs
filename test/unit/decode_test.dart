@@ -412,7 +412,7 @@ void main() {
       expect(
         QS.decode('a[1]=b&a=c', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': ['b', 'c']
+          'a': {1: 'b', 2: 'c'}
         }),
       );
       expect(
@@ -818,7 +818,7 @@ void main() {
       expect(
         QS.decode('a[10]=1&a[2]=2', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': ['2', '1']
+          'a': {2: '2', 10: '1'}
         }),
       );
       expect(
@@ -1767,5 +1767,91 @@ void main() {
         );
       },
     );
+  });
+
+  group('parameter limit', () {
+    test('does not throw error when within parameter limit', () {
+      expect(
+        QS.decode('a=1&b=2&c=3',
+            const DecodeOptions(parameterLimit: 5, throwOnLimitExceeded: true)),
+        equals({'a': '1', 'b': '2', 'c': '3'}),
+      );
+    });
+
+    test('throws error when parameter limit exceeded', () {
+      expect(
+        () => QS.decode(
+          'a=1&b=2&c=3&d=4&e=5&f=6',
+          const DecodeOptions(parameterLimit: 3, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('silently truncates when throwOnLimitExceeded is not given', () {
+      expect(
+        QS.decode(
+          'a=1&b=2&c=3&d=4&e=5',
+          const DecodeOptions(parameterLimit: 3),
+        ),
+        equals({'a': '1', 'b': '2', 'c': '3'}),
+      );
+    });
+
+    test('silently truncates when parameter limit exceeded without error', () {
+      expect(
+        QS.decode(
+          'a=1&b=2&c=3&d=4&e=5',
+          const DecodeOptions(parameterLimit: 3, throwOnLimitExceeded: false),
+        ),
+        equals({'a': '1', 'b': '2', 'c': '3'}),
+      );
+    });
+
+    test('allows unlimited parameters when parameterLimit set to Infinity', () {
+      expect(
+        QS.decode(
+          'a=1&b=2&c=3&d=4&e=5&f=6',
+          const DecodeOptions(parameterLimit: double.infinity),
+        ),
+        equals({'a': '1', 'b': '2', 'c': '3', 'd': '4', 'e': '5', 'f': '6'}),
+      );
+    });
+  });
+
+  group('list limit tests', () {
+    test('does not throw error when list is within limit', () {
+      expect(
+        QS.decode(
+          'a[]=1&a[]=2&a[]=3',
+          const DecodeOptions(listLimit: 5, throwOnLimitExceeded: true),
+        ),
+        equals({
+          'a': ['1', '2', '3']
+        }),
+      );
+    });
+
+    test('throws error when list limit exceeded', () {
+      expect(
+        () => QS.decode(
+          'a[]=1&a[]=2&a[]=3&a[]=4',
+          const DecodeOptions(listLimit: 3, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('converts list to map if length is greater than limit', () {
+      expect(
+        QS.decode(
+          'a[1]=1&a[2]=2&a[3]=3&a[4]=4&a[5]=5&a[6]=6',
+          const DecodeOptions(listLimit: 5),
+        ),
+        equals({
+          'a': {'1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6'}
+        }),
+      );
+    });
   });
 }

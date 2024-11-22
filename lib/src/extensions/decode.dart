@@ -8,10 +8,25 @@ extension _$Decode on QS {
         ),
       );
 
-  static dynamic _parseArrayValue(dynamic val, DecodeOptions options) =>
-      val is String && val.isNotEmpty && options.comma && val.contains(',')
-          ? val.split(',')
-          : val;
+  static dynamic _parseListValue(
+    dynamic val,
+    DecodeOptions options,
+    int currentListLength,
+  ) {
+    if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
+      return val.split(',');
+    }
+
+    if (options.throwOnLimitExceeded &&
+        currentListLength >= options.listLimit) {
+      throw RangeError(
+        'List limit exceeded. '
+        'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
+      );
+    }
+
+    return val;
+  }
 
   static Map<String, dynamic> _parseQueryStringValues(
     String str, [
@@ -23,12 +38,23 @@ extension _$Decode on QS {
         (options.ignoreQueryPrefix ? str.replaceFirst('?', '') : str)
             .replaceAll(RegExp(r'%5B', caseSensitive: false), '[')
             .replaceAll(RegExp(r'%5D', caseSensitive: false), ']');
-    final num? limit = options.parameterLimit == double.infinity
+
+    final int? limit = options.parameterLimit == double.infinity
         ? null
-        : options.parameterLimit;
+        : options.parameterLimit.toInt();
+
     final Iterable<String> parts = limit != null && limit > 0
-        ? cleanStr.split(options.delimiter).take(limit.toInt())
+        ? cleanStr
+            .split(options.delimiter)
+            .take(options.throwOnLimitExceeded ? limit + 1 : limit)
         : cleanStr.split(options.delimiter);
+
+    if (options.throwOnLimitExceeded && limit != null && parts.length > limit) {
+      throw RangeError(
+        'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
+      );
+    }
+
     int skipIndex = -1; // Keep track of where the utf8 sentinel was found
     int i;
 
@@ -65,7 +91,13 @@ extension _$Decode on QS {
       } else {
         key = options.decoder(part.slice(0, pos), charset: charset);
         val = Utils.apply<dynamic>(
-          _parseArrayValue(part.slice(pos + 1), options),
+          _parseListValue(
+            part.slice(pos + 1),
+            options,
+            obj.containsKey(key) && obj[key] is List
+                ? (obj[key] as List).length
+                : 0,
+          ),
           (dynamic val) => options.decoder(val, charset: charset),
         );
       }
@@ -102,7 +134,27 @@ extension _$Decode on QS {
     DecodeOptions options,
     bool valuesParsed,
   ) {
-    dynamic leaf = valuesParsed ? val : _parseArrayValue(val, options);
+    late final int currentListLength;
+
+    if (chain.isNotEmpty && chain.last == '[]') {
+      final int? parentKey = int.tryParse(chain.slice(0, -1).join(''));
+
+      currentListLength = parentKey != null &&
+              val is List &&
+              val.firstWhereIndexedOrNull((int i, _) => i == parentKey) != null
+          ? val.elementAt(parentKey).length
+          : 0;
+    } else {
+      currentListLength = 0;
+    }
+
+    dynamic leaf = valuesParsed
+        ? val
+        : _parseListValue(
+            val,
+            options,
+            currentListLength,
+          );
 
     for (int i = chain.length - 1; i >= 0; --i) {
       dynamic obj;
