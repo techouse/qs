@@ -14,7 +14,14 @@ extension _$Decode on QS {
     int currentListLength,
   ) {
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
-      return val.split(',');
+      final List<String> splitVal = val.split(',');
+      if (options.throwOnLimitExceeded && splitVal.length > options.listLimit) {
+        throw RangeError(
+          'List limit exceeded. '
+          'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
+        );
+      }
+      return splitVal;
     }
 
     if (options.throwOnLimitExceeded &&
@@ -42,6 +49,10 @@ extension _$Decode on QS {
     final int? limit = options.parameterLimit == double.infinity
         ? null
         : options.parameterLimit.toInt();
+
+    if (limit != null && limit <= 0) {
+      throw ArgumentError('Parameter limit must be a positive integer.');
+    }
 
     final Iterable<String> parts = limit != null && limit > 0
         ? cleanStr
