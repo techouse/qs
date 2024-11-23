@@ -42,11 +42,14 @@ final class Utils {
             target_[target_.length] = source;
           }
 
-          if (target is Set) {
-            target = target_.values.whereNotUndefined().toSet();
-          } else {
-            target = target_.values.whereNotUndefined().toList();
-          }
+          target = target_.values.any((el) => el is Undefined)
+              ? SplayTreeMap.from({
+                  for (final MapEntry<int, dynamic> entry in target_.entries)
+                    if (entry.value is! Undefined) entry.key: entry.value,
+                })
+              : target is Set
+                  ? target_.values.toSet()
+                  : target_.values.toList();
         } else {
           if (source is Iterable) {
             // check if source is a list of maps and target is a list of maps
@@ -70,9 +73,11 @@ final class Utils {
               }
             } else {
               if (target is Set) {
-                target = Set.of(target)..addAll(source.whereNotUndefined());
+                target = Set.of(target)
+                  ..addAll(source.whereNotType<Undefined>());
               } else {
-                target = List.of(target)..addAll(source.whereNotUndefined());
+                target = List.of(target)
+                  ..addAll(source.whereNotType<Undefined>());
               }
             }
           } else if (source != null) {
@@ -96,7 +101,7 @@ final class Utils {
         }
       } else if (source != null) {
         if (target is! Iterable && source is Iterable) {
-          return [target, ...source.whereNotUndefined()];
+          return [target, ...source.whereNotType<Undefined>()];
         }
         return [target, source];
       }
@@ -115,11 +120,11 @@ final class Utils {
 
       return [
         if (target is Iterable)
-          ...target.whereNotUndefined()
+          ...target.whereNotType<Undefined>()
         else if (target != null)
           target,
         if (source is Iterable)
-          ...(source as Iterable).whereNotUndefined()
+          ...(source as Iterable).whereNotType<Undefined>()
         else
           source,
       ];
@@ -367,26 +372,9 @@ final class Utils {
       }
     }
 
-    _compactQueue(queue);
-
     removeUndefinedFromMap(value);
 
     return value;
-  }
-
-  static void _compactQueue(List<Map> queue) {
-    while (queue.length > 1) {
-      final Map item = queue.removeLast();
-      final dynamic obj = item['obj'][item['prop']];
-
-      if (obj is Iterable) {
-        if (obj is Set) {
-          item['obj'][item['prop']] = obj.whereNotUndefined().toSet();
-        } else {
-          item['obj'][item['prop']] = obj.whereNotUndefined().toList();
-        }
-      }
-    }
   }
 
   @visibleForTesting

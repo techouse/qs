@@ -6,7 +6,7 @@ void main() {
   group('IterableExtension', () {
     test('whereNotUndefined', () {
       const Iterable<dynamic> iterable = [1, 2, Undefined(), 4, 5];
-      final Iterable<dynamic> result = iterable.whereNotUndefined();
+      final Iterable<dynamic> result = iterable.whereNotType<Undefined>();
       expect(result, isA<Iterable<dynamic>>());
       expect(result, [1, 2, 4, 5]);
     });
@@ -15,9 +15,25 @@ void main() {
   group('ListExtension', () {
     test('whereNotUndefined', () {
       const List<dynamic> list = [1, 2, Undefined(), 4, 5];
-      final List<dynamic> result = list.whereNotUndefined();
+      final List<dynamic> result = list.whereNotType<Undefined>().toList();
       expect(result, isA<List<dynamic>>());
       expect(result, [1, 2, 4, 5]);
+    });
+
+    test('slice', () {
+      const List<String> animals = [
+        'ant',
+        'bison',
+        'camel',
+        'duck',
+        'elephant',
+      ];
+      expect(animals.slice(2), ['camel', 'duck', 'elephant']);
+      expect(animals.slice(2, 4), ['camel', 'duck']);
+      expect(animals.slice(1, 5), ['bison', 'camel', 'duck', 'elephant']);
+      expect(animals.slice(-2), ['duck', 'elephant']);
+      expect(animals.slice(2, -1), ['camel', 'duck']);
+      expect(animals.slice(), ['ant', 'bison', 'camel', 'duck', 'elephant']);
     });
   });
 

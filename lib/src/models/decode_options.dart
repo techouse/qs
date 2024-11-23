@@ -26,6 +26,7 @@ final class DecodeOptions with EquatableMixin {
     this.parseLists = true,
     this.strictDepth = false,
     this.strictNullHandling = false,
+    this.throwOnLimitExceeded = false,
   })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
@@ -109,6 +110,9 @@ final class DecodeOptions with EquatableMixin {
 
   /// Set to true to decode values without `=` to `null`.
   final bool strictNullHandling;
+
+  /// Set to `true` to throw an error when the limit is exceeded.
+  final bool throwOnLimitExceeded;
 
   /// Set a [Decoder] to affect the decoding of the input.
   final Decoder? _decoder;

@@ -1,14 +1,20 @@
 import 'dart:math' show min;
-import 'package:qs_dart/src/models/undefined.dart';
 
 extension IterableExtension<T> on Iterable<T> {
-  /// Returns a new [Iterable] without [Undefined] elements.
-  Iterable<T> whereNotUndefined() => where((T el) => el is! Undefined);
+  /// Returns a new [Iterable] without elements of type [Q].
+  Iterable<T> whereNotType<Q>() => where((T el) => el is! Q);
 }
 
 extension ListExtension<T> on List<T> {
-  /// Returns a new [List] without [Undefined] elements.
-  List<T> whereNotUndefined() => where((T el) => el is! Undefined).toList();
+  /// Extracts a section of a list and returns a new list.
+  ///
+  /// Modeled after JavaScript's `Array.prototype.slice()` method.
+  /// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
+  List<T> slice([int start = 0, int? end]) => sublist(
+        (start < 0 ? length + start : start).clamp(0, length),
+        (end == null ? length : (end < 0 ? length + end : end))
+            .clamp(0, length),
+      );
 }
 
 extension StringExtension on String {

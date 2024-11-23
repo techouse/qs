@@ -1,6 +1,7 @@
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
