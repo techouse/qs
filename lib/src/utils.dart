@@ -372,26 +372,9 @@ final class Utils {
       }
     }
 
-    _compactQueue(queue);
-
     removeUndefinedFromMap(value);
 
     return value;
-  }
-
-  static void _compactQueue(List<Map> queue) {
-    while (queue.length > 1) {
-      final Map item = queue.removeLast();
-      final dynamic obj = item['obj'][item['prop']];
-
-      if (obj is Iterable) {
-        if (obj is Set) {
-          item['obj'][item['prop']] = obj.whereNotType<Undefined>().toSet();
-        } else {
-          item['obj'][item['prop']] = obj.whereNotType<Undefined>().toList();
-        }
-      }
-    }
   }
 
   @visibleForTesting
