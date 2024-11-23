@@ -1864,5 +1864,37 @@ void main() {
         }),
       );
     });
+
+    test('handles list limit of zero correctly', () {
+      expect(
+        QS.decode(
+          'a[]=1&a[]=2',
+          const DecodeOptions(listLimit: 0),
+        ),
+        equals({
+          'a': ['1', '2']
+        }),
+      );
+    });
+
+    test('handles negative list limit correctly', () {
+      expect(
+        () => QS.decode(
+          'a[]=1&a[]=2',
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('applies list limit to nested lists', () {
+      expect(
+        () => QS.decode(
+          'a[0][]=1&a[0][]=2&a[0][]=3&a[0][]=4',
+          const DecodeOptions(listLimit: 3, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
   });
 }
