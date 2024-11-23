@@ -465,6 +465,17 @@ void main() {
       );
     });
 
+    test('decodes nested lists with parentKey not null', () {
+      expect(
+        QS.decode('a[0][]=b'),
+        equals({
+          'a': [
+            ['b']
+          ]
+        }),
+      );
+    });
+
     test('allows to specify list indices', () {
       expect(
         QS.decode('a[1]=c&a[0]=b&a[2]=d'),
