@@ -1,3 +1,10 @@
+## 1.3.0
+
+- [FEAT] add `DecodeOptions.throwOnLimitExceeded` option ([#26](https://github.com/techouse/qs/pull/26))
+- [CHORE] remove dead code in `Utils`
+- [CHORE] add more tests
+- [CHORE] update dependencies
+
 ## 1.2.4
 
 - [CHORE] update [lints](https://pub.dev/packages/lints) to 5.0.0 (was 4.0.0)
