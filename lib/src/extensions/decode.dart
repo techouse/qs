@@ -175,7 +175,7 @@ extension _$Decode on QS {
         obj = options.allowEmptyLists &&
                 (leaf == '' || (options.strictNullHandling && leaf == null))
             ? List<dynamic>.empty(growable: true)
-            : [if (leaf is Iterable) ...leaf else leaf];
+            : Utils.combine([], leaf);
       } else {
         obj = <String, dynamic>{};
         final String cleanRoot = root.startsWith('[') && root.endsWith(']')
