@@ -3,7 +3,7 @@ part of '../qs.dart';
 extension _$Encode on QS {
   static const Map _sentinel = {};
 
-  /// Returns either dynamic or List<dynamic> based on the object.
+  /// Returns either dynamic or List&lt;dynamic&gt; based on the object.
   static dynamic _encode(
     dynamic object, {
     required bool undefined,
