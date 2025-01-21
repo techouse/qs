@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'dart:convert' show latin1, utf8;
+import 'dart:math';
 
 import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
@@ -904,6 +905,43 @@ void main() {
         expect(b, isNot(same(combined)));
         expect(combined, equals([1, 2]));
       });
+    });
+
+    test('decode', () {
+      expect(Utils.decode('a+b'), equals('a b'));
+      expect(Utils.decode('name%2Eobj'), equals('name.obj'));
+      expect(Utils.decode('name%2Eobj%2Efoo', charset: latin1),
+          equals('name.obj.foo'));
+    });
+
+    test('encode', () {
+      expect(Utils.encode(''), equals(''));
+
+      expect(Utils.encode('(abc)'), equals('%28abc%29'));
+
+      expect(
+        Utils.encode('abc 123 💩', charset: latin1),
+        equals('abc%20123%20%26%2355357%3B%26%2356489%3B'),
+      );
+
+      final StringBuffer longString = StringBuffer();
+      final StringBuffer expectedString = StringBuffer();
+      for (int i = 0; i < 1500; i++) {
+        longString.write(' ');
+        expectedString.write('%20');
+      }
+      expect(
+        Utils.encode(longString.toString()),
+        equals(expectedString.toString()),
+      );
+
+      expect(Utils.encode('\x28\x29'), equals('%28%29'));
+
+      expect(Utils.encode('\x28\x29', format: Format.rfc1738), equals('()'));
+
+      expect(Utils.encode('Āက豈'), equals('%C4%80%E1%80%80%EF%A4%80'));
+
+      expect(Utils.encode('\uD83D\uDCA9'), equals('%F0%9F%92%A9'));
     });
   });
 }
