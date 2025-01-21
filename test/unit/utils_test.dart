@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'dart:convert' show latin1, utf8;
-import 'dart:math';
 
 import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
