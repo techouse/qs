@@ -1,3 +1,9 @@
+## 1.3.1
+
+- [FEAT] use `Utils.combine` more in `QS.decode` 
+- [CHORE] add more tests
+- [CHORE] fix linter warnings
+
 ## 1.3.0
 
 - [FEAT] add `DecodeOptions.throwOnLimitExceeded` option ([#26](https://github.com/techouse/qs/pull/26))
