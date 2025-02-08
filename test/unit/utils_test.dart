@@ -941,6 +941,13 @@ void main() {
       expect(Utils.encode('Āက豈'), equals('%C4%80%E1%80%80%EF%A4%80'));
 
       expect(Utils.encode('\uD83D\uDCA9'), equals('%F0%9F%92%A9'));
+
+      expect(Utils.encode('💩'), equals('%F0%9F%92%A9'));
+
+      expect(
+        Utils.encode('💩', charset: latin1),
+        equals('%26%2355357%3B%26%2356489%3B'),
+      );
     });
   });
 }
