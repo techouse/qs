@@ -923,6 +923,11 @@ void main() {
         equals('abc%20123%20%26%2355357%3B%26%2356489%3B'),
       );
 
+      expect(
+        Utils.encode('abc 123 💩'),
+        equals('abc%20123%20%F0%9F%92%A9'),
+      );
+
       final StringBuffer longString = StringBuffer();
       final StringBuffer expectedString = StringBuffer();
       for (int i = 0; i < 1500; i++) {
