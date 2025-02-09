@@ -1,3 +1,7 @@
+## 1.3.2
+
+- [FIX] fix `Utils.unescape` for `%` characters ([#28](https://github.com/techouse/qs/pull/28))
+
 ## 1.3.1
 
 - [FEAT] use `Utils.combine` more in `QS.decode` 
