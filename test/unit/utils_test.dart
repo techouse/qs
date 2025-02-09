@@ -128,16 +128,7 @@ void main() {
     });
 
     test('escape', () {
-      expect(Utils.escape('abc123'), equals('abc123'));
-      expect(Utils.escape('äöü'), equals('%E4%F6%FC'));
-      expect(Utils.escape('ć'), equals('%u0107'));
-      // special characters
-      expect(Utils.escape('@*_+-./'), equals('@*_+-./'));
-      expect(Utils.escape('('), equals('%28'));
-      expect(Utils.escape(')'), equals('%29'));
-      expect(Utils.escape(' '), equals('%20'));
-      expect(Utils.escape('~'), equals('%7E'));
-
+      // Basic alphanumerics (remain unchanged)
       expect(
         Utils.escape(
           'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./',
@@ -145,6 +136,42 @@ void main() {
         equals(
           'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./',
         ),
+      );
+      // Basic alphanumerics (remain unchanged)
+      expect(Utils.escape('abc123'), equals('abc123'));
+      // Accented characters (Latin-1 range uses %XX)
+      expect(Utils.escape('äöü'), equals('%E4%F6%FC'));
+      // Non-ASCII that falls outside Latin-1 uses %uXXXX
+      expect(Utils.escape('ć'), equals('%u0107'));
+      // Characters that are defined as safe
+      expect(Utils.escape('@*_+-./'), equals('@*_+-./'));
+      // Parentheses: in RFC3986 they are encoded
+      expect(Utils.escape('('), equals('%28'));
+      expect(Utils.escape(')'), equals('%29'));
+      // Space character
+      expect(Utils.escape(' '), equals('%20'));
+      // Tilde is safe
+      expect(Utils.escape('~'), equals('%7E'));
+      // Punctuation that is not safe: exclamation and comma
+      expect(Utils.escape('!'), equals('%21'));
+      expect(Utils.escape(','), equals('%2C'));
+      // Mixed safe and unsafe characters
+      expect(Utils.escape('hello world!'), equals('hello%20world%21'));
+      // Multiple spaces are each encoded
+      expect(Utils.escape('a b c'), equals('a%20b%20c'));
+      // A string with various punctuation
+      expect(Utils.escape('Hello, World!'), equals('Hello%2C%20World%21'));
+      // Null character should be encoded
+      expect(Utils.escape('\x00'), equals('%00'));
+      // Emoji (e.g. 😀 U+1F600)
+      expect(Utils.escape('😀'), equals('%uD83D%uDE00'));
+      // Test RFC1738 format: Parentheses are safe (left unchanged)
+      expect(Utils.escape('(', format: Format.rfc1738), equals('('));
+      expect(Utils.escape(')', format: Format.rfc1738), equals(')'));
+      // Mixed test with RFC1738: other unsafe characters are still encoded
+      expect(
+        Utils.escape('(hello)!', format: Format.rfc1738),
+        equals('(hello)%21'),
       );
     });
 
@@ -154,16 +181,24 @@ void main() {
     });
 
     test('unescape', () {
+      // No escapes.
       expect(Utils.unescape('abc123'), equals('abc123'));
+      // Hex escapes with uppercase hex digits.
       expect(Utils.unescape('%E4%F6%FC'), equals('äöü'));
+      // Hex escapes with lowercase hex digits.
+      expect(Utils.unescape('%e4%f6%fc'), equals('äöü'));
+      // Unicode escape.
       expect(Utils.unescape('%u0107'), equals('ć'));
-      // special characters
+      // Unicode escape with lowercase digits.
+      expect(Utils.unescape('%u0061'), equals('a'));
+      // Characters that do not need escaping.
       expect(Utils.unescape('@*_+-./'), equals('@*_+-./'));
+      // Hex escapes for punctuation.
       expect(Utils.unescape('%28'), equals('('));
       expect(Utils.unescape('%29'), equals(')'));
       expect(Utils.unescape('%20'), equals(' '));
       expect(Utils.unescape('%7E'), equals('~'));
-
+      // A long string with only safe characters.
       expect(
         Utils.unescape(
           'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./',
@@ -172,6 +207,20 @@ void main() {
           'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./',
         ),
       );
+      // A mix of Unicode and hex escapes.
+      expect(Utils.unescape('%u0041%20%42'), equals('A B'));
+      // A mix of literal text and hex escapes.
+      expect(Utils.unescape('hello%20world'), equals('hello world'));
+      // A literal percent sign that is not followed by a valid escape remains unchanged.
+      expect(Utils.unescape('100% sure'), equals('100% sure'));
+      // Mixed Unicode and hex escapes.
+      expect(Utils.unescape('%u0041%65'), equals('Ae'));
+      // Escaped percent signs that do not form a valid escape remain unchanged.
+      expect(Utils.unescape('50%% off'), equals('50%% off'));
+      // Consecutive escapes producing multiple spaces.
+      expect(Utils.unescape('%20%u0020'), equals('  '));
+      // An invalid escape sequence should remain unchanged.
+      expect(Utils.unescape('abc%g'), equals('abc%g'));
     });
 
     test('unescape huge string', () {

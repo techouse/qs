@@ -214,19 +214,58 @@ final class Utils {
       final int c = str.codeUnitAt(i);
 
       if (c == 0x25) {
-        if (str[i + 1] == 'u') {
-          buffer.writeCharCode(
-            int.parse(str.slice(i + 2, i + 6), radix: 16),
-          );
-          i += 6;
+        // '%'
+        // Ensure there's at least one character after '%'
+        if (i + 1 < str.length) {
+          if (str[i + 1] == 'u') {
+            // Check that there are at least 6 characters for "%uXXXX"
+            if (i + 6 <= str.length) {
+              try {
+                final int charCode =
+                    int.parse(str.substring(i + 2, i + 6), radix: 16);
+                buffer.writeCharCode(charCode);
+                i += 6;
+                continue;
+              } on FormatException {
+                // Not a valid %u escape: treat '%' as literal.
+                buffer.write(str[i]);
+                i++;
+                continue;
+              }
+            } else {
+              // Not enough characters for a valid %u escape: treat '%' as literal.
+              buffer.write(str[i]);
+              i++;
+              continue;
+            }
+          } else {
+            // For %XX escape: check that there are at least 3 characters.
+            if (i + 3 <= str.length) {
+              try {
+                final int charCode =
+                    int.parse(str.substring(i + 1, i + 3), radix: 16);
+                buffer.writeCharCode(charCode);
+                i += 3;
+                continue;
+              } on FormatException {
+                // Parsing failed: treat '%' as literal.
+                buffer.write(str[i]);
+                i++;
+                continue;
+              }
+            } else {
+              // Not enough characters for a valid %XX escape: treat '%' as literal.
+              buffer.write(str[i]);
+              i++;
+              continue;
+            }
+          }
+        } else {
+          // '%' is the last character; treat it as literal.
+          buffer.write(str[i]);
+          i++;
           continue;
         }
-
-        buffer.writeCharCode(
-          int.parse(str.slice(i + 1, i + 3), radix: 16),
-        );
-        i += 3;
-        continue;
       }
 
       buffer.write(str[i]);
