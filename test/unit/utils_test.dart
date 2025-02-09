@@ -221,6 +221,30 @@ void main() {
       expect(Utils.unescape('%20%u0020'), equals('  '));
       // An invalid escape sequence should remain unchanged.
       expect(Utils.unescape('abc%g'), equals('abc%g'));
+
+      // The input "%uZZZZ" is 6 characters long so it passes the length check.
+      // However, "ZZZZ" is not valid hex so int.parse will throw a FormatException.
+      // In that case, the catch block writes the literal '%' and increments i by 1.
+      // The remainder of the string is then processed normally.
+      // For input "%uZZZZ", the processing is:
+      // - At i = 0, encounter '%', then since i+1 is 'u' and there are 6 characters, try block is entered.
+      // - int.parse("ZZZZ", radix: 16) fails, so the catch writes '%' and i becomes 1.
+      // - Then the rest of the string ("uZZZZ") is appended as literal.
+      // The expected result is "%uZZZZ".
+      expect(Utils.unescape('%uZZZZ'), equals('%uZZZZ'));
+
+      // Input "%u12" has only 4 characters.
+      // For a valid %u escape we need 6 characters.
+      // Thus, the branch "Not enough characters for a valid %u escape" is triggered,
+      // which writes the literal '%' and increments i.
+      // The remainder of the string ("u12") is then appended as literal.
+      // Expected output is "%u12".
+      expect(Utils.unescape('%u12'), equals('%u12'));
+
+      // When "%" is the last character of the string (with no following characters),
+      // the code writes it as literal.
+      // For example, "abc%" should remain "abc%".
+      expect(Utils.unescape('abc%'), equals('abc%'));
     });
 
     test('unescape huge string', () {
