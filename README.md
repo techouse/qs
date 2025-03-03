@@ -8,6 +8,7 @@ Ported from [qs](https://www.npmjs.com/package/qs) for JavaScript.
 [![Pub Publisher](https://img.shields.io/pub/publisher/qs_dart)](https://pub.dev/publishers/tusar.dev/packages)
 [![Pub Likes](https://img.shields.io/pub/likes/qs_dart)](https://pub.dev/packages/qs_dart/score)
 [![Pub Points](https://img.shields.io/pub/points/qs_dart)](https://pub.dev/packages/qs_dart/score)
+[![Pub Monthly Downloads](https://img.shields.io/pub/dm/qs_dart)]((https://pub.dev/packages/qs_dart/score))
 [![PubStats Popularity](https://pubstats.dev/badges/packages/qs_dart/popularity.svg)](https://pubstats.dev/packages/qs_dart)
 [![PubStats Rank](https://pubstats.dev/badges/packages/qs_dart/rank.svg)](https://pubstats.dev/packages/qs_dart)
 [![PubStats Dependents](https://pubstats.dev/badges/packages/qs_dart/dependents.svg)](https://pubstats.dev/packages/qs_dart)
