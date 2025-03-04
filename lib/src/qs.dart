@@ -46,16 +46,14 @@ final class QS {
     // Iterate over the keys and setup the new object
     if (tempObj?.isNotEmpty ?? false) {
       for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
-        final newObj = _$Decode._parseKeys(
-          entry.key,
-          entry.value,
-          options,
-          input is String,
-        );
-
         obj = Utils.merge(
           obj,
-          newObj,
+          _$Decode._parseKeys(
+            entry.key,
+            entry.value,
+            options,
+            input is String,
+          ),
           options,
         );
       }
@@ -74,14 +72,14 @@ final class QS {
       return '';
     }
 
-    late Map<String, dynamic> obj;
-    if (object is Map<String, dynamic>) {
-      obj = {...?object as Map<String, dynamic>?};
-    } else if (object is Iterable) {
-      obj = object.toList().asMap().map((k, v) => MapEntry(k.toString(), v));
-    } else {
-      obj = {};
-    }
+    Map<String, dynamic> obj = switch (object) {
+      Map<String, dynamic> map => {...map},
+      Iterable iterable => iterable
+          .toList()
+          .asMap()
+          .map((int k, dynamic v) => MapEntry(k.toString(), v)),
+      _ => <String, dynamic>{},
+    };
 
     final List keys = [];
 
@@ -97,10 +95,6 @@ final class QS {
       objKeys = List.of(options.filter);
     }
 
-    final bool commaRoundTrip =
-        options.listFormat.generator == ListFormat.comma.generator &&
-            options.commaRoundTrip == true;
-
     objKeys ??= obj.keys.toList();
 
     if (options.sort is Function) {
@@ -110,10 +104,8 @@ final class QS {
     final WeakMap sideChannel = WeakMap();
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
-      if (key is! String?) {
-        continue;
-      }
-      if (obj[key] == null && options.skipNulls) {
+
+      if (key is! String? || (obj[key] == null && options.skipNulls)) {
         continue;
       }
 
@@ -122,7 +114,9 @@ final class QS {
         undefined: !obj.containsKey(key),
         prefix: key,
         generateArrayPrefix: options.listFormat.generator,
-        commaRoundTrip: commaRoundTrip,
+        commaRoundTrip:
+            options.listFormat.generator == ListFormat.comma.generator &&
+                options.commaRoundTrip == true,
         allowEmptyLists: options.allowEmptyLists,
         strictNullHandling: options.strictNullHandling,
         skipNulls: options.skipNulls,
@@ -148,10 +142,14 @@ final class QS {
     }
 
     final String joined = keys.join(options.delimiter);
-    String prefix = options.addQueryPrefix ? '?' : '';
+    final StringBuffer out = StringBuffer();
+
+    if (options.addQueryPrefix) {
+      out.write('?');
+    }
 
     if (options.charsetSentinel) {
-      prefix += switch (options.charset) {
+      out.write(switch (options.charset) {
         /// encodeURIComponent('&#10003;')
         /// the "numeric entity" representation of a checkmark
         latin1 => '${Sentinel.iso}&',
@@ -159,9 +157,13 @@ final class QS {
         /// encodeURIComponent('✓')
         utf8 => '${Sentinel.charset}&',
         _ => '',
-      };
+      });
     }
 
-    return joined.isNotEmpty ? prefix + joined : '';
+    if (joined.isNotEmpty) {
+      out.write(joined);
+    }
+
+    return out.toString();
   }
 }
