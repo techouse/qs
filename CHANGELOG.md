@@ -1,10 +1,14 @@
+## 1.3.3
+
+- [CHORE] refactor `QS.decode` logic for improved readability and efficiency
+
 ## 1.3.2
 
 - [FIX] fix `Utils.unescape` for `%` characters ([#28](https://github.com/techouse/qs/pull/28))
 
 ## 1.3.1
 
-- [FEAT] use `Utils.combine` more in `QS.decode` 
+- [FEAT] use `Utils.combine` more in `QS.decode`
 - [CHORE] add more tests
 - [CHORE] fix linter warnings
 
