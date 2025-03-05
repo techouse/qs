@@ -93,7 +93,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: techouse/qs
-          file: ./coverage/lcov.info
+          files: ./coverage/lcov.info
           verbose: true
       - name: Upload coverage to Codacy
         if: ${{ matrix.platform == 'vm' }}
