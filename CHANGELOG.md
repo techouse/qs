@@ -1,6 +1,10 @@
+## 1.3.3+1
+
+- [CHORE] fix URL-formatting in readme
+
 ## 1.3.3
 
-- [CHORE] refactor `QS.decode` logic for improved readability and efficiency
+- [CHORE] refactor `QS.encode` logic for improved readability and efficiency
 
 ## 1.3.2
 
