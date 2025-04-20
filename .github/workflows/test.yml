@@ -95,6 +95,12 @@ jobs:
           slug: techouse/qs
           files: ./coverage/lcov.info
           verbose: true
+      - name: Check Code Coverage
+        if: ${{ matrix.platform == 'vm' }}
+        uses: VeryGoodOpenSource/very_good_coverage@v3.0.0
+        with:
+          path: coverage/lcov.info
+          min_coverage: 90
       - name: Upload coverage to Codacy
         if: ${{ matrix.platform == 'vm' }}
         uses: codacy/codacy-coverage-reporter-action@v1
