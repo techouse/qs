@@ -1,3 +1,8 @@
+## 1.3.4
+
+- [FEAT] make `QS.encode` parameter for `EncodeOptions` optional
+- [FEAT] make `QS.decode` parameter for `DecodeOptions` optional
+
 ## 1.3.3+1
 
 - [CHORE] fix URL-formatting in readme
