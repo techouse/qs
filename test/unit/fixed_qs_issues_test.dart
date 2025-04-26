@@ -10,7 +10,7 @@ void main() {
       final String encoded = 'search[withbracket[]]=foobar';
 
       expect(
-        QS.encode(original, EncodeOptions(encode: false)),
+        QS.encode(original, const EncodeOptions(encode: false)),
         equals(encoded),
       );
       expect(QS.decode(encoded), equals(original));

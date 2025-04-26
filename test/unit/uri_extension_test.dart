@@ -80,7 +80,7 @@ void main() {
       );
       expect(
         Uri.parse('$testUrl?foo=bar&baz')
-            .queryParametersQs(DecodeOptions(strictNullHandling: true)),
+            .queryParametersQs(const DecodeOptions(strictNullHandling: true)),
         equals({'foo': 'bar', 'baz': null}),
       );
       expect(

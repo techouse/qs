@@ -1,8 +1,9 @@
 import 'dart:convert' show jsonDecode, jsonEncode;
 import 'dart:io' show File, Platform, exitCode, stdout;
-import 'package:qs_dart/qs_dart.dart' as qs;
+
 import 'package:cli_script/cli_script.dart' show wrapMain;
 import 'package:path/path.dart' as p;
+import 'package:qs_dart/qs_dart.dart' as qs;
 
 void main() {
   wrapMain(() {

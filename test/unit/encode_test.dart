@@ -66,7 +66,7 @@ void main() {
             {
               'a': [three]
             },
-            EncodeOptions(
+            const EncodeOptions(
                 encodeValuesOnly: true, listFormat: ListFormat.brackets)),
         equals('a[]=3'),
       );
@@ -2175,7 +2175,7 @@ void main() {
               },
               'b': 'b'
             },
-            EncodeOptions(sort: null, encode: false),
+            const EncodeOptions(sort: null, encode: false),
           ),
           equals(
             'a=a&z[zj][zjb]=zjb&z[zj][zja]=zja&z[zi][zib]=zib&z[zi][zia]=zia&b=b',
@@ -2313,17 +2313,17 @@ void main() {
 
     test('RFC 1738 serialization', () {
       expect(
-        QS.encode({'a': 'b c'}, EncodeOptions(format: Format.rfc1738)),
+        QS.encode({'a': 'b c'}, const EncodeOptions(format: Format.rfc1738)),
         equals('a=b+c'),
       );
       expect(
-        QS.encode({'a b': 'c d'}, EncodeOptions(format: Format.rfc1738)),
+        QS.encode({'a b': 'c d'}, const EncodeOptions(format: Format.rfc1738)),
         equals('a+b=c+d'),
       );
       expect(
         QS.encode(
           {'a b': utf8.encode('a b').buffer},
-          EncodeOptions(format: Format.rfc1738),
+          const EncodeOptions(format: Format.rfc1738),
         ),
         equals('a+b=a+b'),
       );
@@ -2331,7 +2331,7 @@ void main() {
       expect(
         QS.encode(
           {'foo(ref)': 'bar'},
-          EncodeOptions(format: Format.rfc1738),
+          const EncodeOptions(format: Format.rfc1738),
         ),
         equals('foo(ref)=bar'),
       );
@@ -2339,17 +2339,17 @@ void main() {
 
     test('RFC 3986 spaces serialization', () {
       expect(
-        QS.encode({'a': 'b c'}, EncodeOptions(format: Format.rfc3986)),
+        QS.encode({'a': 'b c'}, const EncodeOptions(format: Format.rfc3986)),
         equals('a=b%20c'),
       );
       expect(
-        QS.encode({'a b': 'c d'}, EncodeOptions(format: Format.rfc3986)),
+        QS.encode({'a b': 'c d'}, const EncodeOptions(format: Format.rfc3986)),
         equals('a%20b=c%20d'),
       );
       expect(
         QS.encode(
           {'a b': utf8.encode('a b').buffer},
-          EncodeOptions(format: Format.rfc3986),
+          const EncodeOptions(format: Format.rfc3986),
         ),
         equals('a%20b=a%20b'),
       );
@@ -2550,9 +2550,9 @@ void main() {
     test(
       'does not mutate the options argument',
       () {
-        final EncodeOptions options = EncodeOptions();
+        final EncodeOptions options = const EncodeOptions();
         QS.encode({}, options);
-        expect(options, equals(EncodeOptions()));
+        expect(options, equals(const EncodeOptions()));
       },
     );
 
@@ -3059,7 +3059,7 @@ void main() {
     });
 
     test('encodes a Duration', () {
-      final Duration duration = Duration(
+      final Duration duration = const Duration(
           days: 1,
           hours: 2,
           minutes: 3,
@@ -3165,7 +3165,7 @@ void main() {
     test('encodes falsy values', () {
       expect(QS.encode(null), equals(''));
       expect(
-        QS.encode(null, EncodeOptions(strictNullHandling: true)),
+        QS.encode(null, const EncodeOptions(strictNullHandling: true)),
         equals(''),
       );
       expect(QS.encode(false), equals(''));
@@ -3203,7 +3203,7 @@ void main() {
           {
             'a': [three],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
           ),
@@ -3227,7 +3227,7 @@ void main() {
 
     test('adds query prefix', () {
       expect(
-        QS.encode({'a': 'b'}, EncodeOptions(addQueryPrefix: true)),
+        QS.encode({'a': 'b'}, const EncodeOptions(addQueryPrefix: true)),
         equals('?a=b'),
       );
     });
@@ -3236,7 +3236,7 @@ void main() {
       expect(
         QS.encode(
           <String, dynamic>{},
-          EncodeOptions(addQueryPrefix: true),
+          const EncodeOptions(addQueryPrefix: true),
         ),
         equals(''),
       );
@@ -3258,7 +3258,7 @@ void main() {
               'b': {'c': null},
             },
           },
-          EncodeOptions(strictNullHandling: true),
+          const EncodeOptions(strictNullHandling: true),
         ),
         equals('a%5Bb%5D%5Bc%5D'),
       );
@@ -3297,7 +3297,7 @@ void main() {
           {
             'a': {'b': 'c'},
           },
-          EncodeOptions(allowDots: true),
+          const EncodeOptions(allowDots: true),
         ),
         equals('a.b=c'),
       );
@@ -3310,7 +3310,7 @@ void main() {
               },
             },
           },
-          EncodeOptions(allowDots: true),
+          const EncodeOptions(allowDots: true),
         ),
         equals('a.b.c.d=e'),
       );
@@ -3322,7 +3322,7 @@ void main() {
           {
             'a': ['b', 'c', 'd'],
           },
-          EncodeOptions(listFormat: ListFormat.indices),
+          const EncodeOptions(listFormat: ListFormat.indices),
         ),
         equals('a%5B0%5D=b&a%5B1%5D=c&a%5B2%5D=d'),
         reason: 'indices => indices',
@@ -3332,7 +3332,7 @@ void main() {
           {
             'a': ['b', 'c', 'd'],
           },
-          EncodeOptions(listFormat: ListFormat.brackets),
+          const EncodeOptions(listFormat: ListFormat.brackets),
         ),
         equals('a%5B%5D=b&a%5B%5D=c&a%5B%5D=d'),
         reason: 'brackets => brackets',
@@ -3342,7 +3342,7 @@ void main() {
           {
             'a': ['b', 'c', 'd'],
           },
-          EncodeOptions(listFormat: ListFormat.comma),
+          const EncodeOptions(listFormat: ListFormat.comma),
         ),
         equals('a=b%2Cc%2Cd'),
         reason: 'comma => comma',
@@ -3360,7 +3360,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'b', 'c': null},
-          EncodeOptions(skipNulls: true),
+          const EncodeOptions(skipNulls: true),
         ),
         equals('a=b'),
       );
@@ -3372,7 +3372,7 @@ void main() {
           {
             'a': {'b': 'c', 'd': null},
           },
-          EncodeOptions(skipNulls: true),
+          const EncodeOptions(skipNulls: true),
         ),
         equals('a%5Bb%5D=c'),
       );
@@ -3384,7 +3384,7 @@ void main() {
           {
             'a': ['b', 'c', 'd'],
           },
-          EncodeOptions(indices: false),
+          const EncodeOptions(indices: false),
         ),
         equals('a=b&a=c&a=d'),
       );
@@ -3395,7 +3395,7 @@ void main() {
         expect(
           QS.encode(
             {'a': 'c'},
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.indices,
             ),
@@ -3405,7 +3405,7 @@ void main() {
         expect(
           QS.encode(
             {'a': 'c'},
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.brackets,
             ),
@@ -3415,7 +3415,7 @@ void main() {
         expect(
           QS.encode(
             {'a': 'c'},
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.comma,
             ),
@@ -3425,7 +3425,7 @@ void main() {
         expect(
           QS.encode(
             {'a': 'c'},
-            EncodeOptions(encodeValuesOnly: true),
+            const EncodeOptions(encodeValuesOnly: true),
           ),
           equals('a=c'),
         );
@@ -3437,7 +3437,7 @@ void main() {
             {
               'a': ['c'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.indices,
             ),
@@ -3449,7 +3449,7 @@ void main() {
             {
               'a': ['c'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.brackets,
             ),
@@ -3461,7 +3461,7 @@ void main() {
             {
               'a': ['c'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.comma,
             ),
@@ -3473,7 +3473,7 @@ void main() {
             {
               'a': ['c'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.comma,
               commaRoundTrip: true,
@@ -3486,7 +3486,7 @@ void main() {
             {
               'a': ['c'],
             },
-            EncodeOptions(encodeValuesOnly: true),
+            const EncodeOptions(encodeValuesOnly: true),
           ),
           equals('a[0]=c'),
         );
@@ -3498,7 +3498,7 @@ void main() {
             {
               'a': ['c', 'd'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.indices,
             ),
@@ -3510,7 +3510,7 @@ void main() {
             {
               'a': ['c', 'd'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.brackets,
             ),
@@ -3522,7 +3522,7 @@ void main() {
             {
               'a': ['c', 'd'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.comma,
             ),
@@ -3534,7 +3534,7 @@ void main() {
             {
               'a': ['c', 'd'],
             },
-            EncodeOptions(encodeValuesOnly: true),
+            const EncodeOptions(encodeValuesOnly: true),
           ),
           equals('a[0]=c&a[1]=d'),
         );
@@ -3546,7 +3546,7 @@ void main() {
             {
               'a': ['c,d', 'e'],
             },
-            EncodeOptions(
+            const EncodeOptions(
               encodeValuesOnly: true,
               listFormat: ListFormat.comma,
             ),
@@ -3558,7 +3558,7 @@ void main() {
             {
               'a': ['c,d', 'e'],
             },
-            EncodeOptions(listFormat: ListFormat.comma),
+            const EncodeOptions(listFormat: ListFormat.comma),
           ),
           equals('a=c%2Cd%2Ce'),
         );
@@ -3573,7 +3573,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.indices,
           ),
@@ -3587,7 +3587,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
           ),
@@ -3601,7 +3601,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.comma,
           ),
@@ -3615,7 +3615,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(encodeValuesOnly: true),
+          const EncodeOptions(encodeValuesOnly: true),
         ),
         equals('a[b][0]=c&a[b][1]=d'),
       );
@@ -3627,7 +3627,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
           ),
@@ -3639,7 +3639,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
           ),
@@ -3651,7 +3651,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
           ),
@@ -3663,7 +3663,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.repeat,
           ),
@@ -3676,7 +3676,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.indices,
@@ -3689,7 +3689,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
@@ -3702,7 +3702,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.comma,
@@ -3715,7 +3715,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.repeat,
@@ -3729,7 +3729,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.indices,
@@ -3742,7 +3742,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.brackets,
@@ -3755,7 +3755,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.comma,
@@ -3768,7 +3768,7 @@ void main() {
           {
             'a': [',', '', 'c,d%'],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.repeat,
@@ -3782,7 +3782,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
           ),
@@ -3792,7 +3792,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
           ),
@@ -3802,7 +3802,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
           ),
@@ -3812,7 +3812,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.repeat,
           ),
@@ -3823,7 +3823,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.indices,
@@ -3834,7 +3834,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
@@ -3845,7 +3845,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.comma,
@@ -3856,7 +3856,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.repeat,
@@ -3868,7 +3868,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.indices,
@@ -3879,7 +3879,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.brackets,
@@ -3890,7 +3890,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.comma,
@@ -3901,7 +3901,7 @@ void main() {
       expect(
         QS.encode(
           {'a': ',', 'b': '', 'c': 'c,d%'},
-          EncodeOptions(
+          const EncodeOptions(
             encode: true,
             encodeValuesOnly: false,
             listFormat: ListFormat.repeat,
@@ -3919,7 +3919,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.indices,
@@ -3935,7 +3935,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
@@ -3951,7 +3951,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encodeValuesOnly: true,
             listFormat: ListFormat.comma,
@@ -3967,7 +3967,7 @@ void main() {
               'b': ['c', 'd'],
             },
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encodeValuesOnly: true,
           ),
@@ -3985,7 +3985,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(listFormat: ListFormat.indices),
+          const EncodeOptions(listFormat: ListFormat.indices),
         ),
         equals('a%5B0%5D%5Bb%5D=c'), // a[0][b]=c
         reason: 'indices => brackets',
@@ -3997,7 +3997,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(listFormat: ListFormat.brackets),
+          const EncodeOptions(listFormat: ListFormat.brackets),
         ),
         equals('a%5B%5D%5Bb%5D=c'), // a[][b]=c
         reason: 'brackets => brackets',
@@ -4023,7 +4023,7 @@ void main() {
               }
             ],
           },
-          EncodeOptions(listFormat: ListFormat.indices),
+          const EncodeOptions(listFormat: ListFormat.indices),
         ),
         equals('a%5B0%5D%5Bb%5D%5Bc%5D%5B0%5D=1'),
         reason: 'indices => indices',
@@ -4039,7 +4039,7 @@ void main() {
               }
             ],
           },
-          EncodeOptions(listFormat: ListFormat.brackets),
+          const EncodeOptions(listFormat: ListFormat.brackets),
         ),
         equals('a%5B%5D%5Bb%5D%5Bc%5D%5B%5D=1'),
         reason: 'brackets => brackets',
@@ -4069,7 +4069,7 @@ void main() {
               3,
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.indices,
           ),
@@ -4086,7 +4086,7 @@ void main() {
               3,
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             listFormat: ListFormat.brackets,
           ),
@@ -4103,7 +4103,7 @@ void main() {
               3,
             ],
           },
-          EncodeOptions(encodeValuesOnly: true),
+          const EncodeOptions(encodeValuesOnly: true),
         ),
         equals('a[0][b]=1&a[1]=2&a[2]=3'),
         reason: 'default => indices',
@@ -4118,7 +4118,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
             listFormat: ListFormat.indices,
@@ -4134,7 +4134,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
             listFormat: ListFormat.brackets,
@@ -4150,7 +4150,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
           ),
@@ -4170,7 +4170,7 @@ void main() {
               }
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
             listFormat: ListFormat.indices,
@@ -4190,7 +4190,7 @@ void main() {
               }
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
             listFormat: ListFormat.brackets,
@@ -4210,7 +4210,7 @@ void main() {
               }
             ],
           },
-          EncodeOptions(
+          const EncodeOptions(
             allowDots: true,
             encode: false,
           ),
@@ -4228,7 +4228,7 @@ void main() {
               {'b': 'c'},
             ],
           },
-          EncodeOptions(indices: false),
+          const EncodeOptions(indices: false),
         ),
         equals('a%5Bb%5D=c'),
       );
@@ -4240,7 +4240,7 @@ void main() {
           {
             'a': ['b', 'c'],
           },
-          EncodeOptions(indices: true),
+          const EncodeOptions(indices: true),
         ),
         equals('a%5B0%5D=b&a%5B1%5D=c'),
       );
@@ -4262,7 +4262,7 @@ void main() {
           {
             'a': ['b', 'c'],
           },
-          EncodeOptions(listFormat: ListFormat.indices),
+          const EncodeOptions(listFormat: ListFormat.indices),
         ),
         equals('a%5B0%5D=b&a%5B1%5D=c'),
       );
@@ -4274,7 +4274,7 @@ void main() {
           {
             'a': ['b', 'c'],
           },
-          EncodeOptions(listFormat: ListFormat.repeat),
+          const EncodeOptions(listFormat: ListFormat.repeat),
         ),
         equals('a=b&a=c'),
       );
@@ -4286,7 +4286,7 @@ void main() {
           {
             'a': ['b', 'c'],
           },
-          EncodeOptions(listFormat: ListFormat.brackets),
+          const EncodeOptions(listFormat: ListFormat.brackets),
         ),
         equals('a%5B%5D=b&a%5B%5D=c'),
       );
@@ -4306,7 +4306,7 @@ void main() {
       expect(
         QS.encode(
           {'a': null},
-          EncodeOptions(strictNullHandling: true),
+          const EncodeOptions(strictNullHandling: true),
         ),
         equals('a'),
       );
@@ -4315,7 +4315,7 @@ void main() {
       expect(
         QS.encode(
           {'a': null, 'b': ''},
-          EncodeOptions(strictNullHandling: true),
+          const EncodeOptions(strictNullHandling: true),
         ),
         equals('a&b='),
       );
@@ -4331,7 +4331,7 @@ void main() {
           {
             'a': {'b': null},
           },
-          EncodeOptions(strictNullHandling: true),
+          const EncodeOptions(strictNullHandling: true),
         ),
         equals('a%5Bb%5D'),
       );
@@ -4340,7 +4340,7 @@ void main() {
           {
             'a': {'b': null},
           },
-          EncodeOptions(strictNullHandling: false),
+          const EncodeOptions(strictNullHandling: false),
         ),
         equals('a%5Bb%5D='),
       );
@@ -4354,7 +4354,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals('b[0]=&c=c'),
       );
@@ -4366,7 +4366,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
           ),
@@ -4380,7 +4380,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
           ),
@@ -4394,7 +4394,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.repeat,
           ),
@@ -4408,7 +4408,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
           ),
@@ -4422,7 +4422,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
             commaRoundTrip: true,
@@ -4438,7 +4438,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
             strictNullHandling: true,
@@ -4453,7 +4453,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
             strictNullHandling: true,
@@ -4468,7 +4468,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.repeat,
             strictNullHandling: true,
@@ -4483,7 +4483,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
             strictNullHandling: true,
@@ -4498,7 +4498,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
             commaRoundTrip: true,
@@ -4515,7 +4515,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
             skipNulls: true,
@@ -4530,7 +4530,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
             skipNulls: true,
@@ -4545,7 +4545,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.repeat,
             skipNulls: true,
@@ -4560,7 +4560,7 @@ void main() {
             'b': [null],
             'c': 'c',
           },
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
             skipNulls: true,
@@ -4624,7 +4624,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'b', 'c': 'd'},
-          EncodeOptions(delimiter: ';'),
+          const EncodeOptions(delimiter: ';'),
         ),
         equals('a=b;c=d'),
       );
@@ -4675,7 +4675,7 @@ void main() {
               r'$and': [p1, p2],
             },
           },
-          EncodeOptions(encodeValuesOnly: true),
+          const EncodeOptions(encodeValuesOnly: true),
         ),
         equals(
           [
@@ -4692,7 +4692,7 @@ void main() {
 
     test('can disable uri encoding', () {
       expect(
-        QS.encode({'a': 'b'}, EncodeOptions(encode: false)),
+        QS.encode({'a': 'b'}, const EncodeOptions(encode: false)),
         equals('a=b'),
       );
       expect(
@@ -4700,14 +4700,14 @@ void main() {
           {
             'a': {'b': 'c'},
           },
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals('a[b]=c'),
       );
       expect(
         QS.encode(
           {'a': 'b', 'c': null},
-          EncodeOptions(
+          const EncodeOptions(
             strictNullHandling: true,
             encode: false,
           ),
@@ -4771,7 +4771,7 @@ void main() {
             },
             'b': 'b',
           },
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals(
           'a=a&z[zj][zjb]=zjb&z[zj][zja]=zja&z[zi][zib]=zib&z[zi][zia]=zia&b=b',
@@ -4834,7 +4834,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'b c'},
-          EncodeOptions(
+          const EncodeOptions(
             format: Format.rfc1738,
           ),
         ),
@@ -4843,14 +4843,14 @@ void main() {
       expect(
         QS.encode(
           {'a b': 'c d'},
-          EncodeOptions(format: Format.rfc1738),
+          const EncodeOptions(format: Format.rfc1738),
         ),
         equals('a+b=c+d'),
       );
       expect(
         QS.encode(
           {'a b': StringBuffer('a b')},
-          EncodeOptions(format: Format.rfc1738),
+          const EncodeOptions(format: Format.rfc1738),
         ),
         equals('a+b=a+b'),
       );
@@ -4858,7 +4858,7 @@ void main() {
       expect(
         QS.encode(
           {'foo(ref)': 'bar'},
-          EncodeOptions(format: Format.rfc1738),
+          const EncodeOptions(format: Format.rfc1738),
         ),
         equals('foo(ref)=bar'),
       );
@@ -4868,7 +4868,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'b c'},
-          EncodeOptions(
+          const EncodeOptions(
             format: Format.rfc3986,
           ),
         ),
@@ -4877,14 +4877,14 @@ void main() {
       expect(
         QS.encode(
           {'a b': 'c d'},
-          EncodeOptions(format: Format.rfc3986),
+          const EncodeOptions(format: Format.rfc3986),
         ),
         equals('a%20b=c%20d'),
       );
       expect(
         QS.encode(
           {'a b': StringBuffer('a b')},
-          EncodeOptions(format: Format.rfc3986),
+          const EncodeOptions(format: Format.rfc3986),
         ),
         equals('a%20b=a%20b'),
       );
@@ -4906,7 +4906,7 @@ void main() {
               ['h'],
             ],
           },
-          EncodeOptions(encodeValuesOnly: true),
+          const EncodeOptions(encodeValuesOnly: true),
         ),
         equals('a=b&c[0]=d&c[1]=e%3Df&f[0][0]=g&f[1][0]=h'),
       );
@@ -4929,7 +4929,7 @@ void main() {
           {
             'a': {'b': null},
           },
-          EncodeOptions(
+          const EncodeOptions(
             encodeValuesOnly: true,
             strictNullHandling: true,
           ),
@@ -4942,7 +4942,7 @@ void main() {
       expect(
         QS.encode(
           {'æ': 'æ'},
-          EncodeOptions(charset: latin1),
+          const EncodeOptions(charset: latin1),
         ),
         equals('%E6=%E6'),
       );
@@ -4954,7 +4954,7 @@ void main() {
         expect(
           QS.encode(
             {'a': '☺'},
-            EncodeOptions(charset: latin1),
+            const EncodeOptions(charset: latin1),
           ),
           equals('a=%26%239786%3B'),
         );
@@ -4965,7 +4965,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'æ'},
-          EncodeOptions(charset: utf8),
+          const EncodeOptions(charset: utf8),
         ),
         equals('a=%C3%A6'),
       );
@@ -4975,7 +4975,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'æ'},
-          EncodeOptions(
+          const EncodeOptions(
             charsetSentinel: true,
             charset: utf8,
           ),
@@ -4989,7 +4989,7 @@ void main() {
       expect(
         QS.encode(
           {'a': 'æ'},
-          EncodeOptions(
+          const EncodeOptions(
             charsetSentinel: true,
             charset: latin1,
           ),
@@ -5026,14 +5026,14 @@ void main() {
       };
 
       expect(
-        QS.encode(obj, EncodeOptions(encode: false)),
+        QS.encode(obj, const EncodeOptions(encode: false)),
         equals('a[b][c]=d&a[b][e]=f'),
         reason: 'no array, no listFormat',
       );
       expect(
         QS.encode(
           obj,
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
           ),
@@ -5044,7 +5044,7 @@ void main() {
       expect(
         QS.encode(
           obj,
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
           ),
@@ -5055,7 +5055,7 @@ void main() {
       expect(
         QS.encode(
           obj,
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.comma,
           ),
@@ -5067,7 +5067,7 @@ void main() {
       expect(
         QS.encode(
           withArray,
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals('a[b][0][c]=d&a[b][0][e]=f'),
         reason: 'array, no listFormat',
@@ -5075,7 +5075,7 @@ void main() {
       expect(
         QS.encode(
           withArray,
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.brackets,
           ),
@@ -5086,7 +5086,7 @@ void main() {
       expect(
         QS.encode(
           withArray,
-          EncodeOptions(
+          const EncodeOptions(
             encode: false,
             listFormat: ListFormat.indices,
           ),
@@ -5104,7 +5104,7 @@ void main() {
               '': [2, 3],
             },
           },
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals('[][0]=2&[][1]=3'),
       );
@@ -5116,7 +5116,7 @@ void main() {
               'a': 2,
             },
           },
-          EncodeOptions(encode: false),
+          const EncodeOptions(encode: false),
         ),
         equals('[][0]=2&[][1]=3&[a]=2'),
       );

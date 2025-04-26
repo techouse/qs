@@ -58,7 +58,7 @@ void main() {
         equals({'foo2': 'bar2', 'baz2': ''}),
       );
       expect(
-        QS.decode('foo=bar&baz', DecodeOptions(strictNullHandling: true)),
+        QS.decode('foo=bar&baz', const DecodeOptions(strictNullHandling: true)),
         equals({'foo': 'bar', 'baz': null}),
       );
       expect(
