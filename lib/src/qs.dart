@@ -22,10 +22,9 @@ part 'extensions/encode.dart';
 final class QS {
   /// Decodes a [String] or [Map<String, dynamic>] into a [Map<String, dynamic>].
   /// Providing custom [options] will override the default behavior.
-  static Map<String, dynamic> decode(
-    dynamic input, [
-    DecodeOptions options = const DecodeOptions(),
-  ]) {
+  static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
+    options ??= const DecodeOptions();
+
     if (!(input is String? || input is Map<String, dynamic>?)) {
       throw ArgumentError.value(
         input,
@@ -64,10 +63,9 @@ final class QS {
 
   /// Encodes an [Object] into a query [String].
   /// Providing custom [options] will override the default behavior.
-  static String encode(
-    Object? object, [
-    EncodeOptions options = const EncodeOptions(),
-  ]) {
+  static String encode(Object? object, [EncodeOptions? options]) {
+    options ??= const EncodeOptions();
+
     if (object == null) {
       return '';
     }
