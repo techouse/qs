@@ -10,7 +10,14 @@ extension UriExtension on Uri {
   /// Providing custom [options] will override the default behavior.
   String toStringQs([EncodeOptions? options]) => replace(
         query: queryParameters.isNotEmpty
-            ? QS.encode(queryParameters, options)
+            ? QS.encode(
+                queryParametersAll,
+                const EncodeOptions(
+                  listFormat: ListFormat.repeat,
+                  skipNulls: false,
+                  strictNullHandling: false,
+                ),
+              )
             : null,
         queryParameters: null,
       ).toString();
