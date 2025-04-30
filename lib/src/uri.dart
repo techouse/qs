@@ -8,16 +8,16 @@ extension UriExtension on Uri {
 
   /// The normalized string representation of the URI.
   /// Providing custom [options] will override the default behavior.
-  String toStringQs([EncodeOptions? options]) => replace(
+  String toStringQs([
+    EncodeOptions? options = const EncodeOptions(
+      listFormat: ListFormat.repeat,
+      skipNulls: false,
+      strictNullHandling: false,
+    ),
+  ]) =>
+      replace(
         query: queryParameters.isNotEmpty
-            ? QS.encode(
-                queryParametersAll,
-                const EncodeOptions(
-                  listFormat: ListFormat.repeat,
-                  skipNulls: false,
-                  strictNullHandling: false,
-                ),
-              )
+            ? QS.encode(queryParametersAll, options)
             : null,
         queryParameters: null,
       ).toString();
