@@ -1,3 +1,7 @@
+## 1.3.5
+
+- [FIX] fix `UriExtension.toStringQs` method to use `queryParametersAll`
+
 ## 1.3.4
 
 - [FEAT] make `QS.encode` parameter for `EncodeOptions` optional
