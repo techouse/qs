@@ -1,3 +1,7 @@
+## 1.3.5+1
+
+- [FIX] respect `Uri.toStringQs` encode options
+
 ## 1.3.5
 
 - [FIX] fix `UriExtension.toStringQs` method to use `queryParametersAll`
