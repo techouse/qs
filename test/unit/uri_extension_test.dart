@@ -1506,22 +1506,111 @@ void main() {
 
   group('Uri.toStringQs', () {
     test('encodes a query string object', () {
-      expect(Uri.https(authority, path, {'a': 'b'}).toStringQs(),
-          equals('$testUrl?a=b'));
-      expect(Uri.https(authority, path, {'a': '1'}).toStringQs(),
-          equals('$testUrl?a=1'));
-      expect(Uri.https(authority, path, {'a': '1', 'b': '2'}).toStringQs(),
-          equals('$testUrl?a=1&b=2'));
-      expect(Uri.https(authority, path, {'a': 'A_Z'}).toStringQs(),
-          equals('$testUrl?a=A_Z'));
-      expect(Uri.https(authority, path, {'a': '€'}).toStringQs(),
-          equals('$testUrl?a=%E2%82%AC'));
-      expect(Uri.https(authority, path, {'a': ''}).toStringQs(),
-          equals('$testUrl?a=%EE%80%80'));
-      expect(Uri.https(authority, path, {'a': 'א'}).toStringQs(),
-          equals('$testUrl?a=%D7%90'));
-      expect(Uri.https(authority, path, {'a': '𐐷'}).toStringQs(),
-          equals('$testUrl?a=%F0%90%90%B7'));
+      expect(
+        Uri.https(authority, path, {'a': 'b'}).toStringQs(),
+        equals('$testUrl?a=b'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': '1'}).toStringQs(),
+        equals('$testUrl?a=1'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': '1', 'b': '2'}).toStringQs(),
+        equals('$testUrl?a=1&b=2'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': 'A_Z'}).toStringQs(),
+        equals('$testUrl?a=A_Z'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': '€'}).toStringQs(),
+        equals('$testUrl?a=%E2%82%AC'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': ''}).toStringQs(),
+        equals('$testUrl?a=%EE%80%80'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': 'א'}).toStringQs(),
+        equals('$testUrl?a=%D7%90'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': '𐐷'}).toStringQs(),
+        equals('$testUrl?a=%F0%90%90%B7'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': 'b', 'c': 'd'}).toStringQs(),
+        equals('$testUrl?a=b&c=d'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': 'b', 'c': 'd', 'e': 'f'}).toStringQs(),
+        equals('$testUrl?a=b&c=d&e=f'),
+      );
+      expect(
+        Uri.https(authority, path, {'a': 'b', 'c': 'd', 'e': 'f', 'g': 'h'})
+            .toStringQs(),
+        equals('$testUrl?a=b&c=d&e=f&g=h'),
+      );
+      expect(
+        Uri.https(authority, path, {
+          'a': ['b', 'c', 'd'],
+          'e': 'f'
+        }).toStringQs(),
+        equals('$testUrl?a=b&a=c&a=d&e=f'),
+      );
+    });
+    test('empty map yields no query string', () {
+      expect(
+        Uri.https(authority, path, {}).toStringQs(),
+        Uri.https(authority, path, {}).toString(),
+      );
+    });
+
+    test('single key with empty string value', () {
+      expect(Uri.https(authority, path, {'a': ''}).toStringQs(),
+          equals('$testUrl?a='));
+    });
+
+    test('null value is not skipped', () {
+      expect(Uri.https(authority, path, {'a': null, 'b': '2'}).toStringQs(),
+          equals('$testUrl?a=&b=2'));
+    });
+
+    test('keys with special characters are encoded', () {
+      expect(Uri.https(authority, path, {'a b': 'c d'}).toStringQs(),
+          equals('$testUrl?a%20b=c%20d'));
+      expect(Uri.https(authority, path, {'ä': 'ö'}).toStringQs(),
+          equals('$testUrl?%C3%A4=%C3%B6'));
+    });
+
+    test('values containing reserved characters', () {
+      expect(Uri.https(authority, path, {'q': 'foo@bar.com'}).toStringQs(),
+          equals('$testUrl?q=foo%40bar.com'));
+      expect(Uri.https(authority, path, {'path': '/home'}).toStringQs(),
+          equals('$testUrl?path=%2Fhome'));
+    });
+
+    test('plus sign and space in value', () {
+      expect(Uri.https(authority, path, {'v': 'a+b c'}).toStringQs(),
+          equals('$testUrl?v=a%2Bb%20c'));
+    });
+
+    test('list values including numbers and empty strings', () {
+      expect(
+          Uri.https(authority, path, {
+            'x': ['1', '', '3']
+          }).toStringQs(),
+          equals('$testUrl?x=1&x=&x=3'));
+    });
+
+    test('multiple keys maintain insertion order', () {
+      expect(
+          Uri.https(authority, path, {
+            'first': '1',
+            'second': '2',
+            'third': '3',
+          }).toStringQs(),
+          equals('$testUrl?first=1&second=2&third=3'));
     });
   });
 }
