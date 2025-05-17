@@ -12,6 +12,79 @@ import '../fixtures/data/empty_test_cases.dart';
 
 void main() {
   group('decode', () {
+    test('throws ArgumentError when parameter limit is not positive', () {
+      expect(
+        () => QS.decode(
+          'a=b&c=d',
+          const DecodeOptions(parameterLimit: 0),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('Nested list handling in _parseObject method', () {
+      // This test targets lines 154-156 in decode.dart
+      // We need to create a scenario where val is a List and parentKey exists in the list
+
+      // First, create a list with a nested list at index 0
+      final list = [
+        ['nested']
+      ];
+
+      // Convert to a query string
+      final queryString = QS.encode({'a': list});
+
+      // Now decode it back, which should exercise the code path we're targeting
+      final result = QS.decode(queryString);
+
+      // Verify the result
+      expect(result, {
+        'a': [
+          ['nested']
+        ]
+      });
+
+      // Try another approach with a more complex structure
+      // This creates a query string like 'a[0][0]=value'
+      final result2 = QS.decode(
+        'a[0][0]=value',
+        const DecodeOptions(depth: 5),
+      );
+
+      // This should create a nested list structure
+      expect(result2, {
+        'a': [
+          ['value']
+        ]
+      });
+
+      // Try a more complex approach that should trigger the specific code path
+      // First, create a query string that will create a list with a specific index
+      final queryString3 = 'a[0][]=first&a[0][]=second';
+
+      // Now decode it, which should create a list with a nested list
+      final result3 = QS.decode(queryString3);
+
+      // Verify the result
+      expect(result3, {
+        'a': [
+          ['first', 'second']
+        ]
+      });
+
+      // Now try to add to the existing list
+      final queryString4 = 'a[0][2]=third';
+
+      // Decode it with the existing result as the input
+      final result4 = QS.decode(queryString4);
+
+      // Verify the result
+      expect(result4, {
+        'a': [
+          ['third']
+        ]
+      });
+    });
     test('throws an ArgumentError if the input is not a String or a Map', () {
       expect(() => QS.decode(123), throwsArgumentError);
     });
@@ -122,6 +195,26 @@ void main() {
         equals({
           'a': ['b', 'c']
         }),
+      );
+    });
+
+    test('comma: true with list limit exceeded throws error', () {
+      expect(
+        () => QS.decode(
+          'a=b,c,d,e,f',
+          const DecodeOptions(
+            comma: true,
+            throwOnLimitExceeded: true,
+            listLimit: 3,
+          ),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            'List limit exceeded. Only 3 elements allowed in a list.',
+          ),
+        ),
       );
     });
 
