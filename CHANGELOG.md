@@ -1,3 +1,7 @@
+## 1.3.6
+
+- [FIX] fix Lists with indices always getting parsed into a Map
+
 ## 1.3.5+1
 
 - [FIX] respect `Uri.toStringQs` encode options
