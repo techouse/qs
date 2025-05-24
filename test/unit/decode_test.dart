@@ -505,7 +505,7 @@ void main() {
       expect(
         QS.decode('a[1]=b&a=c', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {1: 'b', 2: 'c'}
+          'a': ['b', 'c']
         }),
       );
       expect(
@@ -598,6 +598,30 @@ void main() {
         QS.decode('a[1]=c'),
         equals({
           'a': ['c']
+        }),
+      );
+      expect(
+        QS.decode('a[0]=b&a[2]=c', const DecodeOptions(parseLists: false)),
+        equals({
+          'a': {'0': 'b', '2': 'c'}
+        }),
+      );
+      expect(
+        QS.decode('a[0]=b&a[2]=c', const DecodeOptions(parseLists: true)),
+        equals({
+          'a': ['b', 'c'],
+        }),
+      );
+      expect(
+        QS.decode('a[1]=b&a[15]=c', const DecodeOptions(parseLists: false)),
+        equals({
+          'a': {'1': 'b', '15': 'c'}
+        }),
+      );
+      expect(
+        QS.decode('a[1]=b&a[15]=c', const DecodeOptions(parseLists: true)),
+        equals({
+          'a': ['b', 'c']
         }),
       );
     });
@@ -922,7 +946,7 @@ void main() {
       expect(
         QS.decode('a[10]=1&a[2]=2', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {2: '2', 10: '1'}
+          'a': ['2', '1']
         }),
       );
       expect(

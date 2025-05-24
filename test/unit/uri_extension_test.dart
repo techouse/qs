@@ -439,7 +439,7 @@ void main() {
         Uri.parse('$testUrl?a[1]=b&a=c')
             .queryParametersQs(const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {1: 'b', 2: 'c'}
+          'a': ['b', 'c']
         }),
       );
       expect(
@@ -864,7 +864,7 @@ void main() {
         Uri.parse('$testUrl?a[10]=1&a[2]=2')
             .queryParametersQs(const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {2: '2', 10: '1'}
+          'a': ['2', '1']
         }),
       );
       expect(

@@ -37,9 +37,16 @@ final class QS {
       return <String, dynamic>{};
     }
 
-    Map<String, dynamic>? tempObj = input is String
+    final Map<String, dynamic>? tempObj = input is String
         ? _$Decode._parseQueryStringValues(input, options)
         : input;
+
+    if (options.parseLists &&
+        options.listLimit > 0 &&
+        (tempObj?.length ?? 0) > options.listLimit) {
+      options = options.copyWith(parseLists: false);
+    }
+
     Map<String, dynamic> obj = {};
 
     // Iterate over the keys and setup the new object

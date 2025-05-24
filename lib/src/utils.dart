@@ -42,7 +42,8 @@ final class Utils {
             target_[target_.length] = source;
           }
 
-          target = target_.values.any((el) => el is Undefined)
+          target = options?.parseLists == false &&
+                  target_.values.any((el) => el is Undefined)
               ? SplayTreeMap.from({
                   for (final MapEntry<int, dynamic> entry in target_.entries)
                     if (entry.value is! Undefined) entry.key: entry.value,
