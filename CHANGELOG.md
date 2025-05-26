@@ -1,3 +1,7 @@
+## 1.3.7
+
+- [CHORE] update dev_dependencies
+
 ## 1.3.6
 
 - [FIX] fix Lists with indices always getting parsed into a Map

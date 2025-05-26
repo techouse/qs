@@ -17,7 +17,7 @@ class CustomObject {
 
   CustomObject(this.value);
 
-  operator [](String key) => key == 'prop' ? value : null;
+  String? operator [](String key) => key == 'prop' ? value : null;
 }
 
 void main() {
