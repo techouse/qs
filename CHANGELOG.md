@@ -1,3 +1,7 @@
+## 1.3.7+1
+
+- [CHORE] re-release 1.3.7 due to a Github Actions issue
+
 ## 1.3.7
 
 - [CHORE] update dev_dependencies
