@@ -1,3 +1,8 @@
+## 1.3.8
+
+- [FIX] enforce non-nullable `serializeDate` in `EncodeOptions`
+- [CHORE] update `serializeDate` related tests
+
 ## 1.3.7+1
 
 - [CHORE] re-release 1.3.7 due to a Github Actions issue
