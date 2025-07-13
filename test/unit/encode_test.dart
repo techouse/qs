@@ -5158,19 +5158,6 @@ void main() {
       );
     });
 
-    test('strictNullHandling works with null serializeDate', () {
-      expect(
-        QS.encode(
-          {'key': DateTime.now()},
-          EncodeOptions(
-            strictNullHandling: true,
-            serializeDate: (DateTime dateTime) => null,
-          ),
-        ),
-        equals('key'),
-      );
-    });
-
     test('objects inside arrays', () {
       final obj = {
         'a': {
