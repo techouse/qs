@@ -92,7 +92,7 @@ extension _$Encode on QS {
       return values;
     }
 
-    late List objKeys;
+    late final List objKeys;
     if (generateArrayPrefix == ListFormat.comma.generator && obj is Iterable) {
       // we need to join elements in
       if (encodeValuesOnly && encoder != null) {
