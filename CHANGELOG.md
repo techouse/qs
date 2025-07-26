@@ -1,3 +1,7 @@
+## 1.3.9
+
+- [FIX] make `encode.objKeys` late final to ensure immutability
+
 ## 1.3.8
 
 - [FIX] enforce non-nullable `serializeDate` in `EncodeOptions`
