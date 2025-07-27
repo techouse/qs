@@ -39,7 +39,7 @@ extension _$Encode on QS {
 
     while ((tmpSc = tmpSc?.get(_sentinel)) != null && !findFlag) {
       // Where object last appeared in the ref tree
-      final int? pos = tmpSc?.get(object);
+      final int? pos = tmpSc?.get(object) as int?;
       step += 1;
       if (pos != null) {
         if (pos == step) {
