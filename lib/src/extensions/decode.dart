@@ -1,13 +1,8 @@
 part of '../qs.dart';
 
-extension _$Decode on QS {
-  static String _interpretNumericEntities(String str) => str.replaceAllMapped(
-        RegExp(r'&#(\d+);'),
-        (Match match) => String.fromCharCode(
-          int.parse(match.group(1)!),
-        ),
-      );
+final RegExp _dotToBracket = RegExp(r'\.([^.\[]+)');
 
+extension _$Decode on QS {
   static dynamic _parseListValue(
     dynamic val,
     DecodeOptions options,
@@ -117,7 +112,7 @@ extension _$Decode on QS {
           !Utils.isEmpty(val) &&
           options.interpretNumericEntities &&
           charset == latin1) {
-        val = _interpretNumericEntities(
+        val = Utils.interpretNumericEntities(
           val is Iterable
               ? val.map((e) => e.toString()).join(',')
               : val.toString(),
@@ -213,60 +208,91 @@ extension _$Decode on QS {
   static dynamic _parseKeys(
     String? givenKey,
     dynamic val,
-    DecodeOptions options,
-    bool valuesParsed,
-  ) {
-    if (givenKey?.isEmpty ?? true) {
-      return;
-    }
+    DecodeOptions options, [
+    bool valuesParsed = false,
+  ]) {
+    if (givenKey == null || givenKey.isEmpty) return null;
 
-    // Transform dot notation to bracket notation
-    String key = options.allowDots
-        ? givenKey!.replaceAllMapped(
-            RegExp(r'\.([^.[]+)'),
-            (Match match) => '[${match[1]}]',
-          )
-        : givenKey!;
-
-    // The regex chunks
-    final RegExp brackets = RecursiveRegex(
-      startDelimiter: '[',
-      endDelimiter: ']',
+    final segments = _splitKeyIntoSegments(
+      originalKey: givenKey,
+      allowDots: options.allowDots,
+      maxDepth: options.depth,
+      strictDepth: options.strictDepth,
     );
 
-    // Get the parent
-    Match? segment = options.depth > 0 ? brackets.firstMatch(key) : null;
-    final String parent = segment != null ? key.slice(0, segment.start) : key;
+    return _parseObject(segments, val, options, valuesParsed);
+  }
 
-    // Stash the parent if it exists
-    final List<String> keys = [];
-    if (parent.isNotEmpty) {
-      keys.add(parent);
+  static List<String> _splitKeyIntoSegments({
+    required String originalKey,
+    required bool allowDots,
+    required int maxDepth,
+    required bool strictDepth,
+  }) {
+    final key = allowDots
+        ? originalKey.replaceAllMapped(_dotToBracket, (m) => '[${m[1]}]')
+        : originalKey;
+
+    // Depth=0: do not split and do not throw (qs semantics)
+    if (maxDepth <= 0) {
+      return <String>[key];
     }
 
-    // Loop through children appending to the array until we hit depth
-    int i = 0;
-    while (options.depth > 0 &&
-        (segment = brackets.firstMatch(key)) != null &&
-        i < options.depth) {
-      i += 1;
-      if (segment != null) {
-        keys.add(segment.group(0)!);
-        // Update the key to start searching from the next position
-        key = key.slice(segment.end);
+    final segments = <String>[];
+
+    // Parent (everything before first '['), may be empty
+    final first = key.indexOf('[');
+    final parent = first >= 0 ? key.substring(0, first) : key;
+    if (parent.isNotEmpty) segments.add(parent);
+
+    final n = key.length;
+    var open = first;
+    var depth = 0;
+
+    while (open >= 0 && depth < maxDepth) {
+      // Balance nested brackets inside this group: "[ ... possibly [] ... ]"
+      var level = 1;
+      var i = open + 1;
+      var close = -1;
+
+      while (i < n) {
+        final ch = key.codeUnitAt(i);
+        if (ch == 0x5B) {
+          // '['
+          level++;
+        } else if (ch == 0x5D) {
+          // ']'
+          level--;
+          if (level == 0) {
+            close = i;
+            break;
+          }
+        }
+        i++;
       }
+
+      if (close < 0) {
+        // Unterminated group, stop collecting groups
+        break;
+      }
+
+      segments.add(key.substring(open, close + 1)); // includes enclosing [ ]
+      depth++;
+
+      // find next group, starting after this one
+      open = key.indexOf('[', close + 1);
     }
 
-    // If there's a remainder, check strictDepth option for throw, else just add whatever is left
-    if (segment != null) {
-      if (options.strictDepth) {
+    if (open >= 0) {
+      // We still have remainder starting with '['
+      if (strictDepth) {
         throw RangeError(
-          'Input depth exceeded depth option of ${options.depth} and strictDepth is true',
-        );
+            'Input depth exceeded $maxDepth and strictDepth is true');
       }
-      keys.add('[${key.slice(segment.start)}]');
+      // Stash the remainder as a single segment (qs behavior)
+      segments.add('[${key.substring(open)}]');
     }
 
-    return _parseObject(keys, val, options, valuesParsed);
+    return segments;
   }
 }

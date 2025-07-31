@@ -495,4 +495,51 @@ final class Utils {
       (val is String && val.isEmpty) ||
       (val is Iterable && val.isEmpty) ||
       (val is Map && val.isEmpty);
+
+  static String interpretNumericEntities(String s) {
+    if (s.length < 4) return s;
+    final sb = StringBuffer();
+    var i = 0;
+    while (i < s.length) {
+      final ch = s.codeUnitAt(i);
+      if (ch == 0x26 /* & */ &&
+          i + 2 < s.length &&
+          s.codeUnitAt(i + 1) == 0x23 /* # */) {
+        var j = i + 2;
+        if (j < s.length) {
+          int code = 0;
+          final start = j;
+          while (j < s.length) {
+            final cu = s.codeUnitAt(j);
+            if (cu < 0x30 || cu > 0x39) break; // 0..9
+            code = code * 10 + (cu - 0x30);
+            j++;
+          }
+          if (j < s.length && s.codeUnitAt(j) == 0x3B /* ; */ && j > start) {
+            if (code <= 0xFFFF) {
+              sb.writeCharCode(code);
+            } else if (code <= 0x10FFFF) {
+              final v = code - 0x10000;
+              sb.writeCharCode(0xD800 | (v >> 10)); // high surrogate
+              sb.writeCharCode(0xDC00 | (v & 0x3FF)); // low surrogate
+            } else {
+              // out of range: keep literal '&' and continue
+              sb.writeCharCode(0x26);
+              i++;
+              continue;
+            }
+            i = j + 1;
+            continue;
+          }
+        }
+        // not a well-formed entity: keep literal '&'
+        sb.writeCharCode(0x26);
+        i++;
+      } else {
+        sb.writeCharCode(ch);
+        i++;
+      }
+    }
+    return sb.toString();
+  }
 }

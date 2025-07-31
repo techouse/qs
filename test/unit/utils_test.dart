@@ -1027,5 +1027,61 @@ void main() {
         equals('%26%2355357%3B%26%2356489%3B'),
       );
     });
+
+    group('interpretNumericEntities', () {
+      test('returns input unchanged when there are no entities', () {
+        expect(Utils.interpretNumericEntities('hello world'), 'hello world');
+        expect(Utils.interpretNumericEntities('100% sure'), '100% sure');
+      });
+
+      test('decodes a single decimal entity', () {
+        expect(Utils.interpretNumericEntities('A = &#65;'), 'A = A');
+        expect(Utils.interpretNumericEntities('&#48;&#49;&#50;'), '012');
+      });
+
+      test('decodes multiple entities in a sentence', () {
+        const input = 'Hello &#87;&#111;&#114;&#108;&#100;!';
+        const expected = 'Hello World!';
+        expect(Utils.interpretNumericEntities(input), expected);
+      });
+
+      test('surrogate pair as two decimal entities (emoji)', () {
+        // U+1F4A9 (💩) is represented as two decimal entities:
+        // 55357 (0xD83D) and 56489 (0xDCA9)
+        expect(Utils.interpretNumericEntities('&#55357;&#56489;'), '💩');
+      });
+
+      test('entities can appear at string boundaries', () {
+        expect(Utils.interpretNumericEntities('&#65;BC'), 'ABC');
+        expect(Utils.interpretNumericEntities('ABC&#33;'), 'ABC!');
+        expect(Utils.interpretNumericEntities('&#65;'), 'A');
+      });
+
+      test('mixes literals and entities', () {
+        // '=' is 61
+        expect(Utils.interpretNumericEntities('x&#61;y'), 'x=y');
+        expect(Utils.interpretNumericEntities('x=&#61;y'), 'x==y');
+      });
+
+      test('malformed patterns remain unchanged', () {
+        // No digits
+        expect(Utils.interpretNumericEntities('&#;'), '&#;');
+        // Missing semicolon
+        expect(Utils.interpretNumericEntities('&#12'), '&#12');
+        // Hex form not supported by this decoder
+        expect(Utils.interpretNumericEntities('&#x41;'), '&#x41;');
+        // Space inside
+        expect(Utils.interpretNumericEntities('&# 12;'), '&# 12;');
+        // Negative / non-digit after '#'
+        expect(Utils.interpretNumericEntities('&#-12;'), '&#-12;');
+        // Mixed garbage
+        expect(Utils.interpretNumericEntities('&#+;'), '&#+;');
+      });
+
+      test('out-of-range code points remain unchanged', () {
+        // Max valid is 0x10FFFF (1114111). One above should be left as literal.
+        expect(Utils.interpretNumericEntities('&#1114112;'), '&#1114112;');
+      });
+    });
   });
 }

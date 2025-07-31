@@ -11,11 +11,9 @@ import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
-import 'package:recursive_regex/recursive_regex.dart';
 import 'package:weak_map/weak_map.dart';
 
 part 'extensions/decode.dart';
-
 part 'extensions/encode.dart';
 
 /// A query string decoder (parser) and encoder (stringifier) class.
@@ -52,16 +50,14 @@ final class QS {
     // Iterate over the keys and setup the new object
     if (tempObj?.isNotEmpty ?? false) {
       for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
-        obj = Utils.merge(
-          obj,
-          _$Decode._parseKeys(
-            entry.key,
-            entry.value,
-            options,
-            input is String,
-          ),
-          options,
-        );
+        final parsed = _$Decode._parseKeys(
+            entry.key, entry.value, options, input is String);
+
+        if (obj.isEmpty && parsed is Map<String, dynamic>) {
+          obj = parsed; // direct assignment – no merge needed
+        } else {
+          obj = Utils.merge(obj, parsed, options) as Map<String, dynamic>;
+        }
       }
     }
 
