@@ -1,5 +1,7 @@
 part of '../qs.dart';
 
+typedef SplitResult = ({List<String> parts, bool exceeded});
+
 final RegExp _dotToBracket = RegExp(r'\.([^.\[]+)');
 
 extension _$Decode on QS {
@@ -37,9 +39,7 @@ extension _$Decode on QS {
     final Map<String, dynamic> obj = {};
 
     final String cleanStr =
-        (options.ignoreQueryPrefix ? str.replaceFirst('?', '') : str)
-            .replaceAll(RegExp(r'%5B', caseSensitive: false), '[')
-            .replaceAll(RegExp(r'%5D', caseSensitive: false), ']');
+        _cleanQueryString(str, ignoreQueryPrefix: options.ignoreQueryPrefix);
 
     final int? limit = options.parameterLimit == double.infinity
         ? null
@@ -229,7 +229,7 @@ extension _$Decode on QS {
     required int maxDepth,
     required bool strictDepth,
   }) {
-    final key = allowDots
+    final String key = allowDots
         ? originalKey.replaceAllMapped(_dotToBracket, (m) => '[${m[1]}]')
         : originalKey;
 
@@ -238,22 +238,22 @@ extension _$Decode on QS {
       return <String>[key];
     }
 
-    final segments = <String>[];
+    final List<String> segments = [];
 
     // Parent (everything before first '['), may be empty
     final first = key.indexOf('[');
     final parent = first >= 0 ? key.substring(0, first) : key;
     if (parent.isNotEmpty) segments.add(parent);
 
-    final n = key.length;
-    var open = first;
-    var depth = 0;
+    final int n = key.length;
+    int open = first;
+    int depth = 0;
 
     while (open >= 0 && depth < maxDepth) {
       // Balance nested brackets inside this group: "[ ... possibly [] ... ]"
-      var level = 1;
-      var i = open + 1;
-      var close = -1;
+      int level = 1;
+      int i = open + 1;
+      int close = -1;
 
       while (i < n) {
         final ch = key.codeUnitAt(i);
@@ -294,5 +294,50 @@ extension _$Decode on QS {
     }
 
     return segments;
+  }
+
+  /// Drops a leading '?' if requested, then replaces %5B/%5b -> '[' and
+  /// %5D/%5d -> ']' in a single pass (case-insensitive).
+  static String _cleanQueryString(
+    String str, {
+    required bool ignoreQueryPrefix,
+  }) {
+    // Remove leading '?' only once (qs semantics)
+    if (ignoreQueryPrefix &&
+        str.isNotEmpty &&
+        str.codeUnitAt(0) == 0x3F /* '?' */) {
+      str = str.substring(1);
+    }
+    if (str.length < 3) return str;
+
+    final StringBuffer sb = StringBuffer();
+    final int n = str.length;
+    int i = 0;
+
+    while (i < n) {
+      final c = str.codeUnitAt(i);
+
+      // Match "%5B" / "%5b" -> '['  and  "%5D" / "%5d" -> ']'
+      if (c == 0x25 /* '%' */ && i + 2 < n) {
+        final c1 = str.codeUnitAt(i + 1);
+        if (c1 == 0x35 /* '5' */) {
+          final c2 = str.codeUnitAt(i + 2);
+          if (c2 == 0x42 /* 'B' */ || c2 == 0x62 /* 'b' */) {
+            sb.writeCharCode(0x5B); // '['
+            i += 3;
+            continue;
+          } else if (c2 == 0x44 /* 'D' */ || c2 == 0x64 /* 'd' */) {
+            sb.writeCharCode(0x5D); // ']'
+            i += 3;
+            continue;
+          }
+        }
+      }
+
+      sb.writeCharCode(c);
+      i++;
+    }
+
+    return sb.toString();
   }
 }
