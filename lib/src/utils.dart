@@ -478,19 +478,19 @@ final class Utils {
 
   static String interpretNumericEntities(String s) {
     if (s.length < 4) return s;
-    final sb = StringBuffer();
-    var i = 0;
+    final StringBuffer sb = StringBuffer();
+    int i = 0;
     while (i < s.length) {
-      final ch = s.codeUnitAt(i);
+      final int ch = s.codeUnitAt(i);
       if (ch == 0x26 /* & */ &&
           i + 2 < s.length &&
           s.codeUnitAt(i + 1) == 0x23 /* # */) {
-        var j = i + 2;
+        int j = i + 2;
         if (j < s.length) {
           int code = 0;
-          final start = j;
+          final int start = j;
           while (j < s.length) {
-            final cu = s.codeUnitAt(j);
+            final int cu = s.codeUnitAt(j);
             if (cu < 0x30 || cu > 0x39) break; // 0..9
             code = code * 10 + (cu - 0x30);
             j++;
