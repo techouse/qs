@@ -1083,5 +1083,81 @@ void main() {
         expect(Utils.interpretNumericEntities('&#1114112;'), '&#1114112;');
       });
     });
+
+    group('compact', () {
+      test('removes Undefined from flat map', () {
+        final m = <String, dynamic>{
+          'a': 1,
+          'b': const Undefined(),
+          'c': null,
+        };
+        final out = Utils.compact(m);
+        expect(out, equals({'a': 1, 'c': null}));
+        // in-place
+        expect(identical(out, m), isTrue);
+      });
+
+      test('removes Undefined from nested map/list', () {
+        final m = <String, dynamic>{
+          'a': [
+            1,
+            const Undefined(),
+            {'x': const Undefined(), 'y': 2},
+            [const Undefined(), 3],
+          ],
+          'b': {'k': const Undefined(), 'z': 0},
+        };
+        final out = Utils.compact(m);
+        expect(
+          out,
+          equals({
+            'a': [
+              1,
+              {'y': 2},
+              [3],
+            ],
+            'b': {'z': 0},
+          }),
+        );
+      });
+
+      test('handles cycles without infinite loop', () {
+        final a = <String, dynamic>{};
+        final b = <String, dynamic>{'child': a, 'u': const Undefined()};
+        a['parent'] = b;
+        a['keep'] = 1;
+
+        final out = Utils.compact(a);
+        expect(out['keep'], 1);
+        expect((out['parent'] as Map)['child'], same(out)); // cycle preserved
+        expect((out['parent'] as Map).containsKey('u'), isFalse);
+      });
+
+      test('preserves order', () {
+        final m = <String, dynamic>{
+          'first': 1,
+          'second': const Undefined(),
+          'third': 3,
+        };
+        final out = Utils.compact(m);
+
+        // insertion order: first, third
+        expect(out.keys.toList(), equals(['first', 'third']));
+      });
+
+      test('shared substructures are visited once', () {
+        final shared = <String, dynamic>{'x': const Undefined(), 'y': 1};
+        final m = <String, dynamic>{
+          'a': shared,
+          'b': shared,
+        };
+
+        final out = Utils.compact(m);
+        expect((out['a'] as Map).containsKey('x'), isFalse);
+        expect((out['a'] as Map)['y'], 1);
+        // 'b' points to the same (mutated) object
+        expect(identical(out['a'], out['b']), isTrue);
+      });
+    });
   });
 }
