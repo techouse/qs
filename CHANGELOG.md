@@ -1,3 +1,7 @@
+## 1.4.0
+
+- [CHORE] improve `decode` performance
+
 ## 1.3.9
 
 - [FIX] make `encode.objKeys` late final to ensure immutability
