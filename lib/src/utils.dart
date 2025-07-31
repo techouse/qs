@@ -1,8 +1,7 @@
-import 'dart:collection' show SplayTreeMap;
+import 'dart:collection' show SplayTreeMap, HashSet;
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
-import 'package:collection/collection.dart' show MapEquality;
 import 'package:meta/meta.dart' show internal, visibleForTesting;
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
@@ -384,68 +383,49 @@ final class Utils {
     }
   }
 
-  static Map<String, dynamic> compact(Map<String, dynamic> value) {
-    final List<Map<String, dynamic>> queue = [
-      {
-        'obj': {'o': value},
-        'prop': 'o',
-      }
-    ];
-    final List refs = [];
+  /// Iteratively removes `Undefined` from maps/lists in-place.
+  /// - Identity-based visitation avoids infinite loops on cycles.
+  /// - Preserves insertion order of Map/List.
+  /// - Mutates the given structure (decode builds a fresh structure, so this is safe).
+  static Map<String, dynamic> compact(Map<String, dynamic> root) {
+    final stack = <Object>[root];
 
-    for (int i = 0; i < queue.length; i++) {
-      final Map item = queue[i];
-      final Map obj = item['obj'][item['prop']];
+    // Identity-based visited set: ensures each concrete object is processed once
+    final visited = HashSet.identity()..add(root);
 
-      final Iterable keys = obj.keys;
-      for (int j = 0; j < keys.length; j++) {
-        final dynamic key = keys.elementAt(j);
-        final dynamic val = obj[key];
+    while (stack.isNotEmpty) {
+      final node = stack.removeLast();
 
-        if (val != null &&
-            val is! Undefined &&
-            val is Map &&
-            !refs.contains(val)) {
-          queue.add({'obj': obj, 'prop': key});
-          refs.add(val);
+      if (node is Map) {
+        // Iterate over a snapshot of entries to allow safe removal while iterating
+        final entries = List.of(node.entries);
+        for (final e in entries) {
+          final k = e.key;
+          final v = e.value;
+
+          if (v is Undefined) {
+            node.remove(k);
+          } else if (v is Map || v is List) {
+            if (visited.add(v)) stack.add(v);
+          }
+        }
+      } else if (node is List) {
+        var i = 0;
+        while (i < node.length) {
+          final v = node[i];
+          if (v is Undefined) {
+            node.removeAt(i); // do not increment i; next element shifts into i
+          } else {
+            if (v is Map || v is List) {
+              if (visited.add(v)) stack.add(v);
+            }
+            i++;
+          }
         }
       }
     }
 
-    removeUndefinedFromMap(value);
-
-    return value;
-  }
-
-  @visibleForTesting
-  static void removeUndefinedFromList(List value) {
-    for (int i = 0; i < value.length; i++) {
-      final dynamic item = value[i];
-      if (item is Undefined) {
-        value.removeAt(i);
-        i--;
-      } else if (item is Map) {
-        removeUndefinedFromMap(item);
-      } else if (item is List) {
-        removeUndefinedFromList(item);
-      }
-    }
-  }
-
-  @visibleForTesting
-  static void removeUndefinedFromMap(Map obj) {
-    final Iterable keys = obj.keys;
-    for (int i = 0; i < keys.length; i++) {
-      final dynamic key = keys.elementAt(i);
-      final dynamic val = obj[key];
-      if (val is Undefined) {
-        obj.remove(key);
-      } else if (val is Map && !const MapEquality().equals(val, obj)) {
-        removeUndefinedFromMap(val);
-      } else if (val is List) {
-        removeUndefinedFromList(val);
-      }
-    }
+    return root;
   }
 
   static List<T> combine<T>(dynamic a, dynamic b) => <T>[

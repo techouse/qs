@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:qs_dart/src/models/undefined.dart';
-import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -42,45 +41,6 @@ void main() {
       array[2] = 'c';
 
       expect(array, ['a', const Undefined(), 'c']);
-    });
-  });
-
-  group('removeUndefinedFromValue', () {
-    test('remove Undefined from List', () {
-      final Map<String, dynamic> mapWithUndefined = {
-        'a': [
-          'a',
-          const Undefined(),
-          'b',
-          const Undefined(),
-          'c',
-        ],
-      };
-
-      Utils.removeUndefinedFromMap(mapWithUndefined);
-
-      expect(mapWithUndefined, {
-        'a': ['a', 'b', 'c'],
-      });
-    });
-
-    test('remove Undefined from Map', () {
-      final Map<String, dynamic> mapWithUndefined = {
-        'a': {
-          'a': 'a',
-          'b': const Undefined(),
-          'c': 'c',
-        },
-      };
-
-      Utils.removeUndefinedFromMap(mapWithUndefined);
-
-      expect(mapWithUndefined, {
-        'a': {
-          'a': 'a',
-          'c': 'c',
-        },
-      });
     });
   });
 }
