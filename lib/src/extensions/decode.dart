@@ -257,9 +257,11 @@ extension _$Decode on QS {
 
       while (i < n) {
         final int ch = key.codeUnitAt(i);
-        if (ch == 0x5B) { // '['
+        if (ch == 0x5B) {
+          // '['
           level++;
-        } else if (ch == 0x5D) { // ']'
+        } else if (ch == 0x5D) {
+          // ']'
           level--;
           if (level == 0) {
             close = i;
