@@ -394,26 +394,30 @@ final class Utils {
     final HashSet visited = HashSet.identity()..add(root);
 
     while (stack.isNotEmpty) {
-      final node = stack.removeLast();
+      final Object node = stack.removeLast();
 
       if (node is Map) {
-        // Iterate over a snapshot of entries to allow safe removal while iterating
-        final List<MapEntry> entries = List.of(node.entries);
-        for (final MapEntry e in entries) {
-          switch (e.value) {
+        for (final key in List<String>.from(node.keys)) {
+          final value = node[key];
+          switch (value) {
             case Undefined():
-              node.remove(e.key);
-            case Map() || List() when visited.add(e.value):
-              stack.add(e.value);
+              node.remove(key);
+            case Map() || List() when visited.add(value):
+              stack.add(value);
+            default:
+              break;
           }
         }
       } else if (node is List) {
         for (int i = node.length - 1; i >= 0; i--) {
           final v = node[i];
-          if (v is Undefined) {
-            node.removeAt(i);
-          } else if (v is Map || v is List) {
-            if (visited.add(v)) stack.add(v);
+          switch (v) {
+            case Undefined():
+              node.removeAt(i);
+            case Map() || List() when visited.add(v):
+              stack.add(v);
+            default:
+              break;
           }
         }
       }
