@@ -1,3 +1,7 @@
+## 1.4.1
+
+- [CHORE] enhance type safety and improve readability in `Utils.compact` method
+
 ## 1.4.0
 
 - [CHORE] improve `decode` performance
