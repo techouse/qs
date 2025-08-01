@@ -241,8 +241,8 @@ extension _$Decode on QS {
     final List<String> segments = [];
 
     // Parent (everything before first '['), may be empty
-    final first = key.indexOf('[');
-    final parent = first >= 0 ? key.substring(0, first) : key;
+    final int first = key.indexOf('[');
+    final String parent = first >= 0 ? key.substring(0, first) : key;
     if (parent.isNotEmpty) segments.add(parent);
 
     final int n = key.length;
@@ -256,12 +256,10 @@ extension _$Decode on QS {
       int close = -1;
 
       while (i < n) {
-        final ch = key.codeUnitAt(i);
-        if (ch == 0x5B) {
-          // '['
+        final int ch = key.codeUnitAt(i);
+        if (ch == 0x5B) { // '['
           level++;
-        } else if (ch == 0x5D) {
-          // ']'
+        } else if (ch == 0x5D) { // ']'
           level--;
           if (level == 0) {
             close = i;
@@ -315,7 +313,7 @@ extension _$Decode on QS {
     int i = 0;
 
     while (i < n) {
-      final c = str.codeUnitAt(i);
+      final int c = str.codeUnitAt(i);
 
       // Match "%5B" / "%5b" -> '['  and  "%5D" / "%5d" -> ']'
       if (c == 0x25 /* '%' */ && i + 2 < n) {
