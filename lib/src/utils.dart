@@ -388,38 +388,32 @@ final class Utils {
   /// - Preserves insertion order of Map/List.
   /// - Mutates the given structure (decode builds a fresh structure, so this is safe).
   static Map<String, dynamic> compact(Map<String, dynamic> root) {
-    final stack = <Object>[root];
+    final List<Object> stack = [root];
 
     // Identity-based visited set: ensures each concrete object is processed once
-    final visited = HashSet.identity()..add(root);
+    final HashSet visited = HashSet.identity()..add(root);
 
     while (stack.isNotEmpty) {
       final node = stack.removeLast();
 
       if (node is Map) {
         // Iterate over a snapshot of entries to allow safe removal while iterating
-        final entries = List.of(node.entries);
-        for (final e in entries) {
-          final k = e.key;
-          final v = e.value;
-
-          if (v is Undefined) {
-            node.remove(k);
-          } else if (v is Map || v is List) {
-            if (visited.add(v)) stack.add(v);
+        final List<MapEntry> entries = List.of(node.entries);
+        for (final MapEntry e in entries) {
+          switch (e.value) {
+            case Undefined():
+              node.remove(e.key);
+            case Map() || List() when visited.add(e.value):
+              stack.add(e.value);
           }
         }
       } else if (node is List) {
-        var i = 0;
-        while (i < node.length) {
+        for (int i = node.length - 1; i >= 0; i--) {
           final v = node[i];
           if (v is Undefined) {
-            node.removeAt(i); // do not increment i; next element shifts into i
-          } else {
-            if (v is Map || v is List) {
-              if (visited.add(v)) stack.add(v);
-            }
-            i++;
+            node.removeAt(i);
+          } else if (v is Map || v is List) {
+            if (visited.add(v)) stack.add(v);
           }
         }
       }
