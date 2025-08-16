@@ -4,12 +4,20 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+*' # tag pattern on pub.dev: 'v'
+
 defaults:
   run:
     shell: bash
+
 env:
   PUB_ENVIRONMENT: bot.github
-permissions: read-all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:

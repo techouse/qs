@@ -8,12 +8,20 @@ on:
     branches:
       - main
   workflow_call:
+
 defaults:
   run:
     shell: bash
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PUB_ENVIRONMENT: bot.github
-permissions: read-all
 
 jobs:
   analyze:
@@ -89,6 +97,7 @@ jobs:
           dart pub global run remove_from_coverage:remove_from_coverage -f coverage/lcov.info -r '\.g\.dart$'
       - name: Upload coverage to Codecov
         if: ${{ matrix.platform == 'vm' }}
+        continue-on-error: true
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -103,6 +112,7 @@ jobs:
           min_coverage: 90
       - name: Upload coverage to Codacy
         if: ${{ matrix.platform == 'vm' }}
+        continue-on-error: true
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
