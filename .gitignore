@@ -11,3 +11,6 @@ coverage/
 
 # Docs
 doc/
+
+# MacOS
+.DS_Store

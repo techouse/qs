@@ -1,6 +1,19 @@
 part of '../utils.dart';
 
-/// Hex table of all 256 characters
+/// Precomputed "%XX" strings for every possible byte (0x00–0xFF).
+///
+/// Why:
+/// - Used by the percent-encoder hot path to avoid per-byte formatting/allocation.
+/// - Uppercase hex, as recommended by RFC 3986, for consistent, stable output.
+///
+/// Usage:
+/// - Index directly with a 0–255 integer (e.g. `hexTable[byte]`).
+///
+/// Notes:
+/// - Order and length (256) are significant—code relies on direct indexing.
+/// - Entries are **byte‑oriented** (not code point aware). Multi‑byte UTF‑8 is
+///   handled by the caller; each produced byte indexes this table.
+/// - Keep in sync with percent-encoding helpers in `utils.dart`.
 const List<String> hexTable = [
   '%00',
   '%01',

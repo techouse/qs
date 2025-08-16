@@ -4,6 +4,44 @@ import 'package:equatable/equatable.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/utils.dart';
 
+/// Decoding options for [QS.decode].
+///
+/// This mirrors the behavior of the reference `qs` library and provides a few
+/// guard rails against untrusted input (parameter count, nesting depth, list
+/// index limits). The defaults aim to be safe and predictable while matching
+/// the semantics used across the ports in this repository.
+///
+/// Highlights
+/// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
+///   If you *explicitly* request dot decoding in keys via [decodeDotInKeys],
+///   [allowDots] is implied and will be treated as `true`.
+/// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
+///   [charsetSentinel] is `true`, a leading `utf8=✓` token (in either UTF‑8 or
+///   Latin‑1 form) can override [charset] as a compatibility escape hatch.
+/// - **Limits**: [parameterLimit], [depth], and [listLimit] are DoS guards.
+///   If you want hard failures instead of soft limiting, enable
+///   [throwOnLimitExceeded] and/or [strictDepth].
+/// - **Duplicates**: use [duplicates] to pick a strategy when the same key is
+///   present multiple times in the input.
+///
+/// See also: the options types in other ports for parity, and the individual
+/// doc comments below for precise semantics.
+
+/// Signature for a custom scalar decoder used by [DecodeOptions].
+///
+/// The function receives a single raw token (already split from the query)
+/// and an optional [charset] hint (either [utf8] or [latin1]). The [charset]
+/// reflects the *effective* charset after any sentinel (`utf8=✓`) handling.
+///
+/// Return the decoded value for the token — typically a `String`, `num`,
+/// `bool`, or `null`. If no decoder is provided, the library falls back to
+/// [Utils.decode].
+///
+/// Notes
+/// - This hook runs on **individual tokens only**; do not parse brackets,
+///   delimiters, or build containers here.
+/// - If you throw from this function, the error will surface out of
+///   [QS.decode].
 typedef Decoder = dynamic Function(String? value, {Encoding? charset});
 
 /// Options that configure the output of [QS.decode].
@@ -35,94 +73,98 @@ final class DecodeOptions with EquatableMixin {
           'Invalid charset',
         );
 
-  /// Set to `true` to decode dot [Map] notation in the encoded input.
+  /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
+  ///
+  /// If you set [decodeDotInKeys] to `true`, this flag is implied and will be
+  /// treated as enabled even if you pass `allowDots: false`.
   final bool allowDots;
 
-  /// Set to `true` to allow empty [List] values inside [Map]s in the encoded input.
+  /// When `true`, allow empty list values to be produced from inputs like
+  /// `a[]=` without coercing or discarding them.
   final bool allowEmptyLists;
 
-  /// [QS] will limit specifying indices in a [List] to a maximum index of `20`.
-  /// Any [List] members with an index of greater than `20` will instead be converted to a [Map] with the index as the key.
-  /// This is needed to handle cases when someone sent, for example, `a[999999999]` and it will take significant time to iterate
-  /// over this huge [List].
-  /// This limit can be overridden by passing an [listLimit] option.
+  /// Maximum list index that will be honored when decoding bracket indices.
+  ///
+  /// Keys like `a[9999999]` can cause excessively large sparse lists; above
+  /// this limit, indices are treated as string map keys instead.
   final int listLimit;
 
-  /// The character encoding to use when decoding the input.
+  /// Character encoding used to decode percent‑encoded bytes in the input.
+  /// Only [utf8] and [latin1] are supported.
   final Encoding charset;
 
-  /// Some services add an initial `utf8=✓` value to forms so that old InternetExplorer versions are more likely to submit the
-  /// form as [utf8]. Additionally, the server can check the value against wrong encodings of the checkmark character and detect
-  /// that a query string or `application/x-www-form-urlencoded` body was *not* sent as [utf8], eg. if the form had an
-  /// `accept-charset` parameter or the containing page had a different character set.
+  /// Enable opt‑in charset detection via the `utf8=✓` sentinel.
   ///
-  /// [QS] supports this mechanism via the [charsetSentinel] option.
-  /// If specified, the [utf8] parameter will be omitted from the returned [Map].
-  /// It will be used to switch to [latin1]/[utf8] mode depending on how the checkmark is encoded.
+  /// If present at the start of the input, the sentinel will:
+  ///  * be omitted from the result map, and
+  ///  * override [charset] based on how the checkmark was encoded (UTF‑8 or
+  ///    Latin‑1).
   ///
-  /// Important: When you specify both the [charset] option and the [charsetSentinel] option,
-  /// the [charset] will be overridden when the request contains a [utf8] parameter from which the actual charset
-  /// can be deduced. In that sense the [charset] will behave as the default charset rather than the authoritative
-  /// charset.
+  /// If both [charset] and [charsetSentinel] are provided, the sentinel wins
+  /// when found; otherwise [charset] is used as the default.
   final bool charsetSentinel;
 
-  /// Set to `true` to parse the input as a comma-separated value.
-  ///
-  /// Note: nested [Map]s, such as `'a={b:1},{c:d}'` are not supported.
+  /// Parse the entire input as a comma‑separated value instead of key/value
+  /// pairs. Nested maps (e.g., `a={b:1},{c:d}`) are **not** supported in this
+  /// mode.
   final bool comma;
 
-  /// Set to `true` to decode dots in keys.
+  /// Decode dots that appear in *keys* (e.g., `a.b=c`).
   ///
-  /// Note: it implies [allowDots], so [QS.decode] will error if you set
-  /// [decodeDotInKeys] to `true`, and [allowDots] to `false`.
+  /// This explicitly opts into dot‑notation handling and implies [allowDots].
+  /// Setting [decodeDotInKeys] to `true` while forcing [allowDots] to `false`
+  /// is invalid and will cause an error in [QS.decode].
   final bool decodeDotInKeys;
 
-  /// The delimiter to use when splitting key-value pairs in the encoded input.
-  /// Can be a [String] or a [RegExp].
+  /// Delimiter used to split key/value pairs. May be a [String] (e.g., `"&"`)
+  /// or a [RegExp] for pattern‑based splitting.
   final Pattern delimiter;
 
-  /// By default, when nesting [Map]s [QS] will only decode up to 5 children deep.
-  /// This depth can be overridden by setting the [depth].
-  /// The depth limit helps mitigate abuse when qs is used to parse user input,
-  /// and it is recommended to keep it a reasonably small number.
+  /// Maximum nesting depth when constructing maps from bracket notation.
+  /// The default (5) is a protective limit against abuse; raise it only when
+  /// you control the inputs.
   final int depth;
 
-  /// For similar reasons, by default [QS] will only parse up to 1000
-  /// parameters. This can be overridden by passing a [parameterLimit]
-  /// option.
+  /// Maximum number of parameters to parse before applying limits.
+  /// Defaults to 1000 to guard against excessively long inputs.
   final num parameterLimit;
 
-  /// Change the duplicate key handling strategy
+  /// Strategy to apply when the same key appears multiple times.
   final Duplicates duplicates;
 
-  /// Set to `true` to ignore the leading question mark query prefix in the encoded input.
+  /// Ignore a leading `?` query prefix if present.
   final bool ignoreQueryPrefix;
 
-  /// Set to `true` to interpret HTML numeric entities (`&#...;`) in the encoded input.
+  /// Interpret HTML numeric entities like `&#...;` in tokens before decoding.
   final bool interpretNumericEntities;
 
-  /// To disable [List] parsing entirely, set [parseLists] to `false`.
+  /// Disable list parsing entirely when `false` (treat bracket indices as
+  /// string keys).
   final bool parseLists;
 
-  /// Set to `true` to add a layer of protection by throwing an error when the
-  /// limit is exceeded, allowing you to catch and handle such cases.
+  /// When `true`, exceeding [depth] results in a thrown error instead of a
+  /// soft limit.
   final bool strictDepth;
 
-  /// Set to true to decode values without `=` to `null`.
+  /// When `true`, tokens without an `=` (e.g., `?flag`) decode to `null`
+  /// rather than `""`.
   final bool strictNullHandling;
 
-  /// Set to `true` to throw an error when the limit is exceeded.
+  /// When `true`, exceeding *any* limit (like [parameterLimit] or [listLimit])
+  /// throws instead of applying a soft cap.
   final bool throwOnLimitExceeded;
 
-  /// Set a [Decoder] to affect the decoding of the input.
+  /// Optional custom scalar decoder for a single token.
+  /// If not provided, falls back to [Utils.decode].
   final Decoder? _decoder;
 
-  /// Decode the input using the specified [Decoder].
+  /// Decode a single scalar using either the custom [Decoder] or the default
+  /// implementation in [Utils.decode].
   dynamic decoder(String? value, {Encoding? charset}) => _decoder is Function
       ? _decoder?.call(value, charset: charset)
       : Utils.decode(value, charset: charset);
 
-  /// Returns a new [DecodeOptions] instance with updated values.
+  /// Return a new [DecodeOptions] with the provided overrides.
   DecodeOptions copyWith({
     bool? allowDots,
     bool? allowEmptyLists,
