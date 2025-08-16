@@ -1,3 +1,7 @@
+## 1.4.2
+
+- [CHORE] improve documentation
+
 ## 1.4.1
 
 - [CHORE] enhance type safety and improve readability in `Utils.compact` method
