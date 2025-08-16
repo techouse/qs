@@ -19,6 +19,21 @@ Ported from [qs](https://www.npmjs.com/package/qs) for JavaScript.
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/techouse)](https://github.com/sponsors/techouse)
 [![GitHub Repo stars](https://img.shields.io/github/stars/techouse/qs)](https://github.com/techouse/qs/stargazers)
 
+
+## Installation
+
+Add the package to your project:
+
+### For Dart projects:
+```sh
+dart pub add qs_dart
+```
+
+### For Flutter projects:
+```sh
+flutter pub add qs_dart
+```
+
 ## Usage
 
 A simple usage example:
@@ -95,8 +110,8 @@ expect(
 );
 ```
 
-By default, when nesting [Map]s [decode] will only decode up to 5 children deep. This means if you attempt to decode
-a string like `'a[b][c][d][e][f][g][h][i]=j'` your resulting [Map] will be:
+By default, nested [Map]s are decoded up to 5 levels deep. For example, decoding
+a string like `'a[b][c][d][e][f][g][h][i]=j'` yields the following [Map]:
 
 ```dart
 expect(
@@ -119,7 +134,7 @@ expect(
 );
 ```
 
-This depth can be overridden by passing a depth option to [DecodeOptions.depth]:
+You can override this limit with [DecodeOptions.depth]:
 
 ```dart
 expect(
@@ -155,8 +170,8 @@ The depth limit helps mitigate abuse when [decode] is used to parse user input, 
 reasonably small number. [DecodeOptions.strictDepth] adds a layer of protection by throwing a [RangeError] when the
 limit is exceeded, allowing you to catch and handle such cases.
 
-For similar reasons, by default [decode] will only parse up to **1000** parameters. This can be overridden by passing 
-a [DecodeOptions.parameterLimit] option:
+For similar reasons, by default [decode] parses up to **1000** parameters. Override with
+[DecodeOptions.parameterLimit]:
 
 ```dart
 expect(
@@ -182,7 +197,7 @@ expect(
 );
 ```
 
-An optional [DecodeOptions.delimiter] can also be passed:
+You can provide a custom [DecodeOptions.delimiter]:
 
 ```dart
 expect(
@@ -206,7 +221,7 @@ expect(
 );
 ```
 
-Option [DecodeOptions.allowDots] can be used to enable dot notation:
+Enable dot notation with [DecodeOptions.allowDots]:
 
 ```dart
 expect(
@@ -218,7 +233,7 @@ expect(
 );
 ```
 
-Option [DecodeOptions.decodeDotInKeys] can be used to decode dots in keys
+Decode percent-encoded dots in keys with [DecodeOptions.decodeDotInKeys].
 
 **Note:** it implies [DecodeOptions.allowDots], so [decode] will error if you set [DecodeOptions.decodeDotInKeys] 
 to `true`, and `DecodeOptions.allowDots` to `false`.
@@ -235,7 +250,7 @@ expect(
 );
 ```
 
-Option [DecodeOptions.allowEmptyLists] can be used to allow empty [List] values in a [Map].
+Allow empty [List] values within a [Map] with [DecodeOptions.allowEmptyLists].
 
 ```dart
 expect(
@@ -476,7 +491,7 @@ expect(
 );
 ```
 
-Some people use commas to join [List]s, [decode] can parse it by setting the [DecodeOptions.comma] option to `true`:
+Some systems join list items with commas; [decode] can parse this when [DecodeOptions.comma] is set to `true`:
 
 ```dart
 expect(
@@ -562,7 +577,7 @@ expect(
 );
 ```
 
-This encoding can also be replaced by a custom [Encoder] set as [EncodeOptions.encoder] option:
+You can supply a custom [Encoder] via [EncodeOptions.encoder]:
 
 ```dart
 expect(
@@ -586,7 +601,7 @@ expect(
 );
 ```
 
-_(Note: the [EncodeOptions.encoder] option does not apply if [EncodeOptions.encode] is `false`)_
+_(Note: [EncodeOptions.encoder] is ignored when [EncodeOptions.encode] is `false`.)_
 
 Similar to [EncodeOptions.encoder] there is a [DecodeOptions.decoder] option for [decode] to override decoding of 
 properties and values:
@@ -621,7 +636,7 @@ expect(
 );
 ```
 
-You may override this by setting the [EncodeOptions.indices] option to `false`, or to be more explicit, the
+You can override this by setting [EncodeOptions.indices] to `false`, or, more explicitly, the
 [EncodeOptions.listFormat] option to [ListFormat.repeat]:
 
 ```dart
@@ -639,7 +654,7 @@ expect(
 );
 ```
 
-You may use the [EncodeOptions.listFormat] option to specify the format of the output [List]:
+You can choose the list encoding style with [EncodeOptions.listFormat]:
 
 ```dart
 expect(
@@ -733,7 +748,7 @@ expect(
 );
 ```
 
-You may encode the dot notation in the keys of [Map] with option [EncodeOptions.encodeDotInKeys] by setting it to `true`:
+Encode literal dots in keys with [EncodeOptions.encodeDotInKeys] (use with [EncodeOptions.allowDots]):
 
 ```dart
 expect(
@@ -750,8 +765,7 @@ expect(
 );
 ```
 
-**Caveat:** when [EncodeOptions.encodeValuesOnly] is `true` as well as [EncodeOptions.encodeDotInKeys], only dots in 
-keys and nothing else will be encoded.
+**Caveat:** when both [EncodeOptions.encodeValuesOnly] and [EncodeOptions.encodeDotInKeys] are `true`, only dots in keys are encoded; values remain unchanged.
 
 You may allow empty [List] values by setting the [EncodeOptions.allowEmptyLists] option to `true`:
 
@@ -784,7 +798,7 @@ expect(
 );
 ```
 
-Key with no values (such as an empty [Map] or [List]) will return nothing:
+Keys with no values (e.g., empty [Map]s or [List]s) produce no output:
 
 ```dart
 expect(
@@ -833,7 +847,7 @@ expect(
 );
 ```
 
-Properties that are [Undefined] will be omitted entirely:
+Properties set to [Undefined] are omitted entirely:
 
 ```dart
 expect(
