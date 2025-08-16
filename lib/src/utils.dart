@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'dart:collection' show SplayTreeMap, HashSet;
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
@@ -10,11 +12,45 @@ import 'package:qs_dart/src/models/undefined.dart';
 
 part 'constants/hex_table.dart';
 
-/// A collection of utility methods used by the library.
+/// Internal utilities and helpers used by the library.
+///
+/// This class gathers low-level building blocks used by the public
+/// encoder/decoder. A few important notes about behavior:
+///
+/// - Unless explicitly stated, functions here are **pure** (no side effects).
+///   The notable exception is [compact], which **mutates** the provided
+///   map/list graph in place to remove `Undefined` markers.
+/// - [encode] and [decode] here operate on **scalar tokens** only; traversal
+///   and joining of keys/values is handled at a higher level.
+/// - Several functions accept/return `dynamic` for performance and to match
+///   the permissive behavior of the original Node.js `qs` implementation.
 @internal
 final class Utils {
   static const int _segmentLimit = 1024;
 
+  /// Deeply merges `source` into `target` while preserving insertion order
+  /// and list semantics used by `qs`.
+  ///
+  /// Rules of thumb:
+  /// - If `source == null`, returns `target` unchanged.
+  /// - When **both** sides are maps, keys are stringified and values are merged
+  ///   recursively.
+  /// - When `target` is an **Iterable** and `source` is **not** a map:
+  ///   - If either side is a list/set of maps, items are merged **by index**.
+  ///   - Otherwise values are **appended** (keeping iteration order).
+  ///   - Presence of [Undefined] acts like a hole; if `options.parseLists == false`
+  ///     and any `Undefined` remain after merging, the result is normalized to
+  ///     a map with string indices (`"0"`, `"1"`, …) to force object-shape.
+  /// - When `target` is a **map** and `source` is an **Iterable**, the iterable
+  ///   is promoted to an object using string indices and merged in.
+  /// - If neither side is a map/iterable, the two values are wrapped into a
+  ///   two-element list `[target, source]`.
+  ///
+  /// Ordering guarantees:
+  /// - Uses `SplayTreeMap` for temporary index maps to keep keys predictable.
+  ///
+  /// This mirrors the behavior of the original Node.js `qs` merge routine,
+  /// including treatment of `Undefined` sentinels.
   static dynamic merge(
     dynamic target,
     dynamic source, [
@@ -154,8 +190,13 @@ final class Utils {
     });
   }
 
-  /// A Dart representation the deprecated JavaScript escape function
-  /// https://developer.mozilla.org/en-US/docs/web/javascript/reference/global_objects/escape
+  /// Dart representation of JavaScript’s deprecated `escape` function.
+  ///
+  /// See MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/escape
+  ///
+  /// - Kept only for RFC1738/latin1 compatibility paths.
+  /// - Prefer `Uri.encodeComponent`; this helper is used internally when
+  ///   `charset == latin1` to mirror legacy behavior.
   @internal
   @visibleForTesting
   @Deprecated('Use Uri.encodeComponent instead')
@@ -201,8 +242,12 @@ final class Utils {
     return buffer.toString();
   }
 
-  /// A Dart representation the deprecated JavaScript unescape function
-  /// https://developer.mozilla.org/en-US/docs/web/javascript/reference/global_objects/unescape
+  /// Dart representation of JavaScript’s deprecated `unescape` function.
+  ///
+  /// See MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/unescape
+  ///
+  /// Used only for latin1 compatibility in [decode]. Prefer
+  /// `Uri.decodeComponent` for UTF‑8.
   @internal
   @visibleForTesting
   @Deprecated('Use Uri.decodeComponent instead')
@@ -275,6 +320,17 @@ final class Utils {
     return buffer.toString();
   }
 
+  /// Percent-encodes a **scalar** value into a query-safe token.
+  ///
+  /// - Returns `''` for container/sentinel types (Map/Iterable/Symbol/Record/Future/Undefined).
+  /// - Accepts `ByteBuffer` (decoded using `charset`) and any other scalar via `toString()`.
+  /// - Chunks long strings in `_segmentLimit` pieces for throughput.
+  /// - When `format == Format.rfc1738`, allows `(` and `)` as unreserved.
+  /// - When `charset == latin1`, falls back to [escape] and converts JavaScript
+  ///   `%uXXXX` sequences into percent-encoded numeric entities
+  ///   (`%26%23NNNN%3B`, i.e. `&#NNNN;`) to match Node’s `qs`.
+  ///
+  /// Note: Higher-level encoders are responsible for key assembly and joining.
   static String encode(
     dynamic value, {
     Encoding charset = utf8,
@@ -299,7 +355,6 @@ final class Utils {
     }
 
     if (charset == latin1) {
-      // ignore: deprecated_member_use_from_same_package
       return Utils.escape(str!, format: format).replaceAllMapped(
         RegExp(r'%u[0-9a-f]{4}', caseSensitive: false),
         (Match match) =>
@@ -361,13 +416,21 @@ final class Utils {
     return buffer.toString();
   }
 
+  /// Decodes a percent-encoded token back to a scalar string.
+  ///
+  /// - Treats `'+'` as space before decoding (URL form semantics).
+  /// - UTF‑8 path uses `Uri.decodeComponent`; on parse errors the original
+  ///   string (with `'+'` → space) is returned.
+  /// - latin1 path replaces `%XX` sequences via [unescape]; failures fall back
+  ///   to returning the input unchanged (after `'+'` handling).
+  ///
+  /// Returns `null` if `str` is `null`.
   static String? decode(String? str, {Encoding? charset = utf8}) {
     final String? strWithoutPlus = str?.replaceAll('+', ' ');
     if (charset == latin1) {
       try {
         return strWithoutPlus?.replaceAllMapped(
           RegExp(r'%[0-9a-f]{2}', caseSensitive: false),
-          // ignore: deprecated_member_use_from_same_package
           (Match match) => Utils.unescape(match.group(0)!),
         );
       } catch (_) {
@@ -383,10 +446,15 @@ final class Utils {
     }
   }
 
-  /// Iteratively removes `Undefined` from maps/lists in-place.
-  /// - Identity-based visitation avoids infinite loops on cycles.
-  /// - Preserves insertion order of Map/List.
-  /// - Mutates the given structure (decode builds a fresh structure, so this is safe).
+  /// Removes [Undefined] markers from maps/lists **in place**.
+  ///
+  /// - Traverses iteratively with an **identity-based** visited set to tolerate
+  ///   cycles without recursion.
+  /// - Preserves insertion order of `Map`/`List`.
+  /// - Safe for decode results (decode builds a fresh structure), but be careful
+  ///   when calling with shared objects because this mutates them.
+  ///
+  /// Returns the same `root` instance for chaining.
   static Map<String, dynamic> compact(Map<String, dynamic> root) {
     final List<Object> stack = [root];
 
@@ -426,14 +494,32 @@ final class Utils {
     return root;
   }
 
+  /// Concatenates two values as a typed `List<T>`, spreading iterables.
+  ///
+  /// Examples:
+  /// ```dart
+  /// combine&lt;int&gt;([1,2], 3); // [1,2,3]
+  /// combine&lt;String&gt;('a', ['b','c']); // ['a','b','c']
+  /// ```
   static List<T> combine<T>(dynamic a, dynamic b) => <T>[
         if (a is Iterable<T>) ...a else a,
         if (b is Iterable<T>) ...b else b,
       ];
 
+  /// Applies `fn` to a scalar or maps it over an iterable, returning the result.
+  ///
+  /// Handy when a caller may pass a single value or a collection.
   static dynamic apply<T>(dynamic val, T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
+  /// Returns `true` if `val` is a scalar we should encode as-is.
+  ///
+  /// Scalars include: `num`, `BigInt`, `bool`, `Enum`, `DateTime`, `Duration`,
+  /// `String` (optionally empty handling via `skipNulls`), and `Uri`.
+  /// Containers (`Iterable`, `Map`) and special cases (`Symbol`, `Record`,
+  /// `Future`, [Undefined]) return `false`.
+  ///
+  /// When `skipNulls == true`, empty strings and empty `Uri.toString()` return `false`.
   static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) {
     if (val is String) {
       return skipNulls ? val.isNotEmpty : true;
@@ -467,6 +553,10 @@ final class Utils {
     return false;
   }
 
+  /// Generic emptiness predicate for values handled by the encoder.
+  ///
+  /// Treats `null`, [Undefined], empty strings, empty iterables and empty maps
+  /// as “empty”.
   static bool isEmpty(dynamic val) =>
       val == null ||
       val is Undefined ||
@@ -474,6 +564,11 @@ final class Utils {
       (val is Iterable && val.isEmpty) ||
       (val is Map && val.isEmpty);
 
+  /// Decodes numeric HTML entities like `&#169;` into Unicode characters.
+  ///
+  /// - Only decimal entities are recognized.
+  /// - Gracefully leaves malformed/partial sequences untouched.
+  /// - Produces surrogate pairs for code points &gt; `0xFFFF`.
   static String interpretNumericEntities(String s) {
     if (s.length < 4) return s;
     final StringBuffer sb = StringBuffer();

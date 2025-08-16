@@ -1,12 +1,29 @@
-/// An enum of all available duplicate key handling strategies.
+/// Strategy to resolve repeated keys when **decoding** a query string.
+///
+/// When a query contains the same key more than once (e.g. `a=1&a=2&a=3`),
+/// the decoder must decide whether to keep all values or collapse them into
+/// a single value. `Duplicates` expresses that choice.
+///
+/// Notes:
+/// - Order is preserved as it appears in the source string.
+/// - This affects **decoding** only. The encoder may legitimately produce
+///   repeated keys when `ListFormat.repeatKey` is chosen.
+///
+/// See also: `DecodeOptions.duplicates`, `ListFormat`.
 enum Duplicates {
-  /// Combine duplicate keys into a single key with an array of values.
+  /// Keep **all** values as a `List`, preserving order.
+  ///
+  /// Example: `a=1&a=2` → `{ "a": ["1", "2"] }`
   combine,
 
-  /// Use the first value for duplicate keys.
+  /// Keep the **first** value and ignore the rest.
+  ///
+  /// Example: `a=1&a=2` → `{ "a": "1" }`
   first,
 
-  /// Use the last value for duplicate keys.
+  /// Keep the **last** value, overwriting earlier ones.
+  ///
+  /// Example: `a=1&a=2` → `{ "a": "2" }`
   last;
 
   @override

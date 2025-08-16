@@ -16,13 +16,38 @@ import 'package:weak_map/weak_map.dart';
 part 'extensions/decode.dart';
 part 'extensions/encode.dart';
 
-/// A query string decoder (parser) and encoder (stringifier) class.
+/// # QS (Dart)
+///
+/// Reference-style query‑string codec that mirrors the semantics of the
+/// popular Node `qs` library. Provides two entry points: [decode] and
+/// [encode].
+///
+/// Highlights
+/// - RFC 3986 / RFC 1738 output formatting via [Format].
+/// - Multiple list notations via [ListFormat].
+/// - Duplicate handling on decode via [Duplicates].
+/// - Pluggable encoder/decoder, custom key sorting and filtering hooks.
+/// - Optional query prefix and charset sentinel emission.
 final class QS {
-  /// Decodes a [String] or [Map<String, dynamic>] into a [Map<String, dynamic>].
-  /// Providing custom [options] will override the default behavior.
+  /// Decode a query string or a pre-parsed map into a structured map.
+  ///
+  /// - `input` may be:
+  ///   * a query [String] (e.g. `"a=1&b[c]=2"`), or
+  ///   * a pre-tokenized `Map<String, dynamic>` produced by a custom tokenizer.
+  /// - When `input` is `null` or the empty string, `{}` is returned.
+  /// - If [DecodeOptions.parseLists] is `true` and the number of top‑level
+  ///   parameters exceeds [DecodeOptions.listLimit], list parsing is
+  ///   temporarily disabled for this call to bound memory (mirrors Node `qs`).
+  /// - Throws [ArgumentError] if `input` is neither a `String` nor a
+  ///   `Map<String, dynamic>`.
+  ///
+  /// See [DecodeOptions] for delimiter, nesting depth, numeric-entity handling,
+  /// duplicates policy, and other knobs.
   static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
     options ??= const DecodeOptions();
+    // Default to the library's safe, Node-`qs` compatible settings.
 
+    // Fail fast on unsupported input shapes to avoid ambiguous behavior.
     if (!(input is String? || input is Map<String, dynamic>?)) {
       throw ArgumentError.value(
         input,
@@ -31,6 +56,7 @@ final class QS {
       );
     }
 
+    // Normalize `null` / empty string to an empty map.
     if (input?.isEmpty ?? true) {
       return <String, dynamic>{};
     }
@@ -39,6 +65,8 @@ final class QS {
         ? _$Decode._parseQueryStringValues(input, options)
         : input;
 
+    // Guardrail: if the top-level parameter count is large, temporarily disable
+    // list parsing to keep memory bounded (matches Node `qs`).
     if (options.parseLists &&
         options.listLimit > 0 &&
         (tempObj?.length ?? 0) > options.listLimit) {
@@ -47,6 +75,7 @@ final class QS {
 
     Map<String, dynamic> obj = {};
 
+    // Merge each parsed key into the accumulator using the same rules as Node `qs`.
     // Iterate over the keys and setup the new object
     if (tempObj?.isNotEmpty ?? false) {
       for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
@@ -61,18 +90,29 @@ final class QS {
       }
     }
 
+    // Drop undefined/empty leaves to match the reference behavior.
     return Utils.compact(obj);
   }
 
-  /// Encodes an [Object] into a query [String].
-  /// Providing custom [options] will override the default behavior.
+  /// Encode a map/iterable into a query string.
+  ///
+  /// - `object` may be:
+  ///   * a `Map<String, dynamic>` (encoded as key/value pairs),
+  ///   * an `Iterable` (encoded as an index‑keyed map: `0`, `1`, …), or
+  ///   * `null` (returns the empty string).
+  /// - If [EncodeOptions.filter] is a function, it is invoked like the
+  ///   Node `qs` filter; if it's an iterable, it specifies the exact
+  ///   key order/selection.
+  /// - Keys are optionally sorted via [EncodeOptions.sort].
+  /// - [EncodeOptions.addQueryPrefix] and [EncodeOptions.charsetSentinel]
+  ///   control the leading `?` and sentinel token emission.
+  ///
+  /// See [EncodeOptions] for details about list formats, output format, and hooks.
   static String encode(Object? object, [EncodeOptions? options]) {
     options ??= const EncodeOptions();
+    // Use default encoding settings unless overridden by the caller.
 
-    if (object == null) {
-      return '';
-    }
-
+    // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {
       Map<String, dynamic> map => {...map},
       Iterable iterable => iterable
@@ -84,12 +124,14 @@ final class QS {
 
     final List keys = [];
 
+    // Nothing to encode.
     if (obj.isEmpty) {
       return '';
     }
 
     List? objKeys;
 
+    // Support the two `qs` filter forms: function and whitelist iterable.
     if (options.filter is Function) {
       obj = options.filter?.call('', obj);
     } else if (options.filter is Iterable) {
@@ -98,10 +140,12 @@ final class QS {
 
     objKeys ??= obj.keys.toList();
 
+    // Deterministic key order if a sorter is provided.
     if (options.sort is Function) {
       objKeys.sort(options.sort);
     }
 
+    // Internal side-channel used by the encoder to detect cycles and share state.
     final WeakMap sideChannel = WeakMap();
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
@@ -142,6 +186,7 @@ final class QS {
       }
     }
 
+    // Join all encoded segments with the chosen delimiter.
     final String joined = keys.join(options.delimiter);
     final StringBuffer out = StringBuffer();
 
@@ -149,6 +194,7 @@ final class QS {
       out.write('?');
     }
 
+    // Optionally emit the charset sentinel (mirrors Node `qs`).
     if (options.charsetSentinel) {
       out.write(switch (options.charset) {
         /// encodeURIComponent('&#10003;')
@@ -161,6 +207,7 @@ final class QS {
       });
     }
 
+    // Append the payload after any optional prefix/sentinel.
     if (joined.isNotEmpty) {
       out.write(joined);
     }

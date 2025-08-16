@@ -5,12 +5,26 @@ import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/utils.dart';
 
+/// Encoders, sorters, and the immutable [EncodeOptions] used by `qs_dart`.
+///
+/// These hooks mirror the original Node.js `qs` library. Defaults are chosen to
+/// match the reference implementation so round‑trips are consistent across ports.
+
+/// Function hook used to percent‑encode a single scalar value.
+/// Must return an already percent‑encoded token (without delimiters).
+/// Ignored when [EncodeOptions.encode] is `false`.
 typedef Encoder = String Function(
   dynamic value, {
   Encoding? charset,
   Format? format,
 });
+
+/// Hook to stringify a [DateTime] before it goes through the [Encoder].
+/// Return a *plain*, unencoded string; the encoder will percent‑encode it.
 typedef DateSerializer = String Function(DateTime date);
+
+/// 3‑way comparator to impose a deterministic order on keys (‑1/0/+1).
+/// Returning values outside that set will be signum‑clamped by callers.
 typedef Sorter = int Function(dynamic a, dynamic b);
 
 /// Options that configure the output of [QS.encode].

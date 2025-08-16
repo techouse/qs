@@ -1,9 +1,51 @@
 part of '../qs.dart';
 
+/// Encoding engine used by [QS.encode].
+///
+/// This module mirrors the shape and behavior of the Node `qs` encoder:
+/// - Stable output: caller-supplied traversal order and optional sort callback.
+/// - Rich key syntax: bracket/indices/repeat/comma list formats; dotted keys; dot-encoding.
+/// - Safety: cycle detection via a side-channel; depth driven by the object graph only.
+/// - Ergonomics: optional custom value encoder, date serializer, and formatter.
+///
+/// Implementation notes:
+/// - *undefined* (bool parameter): marks a missing value (e.g., absent map key) rather than
+///   a present-but-null value. This affects whether we emit a key or skip it.
+/// - *sideChannel* ([WeakMap]): threads state through recursive calls to detect cycles
+///   without retaining the entire object graph.
+/// - *prefix*: current key path being built (e.g., `user[address]`), with optional `?` prefix.
+
 extension _$Encode on QS {
+  // Side-channel anchor used to thread cycle-detection state through recursion.
+  // We store nested WeakMaps under this key to walk back up the call stack.
   static const Map _sentinel = {};
 
-  /// Returns either dynamic or List&lt;dynamic&gt; based on the object.
+  /// Core encoder (recursive).
+  ///
+  /// Returns either a `String` (single key=value) or `List<String>` fragments, which the
+  /// top-level caller ultimately joins with the chosen delimiter.
+  ///
+  /// Parameters (most mirror Node `qs`):
+  /// - [object]: The current value to encode (map/iterable/scalar/byte buffer/date).
+  /// - [undefined]: Marks a *missing* value (e.g., absent map key). When `true`, nothing is emitted.
+  /// - [sideChannel]: Weak side-channel used for cycle detection across recursive calls.
+  /// - [prefix]: Current key path (e.g., `user[address]`). If `addQueryPrefix` is true at the root, we start with `?`.
+  /// - [generateArrayPrefix]: Strategy for array key generation (brackets/indices/repeat/comma).
+  /// - [commaRoundTrip]: When true and a single-element list is encountered under `.comma`, emit `[]` to ensure the value round-trips back to an array.
+  /// - [allowEmptyLists]: If a list is empty, emit `key[]` instead of skipping.
+  /// - [strictNullHandling]: If a present value is `null`, emit only the key (no `=`) instead of `key=`.
+  /// - [skipNulls]: Skip keys whose value is `null`.
+  /// - [encodeDotInKeys]: Replace literal `.` in keys with `%2E`.
+  /// - [encoder]: Optional percent-encoder for values (and keys when `encodeValuesOnly == false`).
+  /// - [serializeDate]: Optional serializer for `DateTime` → String *before* encoding.
+  /// - [sort]: Optional comparator for determining key order at each object depth.
+  /// - [filter]: Either a function `(key, value) → value` or an iterable that constrains emitted keys.
+  /// - [allowDots]: When true, dot notation is used between path segments instead of brackets.
+  /// - [format]: RFC3986 or RFC1738 — influences space/plus behavior via [formatter].
+  /// - [formatter]: Converts scalar strings to their final on-wire form (applies percent-encoding).
+  /// - [encodeValuesOnly]: When true, keys are left as-is and only values are encoded by [encoder].
+  /// - [charset]: Present for parity; encoding is delegated to [encoder]/[formatter].
+  /// - [addQueryPrefix]: At the root, prefix output with `?`.
   static dynamic _encode(
     dynamic object, {
     required bool undefined,
@@ -37,6 +79,8 @@ extension _$Encode on QS {
     int step = 0;
     bool findFlag = false;
 
+    // Walk the nested WeakMap chain to see if the current object already appeared
+    // in the traversal path. If so, either throw (direct cycle) or stop descending.
     while ((tmpSc = tmpSc?.get(_sentinel)) != null && !findFlag) {
       // Where object last appeared in the ref tree
       final int? pos = tmpSc?.get(object) as int?;
@@ -53,6 +97,7 @@ extension _$Encode on QS {
       }
     }
 
+    // Apply filter hook first. For dates, serialize them before any list/comma handling.
     if (filter is Function) {
       obj = filter.call(prefix, obj);
     } else if (obj is DateTime) {
@@ -70,6 +115,9 @@ extension _$Encode on QS {
       );
     }
 
+    // Present-but-null handling:
+    // - If the value is *present* and null and strictNullHandling is on, emit only the key.
+    // - Otherwise, treat null as an empty string.
     if (!undefined && obj == null) {
       if (strictNullHandling) {
         return encoder != null && !encodeValuesOnly ? encoder(prefix) : prefix;
@@ -78,6 +126,7 @@ extension _$Encode on QS {
       obj = '';
     }
 
+    // Fast path for primitives and byte buffers → return a single key=value fragment.
     if (Utils.isNonNullishPrimitive(obj, skipNulls) || obj is ByteBuffer) {
       if (encoder != null) {
         final String keyValue = encodeValuesOnly ? prefix : encoder(prefix);
@@ -86,6 +135,7 @@ extension _$Encode on QS {
       return ['${formatter(prefix)}=${formatter(obj.toString())}'];
     }
 
+    // Collect per-branch fragments; empty list signifies "emit nothing" for this path.
     final List values = [];
 
     if (undefined) {
@@ -93,6 +143,10 @@ extension _$Encode on QS {
     }
 
     late final List objKeys;
+    // Determine the set of keys/indices to traverse at this depth:
+    // - For `.comma` lists we join values in-place.
+    // - If `filter` is Iterable, it constrains the key set.
+    // - Otherwise derive keys from Map/Iterable, and optionally sort them.
     if (generateArrayPrefix == ListFormat.comma.generator && obj is Iterable) {
       // we need to join elements in
       if (encodeValuesOnly && encoder != null) {
@@ -127,6 +181,9 @@ extension _$Encode on QS {
       objKeys = sort != null ? (keys.toList()..sort(sort)) : keys.toList();
     }
 
+    // Key-path formatting:
+    // - Optionally encode literal dots.
+    // - Under `.comma` with single-element lists and round-trip enabled, append [].
     final String encodedPrefix =
         encodeDotInKeys ? prefix.replaceAll('.', '%2E') : prefix;
 
@@ -135,6 +192,7 @@ extension _$Encode on QS {
             ? '$encodedPrefix[]'
             : encodedPrefix;
 
+    // Emit `key[]` when an empty list is allowed, to preserve shape on round-trip.
     if (allowEmptyLists && obj is Iterable && obj.isEmpty) {
       return '$adjustedPrefix[]';
     }
@@ -150,6 +208,7 @@ extension _$Encode on QS {
         value = key['value'];
         valueUndefined = false;
       } else {
+        // Resolve value for the current key/index.
         try {
           if (obj is Map) {
             value = obj[key];
@@ -158,6 +217,8 @@ extension _$Encode on QS {
             value = obj.elementAt(key);
             valueUndefined = false;
           } else {
+            // Best-effort dynamic indexer for user-defined classes that expose `operator []`.
+            // If it throws (no indexer / wrong type), we fall through to the catch and mark undefined.
             value = obj[key];
             valueUndefined = false;
           }
@@ -171,6 +232,7 @@ extension _$Encode on QS {
         continue;
       }
 
+      // Build the next key path segment using either bracket or dot notation.
       final String encodedKey = allowDots && encodeDotInKeys
           ? key.toString().replaceAll('.', '%2E')
           : key.toString();
@@ -179,6 +241,7 @@ extension _$Encode on QS {
           ? generateArrayPrefix(adjustedPrefix, encodedKey)
           : '$adjustedPrefix${allowDots ? '.$encodedKey' : '[$encodedKey]'}';
 
+      // Thread cycle-detection state into recursive calls without keeping strong references.
       sideChannel[object] = step;
       final WeakMap valueSideChannel = WeakMap();
       valueSideChannel.add(key: _sentinel, value: sideChannel);
@@ -209,6 +272,7 @@ extension _$Encode on QS {
         sideChannel: valueSideChannel,
       );
 
+      // Flatten nested results (each recursion returns a list of fragments or a single fragment).
       if (encoded is Iterable) {
         values.addAll(encoded);
       } else {
