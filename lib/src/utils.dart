@@ -656,4 +656,24 @@ final class Utils {
     }
     return sb.toString();
   }
+
+  /// Create an index-keyed map from an iterable.
+  static Map<String, dynamic> createIndexMap(Iterable iterable) {
+    if (iterable is List) {
+      final list = iterable;
+      final map = <String, dynamic>{};
+      for (var i = 0; i < list.length; i++) {
+        map[i.toString()] = list[i];
+      }
+      return map;
+    } else {
+      final map = <String, dynamic>{};
+      var i = 0;
+      for (final v in iterable) {
+        map[i.toString()] = v;
+        i++;
+      }
+      return map;
+    }
+  }
 }
