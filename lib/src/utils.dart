@@ -382,8 +382,8 @@ final class Utils {
         if (end < len) {
           final int last = s.codeUnitAt(end - 1);
           if (last >= 0xD800 && last <= 0xDBFF) {
-            end -=
-                1; // keep the high surrogate with its low surrogate in next segment
+            // keep the high surrogate with its low surrogate in next segment
+            end--;
           }
         }
         _writeEncodedSegment(s.substring(j, end), buffer, format);
@@ -405,8 +405,8 @@ final class Utils {
         case 0x5F: // _
         case 0x7E: // ~
         case int v when v >= 0x30 && v <= 0x39: // 0-9
-        case int v when v >= 0x41 && v <= 0x5A: // a-z
-        case int v when v >= 0x61 && v <= 0x7A: // A-Z
+        case int v when v >= 0x41 && v <= 0x5A: // A-Z
+        case int v when v >= 0x61 && v <= 0x7A: // a-z
         case int v
             when format == Format.rfc1738 && (v == 0x28 || v == 0x29): // ( )
           buffer.writeCharCode(c);
@@ -420,22 +420,54 @@ final class Utils {
             hexTable[0x80 | (v & 0x3F)],
           ]);
           continue;
-        case int v when v < 0xD800 || v >= 0xE000: // 3 bytes
+        case int v
+            when v < 0xD800 || v >= 0xE000: // 3 bytes (BMP, non-surrogates)
           buffer.writeAll([
             hexTable[0xE0 | (v >> 12)],
             hexTable[0x80 | ((v >> 6) & 0x3F)],
             hexTable[0x80 | (v & 0x3F)],
           ]);
           continue;
-        default:
-          i++;
-          c = 0x10000 + (((c & 0x3FF) << 10) | (segment.codeUnitAt(i) & 0x3FF));
+
+        case int v when v >= 0xD800 && v <= 0xDBFF: // high surrogate
+          if (i + 1 < segment.length) {
+            final int w = segment.codeUnitAt(i + 1);
+            if (w >= 0xDC00 && w <= 0xDFFF) {
+              final int code = 0x10000 + (((v & 0x3FF) << 10) | (w & 0x3FF));
+              buffer.writeAll([
+                hexTable[0xF0 | (code >> 18)],
+                hexTable[0x80 | ((code >> 12) & 0x3F)],
+                hexTable[0x80 | ((code >> 6) & 0x3F)],
+                hexTable[0x80 | (code & 0x3F)],
+              ]);
+              i++; // consume low surrogate
+              continue;
+            }
+          }
+          // Lone high surrogate: encode as a 3-byte sequence of the code unit
           buffer.writeAll([
-            hexTable[0xF0 | (c >> 18)],
-            hexTable[0x80 | ((c >> 12) & 0x3F)],
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+
+        case int v when v >= 0xDC00 && v <= 0xDFFF: // lone low surrogate
+          buffer.writeAll([
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+
+        default:
+          // Fallback: encode as 3 bytes of the code unit (should not be hit)
+          buffer.writeAll([
+            hexTable[0xE0 | (c >> 12)],
             hexTable[0x80 | ((c >> 6) & 0x3F)],
             hexTable[0x80 | (c & 0x3F)],
           ]);
+          continue;
       }
     }
   }
