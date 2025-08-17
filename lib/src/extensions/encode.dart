@@ -70,7 +70,8 @@ extension _$Encode on QS {
   }) {
     prefix ??= addQueryPrefix ? '?' : '';
     generateArrayPrefix ??= ListFormat.indices.generator;
-    commaRoundTrip ??= generateArrayPrefix == ListFormat.comma.generator;
+    commaRoundTrip ??=
+        identical(generateArrayPrefix, ListFormat.comma.generator);
     formatter ??= format.formatter;
 
     dynamic obj = object;
@@ -105,7 +106,7 @@ extension _$Encode on QS {
         null => obj.toIso8601String(),
         _ => serializeDate(obj),
       };
-    } else if (generateArrayPrefix == ListFormat.comma.generator &&
+    } else if (identical(generateArrayPrefix, ListFormat.comma.generator) &&
         obj is Iterable) {
       obj = Utils.apply(
         obj,
@@ -142,12 +143,24 @@ extension _$Encode on QS {
       return values;
     }
 
+    // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration
+    List<dynamic>? seqList_;
+    final bool isSeq_ = obj is Iterable && obj is! String && obj is! Map;
+    if (isSeq_) {
+      if (obj is List) {
+        seqList_ = obj;
+      } else {
+        seqList_ = obj.toList(growable: false);
+      }
+    }
+
     late final List objKeys;
     // Determine the set of keys/indices to traverse at this depth:
     // - For `.comma` lists we join values in-place.
     // - If `filter` is Iterable, it constrains the key set.
     // - Otherwise derive keys from Map/Iterable, and optionally sort them.
-    if (generateArrayPrefix == ListFormat.comma.generator && obj is Iterable) {
+    if (identical(generateArrayPrefix, ListFormat.comma.generator) &&
+        obj is Iterable) {
       // we need to join elements in
       if (encodeValuesOnly && encoder != null) {
         obj = Utils.apply<String>(obj, encoder);
@@ -173,10 +186,15 @@ extension _$Encode on QS {
       late final Iterable keys;
       if (obj is Map) {
         keys = obj.keys;
-      } else if (obj is Iterable) {
-        keys = [for (int index = 0; index < obj.length; index++) index];
+      } else if (seqList_ != null) {
+        final int n = seqList_.length;
+        final List<int> idxs = List<int>.filled(n, 0, growable: false);
+        for (int i = 0; i < n; i++) {
+          idxs[i] = i;
+        }
+        keys = idxs;
       } else {
-        keys = [];
+        keys = const <int>[];
       }
       objKeys = sort != null ? (keys.toList()..sort(sort)) : keys.toList();
     }
@@ -188,12 +206,12 @@ extension _$Encode on QS {
         encodeDotInKeys ? prefix.replaceAll('.', '%2E') : prefix;
 
     final String adjustedPrefix =
-        commaRoundTrip && obj is Iterable && obj.length == 1
+        (commaRoundTrip == true) && seqList_ != null && seqList_.length == 1
             ? '$encodedPrefix[]'
             : encodedPrefix;
 
     // Emit `key[]` when an empty list is allowed, to preserve shape on round-trip.
-    if (allowEmptyLists && obj is Iterable && obj.isEmpty) {
+    if (allowEmptyLists && seqList_ != null && seqList_.isEmpty) {
       return '$adjustedPrefix[]';
     }
 
@@ -213,9 +231,15 @@ extension _$Encode on QS {
           if (obj is Map) {
             value = obj[key];
             valueUndefined = !obj.containsKey(key);
-          } else if (obj is Iterable) {
-            value = obj.elementAt(key);
-            valueUndefined = false;
+          } else if (seqList_ != null) {
+            final int? idx = key is int ? key : int.tryParse(key.toString());
+            if (idx != null && idx >= 0 && idx < seqList_.length) {
+              value = seqList_[idx];
+              valueUndefined = false;
+            } else {
+              value = null;
+              valueUndefined = true;
+            }
           } else {
             // Best-effort dynamic indexer for user-defined classes that expose `operator []`.
             // If it throws (no indexer / wrong type), we fall through to the catch and mark undefined.
@@ -237,7 +261,7 @@ extension _$Encode on QS {
           ? key.toString().replaceAll('.', '%2E')
           : key.toString();
 
-      final String keyPrefix = obj is Iterable
+      final String keyPrefix = seqList_ != null
           ? generateArrayPrefix(adjustedPrefix, encodedKey)
           : '$adjustedPrefix${allowDots ? '.$encodedKey' : '[$encodedKey]'}';
 
@@ -256,9 +280,9 @@ extension _$Encode on QS {
         strictNullHandling: strictNullHandling,
         skipNulls: skipNulls,
         encodeDotInKeys: encodeDotInKeys,
-        encoder: generateArrayPrefix == ListFormat.comma.generator &&
+        encoder: identical(generateArrayPrefix, ListFormat.comma.generator) &&
                 encodeValuesOnly &&
-                obj is Iterable
+                seqList_ != null
             ? null
             : encoder,
         serializeDate: serializeDate,
