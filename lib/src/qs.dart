@@ -115,14 +115,11 @@ final class QS {
     // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {
       Map<String, dynamic> map => {...map},
-      Iterable iterable => iterable
-          .toList()
-          .asMap()
-          .map((int k, dynamic v) => MapEntry(k.toString(), v)),
+      Iterable iterable => Utils.createIndexMap(iterable),
       _ => <String, dynamic>{},
     };
 
-    final List keys = [];
+    final List<String> keys = [];
 
     // Nothing to encode.
     if (obj.isEmpty) {
@@ -154,14 +151,16 @@ final class QS {
         continue;
       }
 
+      final ListFormatGenerator gen = options.listFormat.generator;
+      final bool crt = identical(gen, ListFormat.comma.generator) &&
+          options.commaRoundTrip == true;
+
       final encoded = _$Encode._encode(
         obj[key],
         undefined: !obj.containsKey(key),
         prefix: key,
-        generateArrayPrefix: options.listFormat.generator,
-        commaRoundTrip:
-            options.listFormat.generator == ListFormat.comma.generator &&
-                options.commaRoundTrip == true,
+        generateArrayPrefix: gen,
+        commaRoundTrip: crt,
         allowEmptyLists: options.allowEmptyLists,
         strictNullHandling: options.strictNullHandling,
         skipNulls: options.skipNulls,
@@ -180,9 +179,11 @@ final class QS {
       );
 
       if (encoded is Iterable) {
-        keys.addAll(encoded);
-      } else {
-        keys.add(encoded);
+        for (final e in encoded) {
+          if (e != null) keys.add(e as String);
+        }
+      } else if (encoded != null) {
+        keys.add(encoded as String);
       }
     }
 
