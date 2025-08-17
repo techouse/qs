@@ -1,5 +1,7 @@
 # Makefile
 
+.PHONY: test
+
 help:
 	@printf "%-20s %s\n" "Target" "Description"
 	@printf "%-20s %s\n" "------" "-----------"
@@ -43,7 +45,7 @@ show_test_coverage:
 	genhtml coverage/lcov.info -o coverage/html
 	source ./scripts/makefile_scripts.sh && open_link "coverage/html/index.html"
 
-tests:
+test:
 	@# Help: Run VM tests
 	dart test --platform vm
 
