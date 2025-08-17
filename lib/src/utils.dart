@@ -64,12 +64,7 @@ final class Utils {
       if (target is Iterable) {
         if (target.any((el) => el is Undefined)) {
           // use a SplayTreeMap to keep the keys in order
-          final SplayTreeMap<int, dynamic> target_ =
-              SplayTreeMap<int, dynamic>();
-          int i_ = 0;
-          for (final dynamic item in target) {
-            target_[i_++] = item;
-          }
+          final SplayTreeMap<int, dynamic> target_ = _toIndexedTreeMap(target);
 
           if (source is Iterable) {
             for (final (int i, dynamic item) in source.indexed) {
@@ -98,11 +93,7 @@ final class Utils {
               // loop through the target list and merge the maps
               // then loop through the source list and add any new maps
               final SplayTreeMap<int, dynamic> target_ =
-                  SplayTreeMap<int, dynamic>();
-              int j_ = 0;
-              for (final dynamic item in target) {
-                target_[j_++] = item;
-              }
+                  _toIndexedTreeMap(target);
               for (final (int i, dynamic item) in source.indexed) {
                 target_.update(
                   i,
@@ -196,6 +187,16 @@ final class Utils {
       );
     }
     return mergeTarget;
+  }
+
+  /// Converts an iterable to a zero-indexed [SplayTreeMap].
+  static SplayTreeMap<int, dynamic> _toIndexedTreeMap(Iterable iterable) {
+    final SplayTreeMap<int, dynamic> map = SplayTreeMap<int, dynamic>();
+    int i = 0;
+    for (final v in iterable) {
+      map[i++] = v;
+    }
+    return map;
   }
 
   /// Dart representation of JavaScript’s deprecated `escape` function.

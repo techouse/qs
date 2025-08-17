@@ -187,12 +187,7 @@ extension _$Encode on QS {
       if (obj is Map) {
         keys = obj.keys;
       } else if (seqList_ != null) {
-        final int n = seqList_.length;
-        final List<int> idxs = List<int>.filled(n, 0, growable: false);
-        for (int i = 0; i < n; i++) {
-          idxs[i] = i;
-        }
-        keys = idxs;
+        keys = List<int>.generate(seqList_.length, (i) => i, growable: false);
       } else {
         keys = const <int>[];
       }
@@ -261,9 +256,14 @@ extension _$Encode on QS {
           ? key.toString().replaceAll('.', '%2E')
           : key.toString();
 
-      final String keyPrefix = seqList_ != null
-          ? generateArrayPrefix(adjustedPrefix, encodedKey)
-          : '$adjustedPrefix${allowDots ? '.$encodedKey' : '[$encodedKey]'}';
+      final bool isCommaSentinel =
+          key is Map<String, dynamic> && key.containsKey('value');
+      final String keyPrefix = (isCommaSentinel &&
+              identical(generateArrayPrefix, ListFormat.comma.generator))
+          ? adjustedPrefix
+          : (seqList_ != null
+              ? generateArrayPrefix(adjustedPrefix, encodedKey)
+              : '$adjustedPrefix${allowDots ? '.$encodedKey' : '[$encodedKey]'}');
 
       // Thread cycle-detection state into recursive calls without keeping strong references.
       sideChannel[object] = step;

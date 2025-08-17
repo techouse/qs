@@ -49,7 +49,8 @@ extension _$Decode on QS {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
-      if (options.throwOnLimitExceeded && splitVal.length > options.listLimit) {
+      if (options.throwOnLimitExceeded &&
+          currentListLength + splitVal.length > options.listLimit) {
         throw RangeError(
           'List limit exceeded. '
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -60,7 +61,7 @@ extension _$Decode on QS {
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
-        currentListLength >= options.listLimit) {
+        currentListLength + 1 > options.listLimit) {
       throw RangeError(
         'List limit exceeded. '
         'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -168,9 +169,11 @@ extension _$Decode on QS {
           !Utils.isEmpty(val) &&
           options.interpretNumericEntities &&
           charset == latin1) {
-        final String tmp =
-            val is Iterable ? _joinIterableToCommaString(val) : val.toString();
-        val = Utils.interpretNumericEntities(tmp);
+        if (val is Iterable) {
+          val = Utils.interpretNumericEntities(_joinIterableToCommaString(val));
+        } else {
+          val = Utils.interpretNumericEntities(val.toString());
+        }
       }
 
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
@@ -208,14 +211,20 @@ extension _$Decode on QS {
     // Determine the current list length if we are appending into `[]`.
     late final int currentListLength;
 
-    if (chain.isNotEmpty && chain.last == '[]') {
-      final int? parentKey = int.tryParse(chain.slice(0, -1).join(''));
-
-      currentListLength = parentKey != null &&
-              val is List &&
-              val.firstWhereIndexedOrNull((int i, _) => i == parentKey) != null
-          ? val.elementAt(parentKey).length
-          : 0;
+    if (chain.length >= 2 && chain.last == '[]') {
+      final String prev = chain[chain.length - 2];
+      final bool bracketed = prev.startsWith('[') && prev.endsWith(']');
+      final int? parentIndex =
+          bracketed ? int.tryParse(prev.substring(1, prev.length - 1)) : null;
+      if (parentIndex != null &&
+          parentIndex >= 0 &&
+          val is List &&
+          parentIndex < val.length) {
+        final dynamic parent = val[parentIndex];
+        currentListLength = parent is List ? parent.length : 0;
+      } else {
+        currentListLength = 0;
+      }
     } else {
       currentListLength = 0;
     }

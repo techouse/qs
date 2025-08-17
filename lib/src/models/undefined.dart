@@ -18,5 +18,5 @@ final class Undefined with EquatableMixin {
 
   /// No distinguishing fields — all [Undefined] instances are equal.
   @override
-  List<Object> get props => [];
+  List<Object> get props => const [];
 }

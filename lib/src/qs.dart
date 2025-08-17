@@ -1,7 +1,6 @@
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
@@ -147,7 +146,7 @@ final class QS {
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
 
-      if (key is! String? || (obj[key] == null && options.skipNulls)) {
+      if (key is! String || (obj[key] == null && options.skipNulls)) {
         continue;
       }
 
