@@ -124,7 +124,7 @@ extension _$Decode on QS {
         if (p.startsWith('utf8=')) {
           if (p == Sentinel.charset.toString()) {
             charset = utf8;
-          } else if (parts.elementAt(i) == Sentinel.iso.toString()) {
+          } else if (p == Sentinel.iso.toString()) {
             charset = latin1;
           }
           skipIndex = i;
@@ -174,8 +174,8 @@ extension _$Decode on QS {
       }
 
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
-      if (part.contains('[]=')) {
-        val = val is Iterable ? [val] : val;
+      if (options.parseLists && part.contains('[]=')) {
+        val = [val];
       }
 
       // Duplicate key policy: combine/first/last (default: combine).
