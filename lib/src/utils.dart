@@ -374,10 +374,20 @@ final class Utils {
     if (len <= _segmentLimit) {
       _writeEncodedSegment(s, buffer, format);
     } else {
-      for (int j = 0; j < len; j += _segmentLimit) {
-        final end = (j + _segmentLimit <= len) ? j + _segmentLimit : len;
-        final segment = s.substring(j, end);
-        _writeEncodedSegment(segment, buffer, format);
+      int j = 0;
+      while (j < len) {
+        int end = j + _segmentLimit;
+        if (end > len) end = len;
+        // Avoid splitting a UTF-16 surrogate pair across segment boundary.
+        if (end < len) {
+          final int last = s.codeUnitAt(end - 1);
+          if (last >= 0xD800 && last <= 0xDBFF) {
+            end -=
+                1; // keep the high surrogate with its low surrogate in next segment
+          }
+        }
+        _writeEncodedSegment(s.substring(j, end), buffer, format);
+        j = end; // advance to the adjusted end
       }
     }
 
