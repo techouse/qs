@@ -1,3 +1,17 @@
+## 1.4.3
+
+- [FIX] optimize map merging and percent-encoding logic in `Utils`
+- [FIX] improve percent-decoding performance and refactor merge logic in `Utils`
+- [FIX] optimize slice logic for lists and strings to improve bounds handling and performance
+- [FIX] optimize iterable handling in encoder for improved performance and consistency
+- [FIX] optimize parameter splitting and iterable joining in decoder for improved performance and clarity
+- [FIX] refine charset detection and array parsing logic in decoder for improved accuracy and consistency
+- [FIX] add utility to create index-keyed map from iterable for improved mapping flexibility
+- [FIX] optimize encoder map normalization and key handling for improved type safety and clarity
+- [FIX] prevent splitting UTF-16 surrogate pairs across segment boundaries in encoder for improved correctness
+- [FIX] refine UTF-16 surrogate handling in encoder for improved correctness and Unicode compliance
+- [FIX] optimize list limit enforcement, key handling, and iterable indexing for improved correctness and clarity
+
 ## 1.4.2
 
 - [CHORE] improve documentation
