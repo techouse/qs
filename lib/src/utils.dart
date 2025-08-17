@@ -65,7 +65,11 @@ final class Utils {
         if (target.any((el) => el is Undefined)) {
           // use a SplayTreeMap to keep the keys in order
           final SplayTreeMap<int, dynamic> target_ =
-              SplayTreeMap.of(target.toList().asMap());
+              SplayTreeMap<int, dynamic>();
+          int i_ = 0;
+          for (final dynamic item in target) {
+            target_[i_++] = item;
+          }
 
           if (source is Iterable) {
             for (final (int i, dynamic item) in source.indexed) {
@@ -94,7 +98,11 @@ final class Utils {
               // loop through the target list and merge the maps
               // then loop through the source list and add any new maps
               final SplayTreeMap<int, dynamic> target_ =
-                  SplayTreeMap.of(target.toList().asMap());
+                  SplayTreeMap<int, dynamic>();
+              int j_ = 0;
+              for (final dynamic item in target) {
+                target_[j_++] = item;
+              }
               for (final (int i, dynamic item) in source.indexed) {
                 target_.update(
                   i,
@@ -224,10 +232,7 @@ final class Utils {
       }
 
       if (c < 256) {
-        buffer.writeAll([
-          '%',
-          c.toRadixString(16).padLeft(2, '0').toUpperCase(),
-        ]);
+        buffer.write(hexTable[c]);
         continue;
       }
 
@@ -363,57 +368,65 @@ final class Utils {
     }
 
     final StringBuffer buffer = StringBuffer();
-
-    for (int j = 0; j < str!.length; j += _segmentLimit) {
-      final String segment =
-          str.length >= _segmentLimit ? str.slice(j, j + _segmentLimit) : str;
-
-      for (int i = 0; i < segment.length; ++i) {
-        int c = segment.codeUnitAt(i);
-
-        switch (c) {
-          case 0x2D: // -
-          case 0x2E: // .
-          case 0x5F: // _
-          case 0x7E: // ~
-          case int c when c >= 0x30 && c <= 0x39: // 0-9
-          case int c when c >= 0x41 && c <= 0x5A: // a-z
-          case int c when c >= 0x61 && c <= 0x7A: // A-Z
-          case int c
-              when format == Format.rfc1738 && (c == 0x28 || c == 0x29): // ( )
-            buffer.write(segment[i]);
-            continue;
-          case int c when c < 0x80: // ASCII
-            buffer.write(hexTable[c]);
-            continue;
-          case int c when c < 0x800: // 2 bytes
-            buffer.writeAll([
-              hexTable[0xC0 | (c >> 6)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
-            continue;
-          case int c when c < 0xD800 || c >= 0xE000: // 3 bytes
-            buffer.writeAll([
-              hexTable[0xE0 | (c >> 12)],
-              hexTable[0x80 | ((c >> 6) & 0x3F)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
-            continue;
-          default:
-            i++;
-            c = 0x10000 +
-                (((c & 0x3FF) << 10) | (segment.codeUnitAt(i) & 0x3FF));
-            buffer.writeAll([
-              hexTable[0xF0 | (c >> 18)],
-              hexTable[0x80 | ((c >> 12) & 0x3F)],
-              hexTable[0x80 | ((c >> 6) & 0x3F)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
-        }
+    final String s = str!;
+    final int len = s.length;
+    if (len <= _segmentLimit) {
+      _writeEncodedSegment(s, buffer, format);
+    } else {
+      for (int j = 0; j < len; j += _segmentLimit) {
+        final end = (j + _segmentLimit <= len) ? j + _segmentLimit : len;
+        final segment = s.substring(j, end);
+        _writeEncodedSegment(segment, buffer, format);
       }
     }
 
     return buffer.toString();
+  }
+
+  static void _writeEncodedSegment(
+      String segment, StringBuffer buffer, Format? format) {
+    for (int i = 0; i < segment.length; ++i) {
+      int c = segment.codeUnitAt(i);
+
+      switch (c) {
+        case 0x2D: // -
+        case 0x2E: // .
+        case 0x5F: // _
+        case 0x7E: // ~
+        case int v when v >= 0x30 && v <= 0x39: // 0-9
+        case int v when v >= 0x41 && v <= 0x5A: // a-z
+        case int v when v >= 0x61 && v <= 0x7A: // A-Z
+        case int v
+            when format == Format.rfc1738 && (v == 0x28 || v == 0x29): // ( )
+          buffer.writeCharCode(c);
+          continue;
+        case int v when v < 0x80: // ASCII
+          buffer.write(hexTable[v]);
+          continue;
+        case int v when v < 0x800: // 2 bytes
+          buffer.writeAll([
+            hexTable[0xC0 | (v >> 6)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+        case int v when v < 0xD800 || v >= 0xE000: // 3 bytes
+          buffer.writeAll([
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+        default:
+          i++;
+          c = 0x10000 + (((c & 0x3FF) << 10) | (segment.codeUnitAt(i) & 0x3FF));
+          buffer.writeAll([
+            hexTable[0xF0 | (c >> 18)],
+            hexTable[0x80 | ((c >> 12) & 0x3F)],
+            hexTable[0x80 | ((c >> 6) & 0x3F)],
+            hexTable[0x80 | (c & 0x3F)],
+          ]);
+      }
+    }
   }
 
   /// Decodes a percent-encoded token back to a scalar string.
@@ -430,8 +443,12 @@ final class Utils {
     if (charset == latin1) {
       try {
         return strWithoutPlus?.replaceAllMapped(
-          RegExp(r'%[0-9a-f]{2}', caseSensitive: false),
-          (Match match) => Utils.unescape(match.group(0)!),
+          RegExp(r'%([0-9a-fA-F]{2})'),
+          (Match match) {
+            final hex = match.group(1)!;
+            final code = int.parse(hex, radix: 16);
+            return String.fromCharCode(code);
+          },
         );
       } catch (_) {
         return strWithoutPlus;
