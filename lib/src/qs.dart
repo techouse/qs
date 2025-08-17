@@ -1,7 +1,6 @@
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
@@ -115,14 +114,11 @@ final class QS {
     // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {
       Map<String, dynamic> map => {...map},
-      Iterable iterable => iterable
-          .toList()
-          .asMap()
-          .map((int k, dynamic v) => MapEntry(k.toString(), v)),
+      Iterable iterable => Utils.createIndexMap(iterable),
       _ => <String, dynamic>{},
     };
 
-    final List keys = [];
+    final List<String> keys = [];
 
     // Nothing to encode.
     if (obj.isEmpty) {
@@ -150,18 +146,20 @@ final class QS {
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
 
-      if (key is! String? || (obj[key] == null && options.skipNulls)) {
+      if (key is! String || (obj[key] == null && options.skipNulls)) {
         continue;
       }
+
+      final ListFormatGenerator gen = options.listFormat.generator;
+      final bool crt = identical(gen, ListFormat.comma.generator) &&
+          options.commaRoundTrip == true;
 
       final encoded = _$Encode._encode(
         obj[key],
         undefined: !obj.containsKey(key),
         prefix: key,
-        generateArrayPrefix: options.listFormat.generator,
-        commaRoundTrip:
-            options.listFormat.generator == ListFormat.comma.generator &&
-                options.commaRoundTrip == true,
+        generateArrayPrefix: gen,
+        commaRoundTrip: crt,
         allowEmptyLists: options.allowEmptyLists,
         strictNullHandling: options.strictNullHandling,
         skipNulls: options.skipNulls,
@@ -180,9 +178,11 @@ final class QS {
       );
 
       if (encoded is Iterable) {
-        keys.addAll(encoded);
-      } else {
-        keys.add(encoded);
+        for (final e in encoded) {
+          if (e != null) keys.add(e as String);
+        }
+      } else if (encoded != null) {
+        keys.add(encoded as String);
       }
     }
 

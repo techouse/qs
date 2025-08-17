@@ -16,8 +16,7 @@ final class Undefined with EquatableMixin {
   /// No-op copy that returns another equal sentinel. Kept for API symmetry.
   Undefined copyWith() => const Undefined();
 
-  @override
-
   /// No distinguishing fields — all [Undefined] instances are equal.
-  List<Object> get props => [];
+  @override
+  List<Object> get props => const [];
 }

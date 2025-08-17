@@ -1,20 +1,18 @@
-import 'dart:math' show min;
-
-/// Utilities mirroring small JavaScript conveniences used across the qs Dart port.
-///
-/// - `IterableExtension.whereNotType<Q>()`: filters out elements of a given type
-///   while preserving order (useful when handling heterogeneous collections during
-///   parsing).
-/// - `ListExtension.slice(start, [end])`: JS-style `Array.prototype.slice` for
-///   lists. Supports negative indices, clamps to bounds, and never throws for
-///   out-of-range values. Returns a new list that references the same element
-///   objects (non-deep copy).
-/// - `StringExtension.slice(start, [end])`: JS-style `String.prototype.slice`
-///   for strings with the same semantics (negative indices and clamping).
-///
-/// These helpers are intentionally tiny and non-mutating so the compiler can
-/// inline them; they keep call sites close to the semantics of the original
-/// Node `qs` implementation.
+// Utilities mirroring small JavaScript conveniences used across the qs Dart port.
+//
+// - `IterableExtension.whereNotType<Q>()`: filters out elements of a given type
+//   while preserving order (useful when handling heterogeneous collections during
+//   parsing).
+// - `ListExtension.slice(start, [end])`: JS-style `Array.prototype.slice` for
+//   lists. Supports negative indices, clamps to bounds, and never throws for
+//   out-of-range values. Returns a new list that references the same element
+//   objects (non-deep copy).
+// - `StringExtension.slice(start, [end])`: JS-style `String.prototype.slice`
+//   for strings with the same semantics (negative indices and clamping).
+//
+// These helpers are intentionally tiny and non-mutating so the compiler can
+// inline them; they keep call sites close to the semantics of the original
+// Node `qs` implementation.
 
 extension IterableExtension<T> on Iterable<T> {
   /// Returns a **lazy** [Iterable] view that filters out all elements of type [Q].
@@ -47,11 +45,25 @@ extension ListExtension<T> on List<T> {
   /// ['a','b','c'].slice(-2, -1);   // ['b']
   /// ['a','b','c'].slice(0, 99);    // ['a','b','c']
   /// ```
-  List<T> slice([int start = 0, int? end]) => sublist(
-        (start < 0 ? length + start : start).clamp(0, length),
-        (end == null ? length : (end < 0 ? length + end : end))
-            .clamp(0, length),
-      );
+  List<T> slice([int start = 0, int? end]) {
+    final int l = length;
+    int s = start < 0 ? l + start : start;
+    int e = end == null ? l : (end < 0 ? l + end : end);
+
+    if (s < 0) {
+      s = 0;
+    } else if (s > l) {
+      s = l;
+    }
+    if (e < 0) {
+      e = 0;
+    } else if (e > l) {
+      e = l;
+    }
+
+    if (e <= s) return <T>[];
+    return sublist(s, e);
+  }
 }
 
 extension StringExtension on String {
@@ -70,13 +82,22 @@ extension StringExtension on String {
   /// 'hello'.slice(0, 99);    // 'hello'
   /// ```
   String slice(int start, [int? end]) {
-    end ??= length;
-    if (end < 0) {
-      end = length + end;
+    final int l = length;
+    int s = start < 0 ? l + start : start;
+    int e = end == null ? l : (end < 0 ? l + end : end);
+
+    if (s < 0) {
+      s = 0;
+    } else if (s > l) {
+      s = l;
     }
-    if (start < 0) {
-      start = length + start;
+    if (e < 0) {
+      e = 0;
+    } else if (e > l) {
+      e = l;
     }
-    return substring(start, min(end, length));
+
+    if (e <= s) return '';
+    return substring(s, e);
   }
 }

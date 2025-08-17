@@ -49,7 +49,8 @@ extension _$Decode on QS {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
-      if (options.throwOnLimitExceeded && splitVal.length > options.listLimit) {
+      if (options.throwOnLimitExceeded &&
+          currentListLength + splitVal.length > options.listLimit) {
         throw RangeError(
           'List limit exceeded. '
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -60,7 +61,7 @@ extension _$Decode on QS {
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
-        currentListLength >= options.listLimit) {
+        currentListLength + 1 > options.listLimit) {
       throw RangeError(
         'List limit exceeded. '
         'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -94,19 +95,21 @@ extension _$Decode on QS {
       throw ArgumentError('Parameter limit must be a positive integer.');
     }
 
-    // 3) Split by delimiter, respecting `parameterLimit` and whether we throw
-    //    when the limit is exceeded.
-    final Iterable<String> parts = limit != null && limit > 0
-        ? cleanStr
-            .split(options.delimiter)
-            .take(options.throwOnLimitExceeded ? limit + 1 : limit)
-        : cleanStr.split(options.delimiter);
-
-    // If we were asked to throw on overflow, detect it after the split/take.
-    if (options.throwOnLimitExceeded && limit != null && parts.length > limit) {
-      throw RangeError(
-        'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
-      );
+    // 3) Split by delimiter once; optionally truncate, optionally throw on overflow.
+    final List<String> allParts = cleanStr.split(options.delimiter);
+    late final List<String> parts;
+    if (limit != null && limit > 0) {
+      final int takeCount = options.throwOnLimitExceeded ? limit + 1 : limit;
+      final int count =
+          allParts.length < takeCount ? allParts.length : takeCount;
+      parts = allParts.sublist(0, count);
+      if (options.throwOnLimitExceeded && allParts.length > limit) {
+        throw RangeError(
+          'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
+        );
+      }
+    } else {
+      parts = allParts;
     }
 
     // Charset probing (utf8=✓ / utf8=X). Skip the sentinel pair later.
@@ -118,10 +121,11 @@ extension _$Decode on QS {
     // 4) Scan once for a charset sentinel and adjust decoder charset accordingly.
     if (options.charsetSentinel) {
       for (i = 0; i < parts.length; ++i) {
-        if (parts.elementAt(i).startsWith('utf8=')) {
-          if (parts.elementAt(i) == Sentinel.charset.toString()) {
+        final String p = parts[i];
+        if (p.startsWith('utf8=')) {
+          if (p == Sentinel.charset.toString()) {
             charset = utf8;
-          } else if (parts.elementAt(i) == Sentinel.iso.toString()) {
+          } else if (p == Sentinel.iso.toString()) {
             charset = latin1;
           }
           skipIndex = i;
@@ -133,10 +137,8 @@ extension _$Decode on QS {
     // 5) Parse each `key=value` pair, honoring bracket-`]=` short-circuit for speed.
     final Map<String, dynamic> obj = {};
     for (i = 0; i < parts.length; ++i) {
-      if (i == skipIndex) {
-        continue;
-      }
-      final String part = parts.elementAt(i);
+      if (i == skipIndex) continue;
+      final String part = parts[i];
       final int bracketEqualsPos = part.indexOf(']=');
       final int pos =
           bracketEqualsPos == -1 ? part.indexOf('=') : bracketEqualsPos + 1;
@@ -167,16 +169,16 @@ extension _$Decode on QS {
           !Utils.isEmpty(val) &&
           options.interpretNumericEntities &&
           charset == latin1) {
-        val = Utils.interpretNumericEntities(
-          val is Iterable
-              ? val.map((e) => e.toString()).join(',')
-              : val.toString(),
-        );
+        if (val is Iterable) {
+          val = Utils.interpretNumericEntities(_joinIterableToCommaString(val));
+        } else {
+          val = Utils.interpretNumericEntities(val.toString());
+        }
       }
 
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
-      if (part.contains('[]=')) {
-        val = val is Iterable ? [val] : val;
+      if (options.parseLists && part.contains('[]=')) {
+        val = [val];
       }
 
       // Duplicate key policy: combine/first/last (default: combine).
@@ -209,14 +211,20 @@ extension _$Decode on QS {
     // Determine the current list length if we are appending into `[]`.
     late final int currentListLength;
 
-    if (chain.isNotEmpty && chain.last == '[]') {
-      final int? parentKey = int.tryParse(chain.slice(0, -1).join(''));
-
-      currentListLength = parentKey != null &&
-              val is List &&
-              val.firstWhereIndexedOrNull((int i, _) => i == parentKey) != null
-          ? val.elementAt(parentKey).length
-          : 0;
+    if (chain.length >= 2 && chain.last == '[]') {
+      final String prev = chain[chain.length - 2];
+      final bool bracketed = prev.startsWith('[') && prev.endsWith(']');
+      final int? parentIndex =
+          bracketed ? int.tryParse(prev.substring(1, prev.length - 1)) : null;
+      if (parentIndex != null &&
+          parentIndex >= 0 &&
+          val is List &&
+          parentIndex < val.length) {
+        final dynamic parent = val[parentIndex];
+        currentListLength = parent is List ? parent.length : 0;
+      } else {
+        currentListLength = 0;
+      }
     } else {
       currentListLength = 0;
     }
@@ -429,6 +437,18 @@ extension _$Decode on QS {
       i++;
     }
 
+    return sb.toString();
+  }
+
+  /// Joins an iterable of objects into a comma-separated string.
+  static String _joinIterableToCommaString(Iterable it) {
+    final StringBuffer sb = StringBuffer();
+    bool first = true;
+    for (final e in it) {
+      if (!first) sb.write(',');
+      sb.write(e == null ? '' : e.toString());
+      first = false;
+    }
     return sb.toString();
   }
 }

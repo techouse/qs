@@ -64,8 +64,7 @@ final class Utils {
       if (target is Iterable) {
         if (target.any((el) => el is Undefined)) {
           // use a SplayTreeMap to keep the keys in order
-          final SplayTreeMap<int, dynamic> target_ =
-              SplayTreeMap.of(target.toList().asMap());
+          final SplayTreeMap<int, dynamic> target_ = _toIndexedTreeMap(target);
 
           if (source is Iterable) {
             for (final (int i, dynamic item) in source.indexed) {
@@ -94,7 +93,7 @@ final class Utils {
               // loop through the target list and merge the maps
               // then loop through the source list and add any new maps
               final SplayTreeMap<int, dynamic> target_ =
-                  SplayTreeMap.of(target.toList().asMap());
+                  _toIndexedTreeMap(target);
               for (final (int i, dynamic item) in source.indexed) {
                 target_.update(
                   i,
@@ -176,8 +175,8 @@ final class Utils {
               entry.key.toString(): entry.value
           };
 
-    return source.entries.fold(mergeTarget, (Map acc, MapEntry entry) {
-      acc.update(
+    for (final MapEntry entry in source.entries) {
+      mergeTarget.update(
         entry.key.toString(),
         (value) => merge(
           value,
@@ -186,8 +185,18 @@ final class Utils {
         ),
         ifAbsent: () => entry.value,
       );
-      return acc;
-    });
+    }
+    return mergeTarget;
+  }
+
+  /// Converts an iterable to a zero-indexed [SplayTreeMap].
+  static SplayTreeMap<int, dynamic> _toIndexedTreeMap(Iterable iterable) {
+    final SplayTreeMap<int, dynamic> map = SplayTreeMap<int, dynamic>();
+    int i = 0;
+    for (final v in iterable) {
+      map[i++] = v;
+    }
+    return map;
   }
 
   /// Dart representation of JavaScript’s deprecated `escape` function.
@@ -219,15 +228,12 @@ final class Utils {
           c == 0x2E || // .
           c == 0x2F || // /
           (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
-        buffer.write(str[i]);
+        buffer.writeCharCode(c);
         continue;
       }
 
       if (c < 256) {
-        buffer.writeAll([
-          '%',
-          c.toRadixString(16).padLeft(2, '0').toUpperCase(),
-        ]);
+        buffer.write(hexTable[c]);
         continue;
       }
 
@@ -252,6 +258,7 @@ final class Utils {
   @visibleForTesting
   @Deprecated('Use Uri.decodeComponent instead')
   static String unescape(String str) {
+    if (!str.contains('%')) return str;
     final StringBuffer buffer = StringBuffer();
     int i = 0;
 
@@ -273,13 +280,13 @@ final class Utils {
                 continue;
               } on FormatException {
                 // Not a valid %u escape: treat '%' as literal.
-                buffer.write(str[i]);
+                buffer.writeCharCode(0x25);
                 i++;
                 continue;
               }
             } else {
               // Not enough characters for a valid %u escape: treat '%' as literal.
-              buffer.write(str[i]);
+              buffer.writeCharCode(0x25);
               i++;
               continue;
             }
@@ -294,26 +301,26 @@ final class Utils {
                 continue;
               } on FormatException {
                 // Parsing failed: treat '%' as literal.
-                buffer.write(str[i]);
+                buffer.writeCharCode(0x25);
                 i++;
                 continue;
               }
             } else {
               // Not enough characters for a valid %XX escape: treat '%' as literal.
-              buffer.write(str[i]);
+              buffer.writeCharCode(0x25);
               i++;
               continue;
             }
           }
         } else {
           // '%' is the last character; treat it as literal.
-          buffer.write(str[i]);
+          buffer.writeCharCode(0x25);
           i++;
           continue;
         }
       }
 
-      buffer.write(str[i]);
+      buffer.writeCharCode(c);
       i++;
     }
 
@@ -363,57 +370,133 @@ final class Utils {
     }
 
     final StringBuffer buffer = StringBuffer();
-
-    for (int j = 0; j < str!.length; j += _segmentLimit) {
-      final String segment =
-          str.length >= _segmentLimit ? str.slice(j, j + _segmentLimit) : str;
-
-      for (int i = 0; i < segment.length; ++i) {
-        int c = segment.codeUnitAt(i);
-
-        switch (c) {
-          case 0x2D: // -
-          case 0x2E: // .
-          case 0x5F: // _
-          case 0x7E: // ~
-          case int c when c >= 0x30 && c <= 0x39: // 0-9
-          case int c when c >= 0x41 && c <= 0x5A: // a-z
-          case int c when c >= 0x61 && c <= 0x7A: // A-Z
-          case int c
-              when format == Format.rfc1738 && (c == 0x28 || c == 0x29): // ( )
-            buffer.write(segment[i]);
-            continue;
-          case int c when c < 0x80: // ASCII
-            buffer.write(hexTable[c]);
-            continue;
-          case int c when c < 0x800: // 2 bytes
-            buffer.writeAll([
-              hexTable[0xC0 | (c >> 6)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
-            continue;
-          case int c when c < 0xD800 || c >= 0xE000: // 3 bytes
-            buffer.writeAll([
-              hexTable[0xE0 | (c >> 12)],
-              hexTable[0x80 | ((c >> 6) & 0x3F)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
-            continue;
-          default:
-            i++;
-            c = 0x10000 +
-                (((c & 0x3FF) << 10) | (segment.codeUnitAt(i) & 0x3FF));
-            buffer.writeAll([
-              hexTable[0xF0 | (c >> 18)],
-              hexTable[0x80 | ((c >> 12) & 0x3F)],
-              hexTable[0x80 | ((c >> 6) & 0x3F)],
-              hexTable[0x80 | (c & 0x3F)],
-            ]);
+    final String s = str!;
+    final int len = s.length;
+    if (len <= _segmentLimit) {
+      _writeEncodedSegment(s, buffer, format);
+    } else {
+      int j = 0;
+      while (j < len) {
+        int end = j + _segmentLimit;
+        if (end > len) end = len;
+        // Avoid splitting a UTF-16 surrogate pair across segment boundary.
+        if (end < len) {
+          final int last = s.codeUnitAt(end - 1);
+          if (last >= 0xD800 && last <= 0xDBFF) {
+            // keep the high surrogate with its low surrogate in next segment
+            end--;
+          }
         }
+        _writeEncodedSegment(s.substring(j, end), buffer, format);
+        j = end; // advance to the adjusted end
       }
     }
 
     return buffer.toString();
+  }
+
+  static void _writeEncodedSegment(
+      String segment, StringBuffer buffer, Format? format) {
+    for (int i = 0; i < segment.length; ++i) {
+      int c = segment.codeUnitAt(i);
+
+      switch (c) {
+        case 0x2D: // -
+        case 0x2E: // .
+        case 0x5F: // _
+        case 0x7E: // ~
+        case int v when v >= 0x30 && v <= 0x39: // 0-9
+        case int v when v >= 0x41 && v <= 0x5A: // A-Z
+        case int v when v >= 0x61 && v <= 0x7A: // a-z
+        case int v
+            when format == Format.rfc1738 && (v == 0x28 || v == 0x29): // ( )
+          buffer.writeCharCode(c);
+          continue;
+        case int v when v < 0x80: // ASCII
+          buffer.write(hexTable[v]);
+          continue;
+        case int v when v < 0x800: // 2 bytes
+          buffer.writeAll([
+            hexTable[0xC0 | (v >> 6)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+        case int v
+            when v < 0xD800 || v >= 0xE000: // 3 bytes (BMP, non-surrogates)
+          buffer.writeAll([
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+
+        case int v when v >= 0xD800 && v <= 0xDBFF: // high surrogate
+          if (i + 1 < segment.length) {
+            final int w = segment.codeUnitAt(i + 1);
+            if (w >= 0xDC00 && w <= 0xDFFF) {
+              final int code = 0x10000 + (((v & 0x3FF) << 10) | (w & 0x3FF));
+              buffer.writeAll([
+                hexTable[0xF0 | (code >> 18)],
+                hexTable[0x80 | ((code >> 12) & 0x3F)],
+                hexTable[0x80 | ((code >> 6) & 0x3F)],
+                hexTable[0x80 | (code & 0x3F)],
+              ]);
+              i++; // consume low surrogate
+              continue;
+            }
+          }
+          // Lone high surrogate: encode as a 3-byte sequence of the code unit
+          buffer.writeAll([
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+
+        case int v when v >= 0xDC00 && v <= 0xDFFF: // lone low surrogate
+          buffer.writeAll([
+            hexTable[0xE0 | (v >> 12)],
+            hexTable[0x80 | ((v >> 6) & 0x3F)],
+            hexTable[0x80 | (v & 0x3F)],
+          ]);
+          continue;
+
+        default:
+          // Fallback: encode as 3 bytes of the code unit (should not be hit)
+          buffer.writeAll([
+            hexTable[0xE0 | (c >> 12)],
+            hexTable[0x80 | ((c >> 6) & 0x3F)],
+            hexTable[0x80 | (c & 0x3F)],
+          ]);
+          continue;
+      }
+    }
+  }
+
+  /// Fast latin1 percent-decoder
+  static String _decodeLatin1Percent(String s) {
+    final StringBuffer sb = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final int ch = s.codeUnitAt(i);
+      if (ch == 0x25 /* % */ && i + 2 < s.length) {
+        final int h1 = _hexVal(s.codeUnitAt(i + 1));
+        final int h2 = _hexVal(s.codeUnitAt(i + 2));
+        if (h1 >= 0 && h2 >= 0) {
+          sb.writeCharCode((h1 << 4) | h2);
+          i += 2;
+          continue;
+        }
+      }
+      sb.writeCharCode(ch);
+    }
+    return sb.toString();
+  }
+
+  static int _hexVal(int cu) {
+    if (cu >= 0x30 && cu <= 0x39) return cu - 0x30; // '0'..'9'
+    if (cu >= 0x41 && cu <= 0x46) return cu - 0x41 + 10; // 'A'..'F'
+    if (cu >= 0x61 && cu <= 0x66) return cu - 0x61 + 10; // 'a'..'f'
+    return -1;
   }
 
   /// Decodes a percent-encoded token back to a scalar string.
@@ -428,13 +511,13 @@ final class Utils {
   static String? decode(String? str, {Encoding? charset = utf8}) {
     final String? strWithoutPlus = str?.replaceAll('+', ' ');
     if (charset == latin1) {
+      final String? s = strWithoutPlus;
+      if (s == null) return null;
+      if (!s.contains('%')) return s; // fast path: nothing to decode
       try {
-        return strWithoutPlus?.replaceAllMapped(
-          RegExp(r'%[0-9a-f]{2}', caseSensitive: false),
-          (Match match) => Utils.unescape(match.group(0)!),
-        );
+        return _decodeLatin1Percent(s);
       } catch (_) {
-        return strWithoutPlus;
+        return s;
       }
     }
     try {
@@ -571,6 +654,7 @@ final class Utils {
   /// - Produces surrogate pairs for code points &gt; `0xFFFF`.
   static String interpretNumericEntities(String s) {
     if (s.length < 4) return s;
+    if (!s.contains('&#')) return s;
     final StringBuffer sb = StringBuffer();
     int i = 0;
     while (i < s.length) {
@@ -614,5 +698,25 @@ final class Utils {
       }
     }
     return sb.toString();
+  }
+
+  /// Create an index-keyed map from an iterable.
+  static Map<String, dynamic> createIndexMap(Iterable iterable) {
+    if (iterable is List) {
+      final list = iterable;
+      final map = <String, dynamic>{};
+      for (var i = 0; i < list.length; i++) {
+        map[i.toString()] = list[i];
+      }
+      return map;
+    } else {
+      final map = <String, dynamic>{};
+      var i = 0;
+      for (final v in iterable) {
+        map[i.toString()] = v;
+        i++;
+      }
+      return map;
+    }
   }
 }
