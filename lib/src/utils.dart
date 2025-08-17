@@ -184,8 +184,8 @@ final class Utils {
               entry.key.toString(): entry.value
           };
 
-    return source.entries.fold(mergeTarget, (Map acc, MapEntry entry) {
-      acc.update(
+    for (final MapEntry entry in source.entries) {
+      mergeTarget.update(
         entry.key.toString(),
         (value) => merge(
           value,
@@ -194,8 +194,8 @@ final class Utils {
         ),
         ifAbsent: () => entry.value,
       );
-      return acc;
-    });
+    }
+    return mergeTarget;
   }
 
   /// Dart representation of JavaScript’s deprecated `escape` function.
@@ -227,7 +227,7 @@ final class Utils {
           c == 0x2E || // .
           c == 0x2F || // /
           (format == Format.rfc1738 && (c == 0x28 || c == 0x29))) {
-        buffer.write(str[i]);
+        buffer.writeCharCode(c);
         continue;
       }
 
@@ -257,6 +257,7 @@ final class Utils {
   @visibleForTesting
   @Deprecated('Use Uri.decodeComponent instead')
   static String unescape(String str) {
+    if (!str.contains('%')) return str;
     final StringBuffer buffer = StringBuffer();
     int i = 0;
 
@@ -278,13 +279,13 @@ final class Utils {
                 continue;
               } on FormatException {
                 // Not a valid %u escape: treat '%' as literal.
-                buffer.write(str[i]);
+                buffer.writeCharCode(0x25);
                 i++;
                 continue;
               }
             } else {
               // Not enough characters for a valid %u escape: treat '%' as literal.
-              buffer.write(str[i]);
+              buffer.writeCharCode(0x25);
               i++;
               continue;
             }
@@ -299,26 +300,26 @@ final class Utils {
                 continue;
               } on FormatException {
                 // Parsing failed: treat '%' as literal.
-                buffer.write(str[i]);
+                buffer.writeCharCode(0x25);
                 i++;
                 continue;
               }
             } else {
               // Not enough characters for a valid %XX escape: treat '%' as literal.
-              buffer.write(str[i]);
+              buffer.writeCharCode(0x25);
               i++;
               continue;
             }
           }
         } else {
           // '%' is the last character; treat it as literal.
-          buffer.write(str[i]);
+          buffer.writeCharCode(0x25);
           i++;
           continue;
         }
       }
 
-      buffer.write(str[i]);
+      buffer.writeCharCode(c);
       i++;
     }
 
@@ -429,6 +430,32 @@ final class Utils {
     }
   }
 
+  /// Fast latin1 percent-decoder
+  static String _decodeLatin1Percent(String s) {
+    final StringBuffer sb = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final int ch = s.codeUnitAt(i);
+      if (ch == 0x25 /* % */ && i + 2 < s.length) {
+        final int h1 = _hexVal(s.codeUnitAt(i + 1));
+        final int h2 = _hexVal(s.codeUnitAt(i + 2));
+        if (h1 >= 0 && h2 >= 0) {
+          sb.writeCharCode((h1 << 4) | h2);
+          i += 2;
+          continue;
+        }
+      }
+      sb.writeCharCode(ch);
+    }
+    return sb.toString();
+  }
+
+  static int _hexVal(int cu) {
+    if (cu >= 0x30 && cu <= 0x39) return cu - 0x30; // '0'..'9'
+    if (cu >= 0x41 && cu <= 0x46) return cu - 0x41 + 10; // 'A'..'F'
+    if (cu >= 0x61 && cu <= 0x66) return cu - 0x61 + 10; // 'a'..'f'
+    return -1;
+  }
+
   /// Decodes a percent-encoded token back to a scalar string.
   ///
   /// - Treats `'+'` as space before decoding (URL form semantics).
@@ -441,17 +468,13 @@ final class Utils {
   static String? decode(String? str, {Encoding? charset = utf8}) {
     final String? strWithoutPlus = str?.replaceAll('+', ' ');
     if (charset == latin1) {
+      final String? s = strWithoutPlus;
+      if (s == null) return null;
+      if (!s.contains('%')) return s; // fast path: nothing to decode
       try {
-        return strWithoutPlus?.replaceAllMapped(
-          RegExp(r'%([0-9a-fA-F]{2})'),
-          (Match match) {
-            final hex = match.group(1)!;
-            final code = int.parse(hex, radix: 16);
-            return String.fromCharCode(code);
-          },
-        );
+        return _decodeLatin1Percent(s);
       } catch (_) {
-        return strWithoutPlus;
+        return s;
       }
     }
     try {
@@ -588,6 +611,7 @@ final class Utils {
   /// - Produces surrogate pairs for code points &gt; `0xFFFF`.
   static String interpretNumericEntities(String s) {
     if (s.length < 4) return s;
+    if (!s.contains('&#')) return s;
     final StringBuffer sb = StringBuffer();
     int i = 0;
     while (i < s.length) {
