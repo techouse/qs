@@ -69,7 +69,7 @@ final class DecodeOptions with EquatableMixin {
     this.strictDepth = false,
     this.strictNullHandling = false,
     this.throwOnLimitExceeded = false,
-  })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
+  })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
         assert(
@@ -190,24 +190,36 @@ final class DecodeOptions with EquatableMixin {
     try {
       // Try full shape (value, {charset, kind})
       return (d as dynamic)(value, charset: charset, kind: kind);
-    } catch (_) {
-      try {
-        // Try (value, {charset})
-        return (d as dynamic)(value, charset: charset);
-      } catch (_) {
-        try {
-          // Try (value, {kind})
-          return (d as dynamic)(value, kind: kind);
-        } catch (_) {
-          try {
-            // Try (value)
-            return (d as dynamic)(value);
-          } catch (_) {
-            // Fallback to default
-            return Utils.decode(value, charset: charset);
-          }
-        }
-      }
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value, {charset})
+      return (d as dynamic)(value, charset: charset);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value, {kind})
+      return (d as dynamic)(value, kind: kind);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value)
+      return (d as dynamic)(value);
+    } on NoSuchMethodError catch (_) {
+      // Fallback to default
+      return Utils.decode(value, charset: charset);
+    } on TypeError catch (_) {
+      // Fallback to default
+      return Utils.decode(value, charset: charset);
     }
   }
 
