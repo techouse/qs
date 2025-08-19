@@ -32,21 +32,20 @@ import 'package:qs_dart/src/utils.dart';
 ///
 /// Implementations may choose to ignore [charset] or [kind], but both are
 /// provided to enable key-aware decoding when desired.
-typedef Decoder = dynamic Function(String? value,
-    {Encoding? charset, DecodeKind? kind});
-
-/// Back-compat: single-argument decoder (value only).
-typedef DecoderV1 = dynamic Function(String? value);
+typedef Decoder = dynamic Function(
+  String? value, {
+  Encoding? charset,
+  DecodeKind? kind,
+});
 
 /// Back-compat: decoder with optional [charset] only.
-typedef DecoderV2 = dynamic Function(String? value, {Encoding? charset});
-
-/// Full-featured: decoder with [charset] and key/value [kind].
-typedef DecoderV3 = dynamic Function(String? value,
-    {Encoding? charset, DecodeKind? kind});
+typedef Decoder1 = dynamic Function(String? value, {Encoding? charset});
 
 /// Decoder that accepts only [kind] (no [charset]).
-typedef DecoderV4 = dynamic Function(String? value, {DecodeKind? kind});
+typedef Decoder2 = dynamic Function(String? value, {DecodeKind? kind});
+
+/// Back-compat: single-argument decoder (value only).
+typedef Decoder3 = dynamic Function(String? value);
 
 /// Options that configure the output of [QS.decode].
 final class DecodeOptions with EquatableMixin {
@@ -165,31 +164,26 @@ final class DecodeOptions with EquatableMixin {
   /// Decode a single scalar using either the custom decoder or the default
   /// implementation in [Utils.decode]. The [kind] indicates whether the token
   /// is a key (or key segment) or a value.
-  dynamic decoder(String? value,
-      {Encoding? charset, DecodeKind kind = DecodeKind.value}) {
-    final d = _decoder;
-    if (d == null) {
-      return Utils.decode(value, charset: charset);
-    }
+  dynamic decoder(
+    String? value, {
+    Encoding? charset,
+    DecodeKind kind = DecodeKind.value,
+  }) {
+    final Object? decoder = _decoder;
+
+    // If no custom decoder is provided, use the default decoding logic.
+    if (decoder == null) return Utils.decode(value, charset: charset);
 
     // Prefer strongly-typed variants first
-    if (d is DecoderV3) {
-      return d(value, charset: charset, kind: kind);
-    }
-    if (d is DecoderV2) {
-      return d(value, charset: charset);
-    }
-    if (d is DecoderV4) {
-      return d(value, kind: kind);
-    }
-    if (d is DecoderV1) {
-      return d(value);
-    }
+    if (decoder is Decoder) return decoder(value, charset: charset, kind: kind);
+    if (decoder is Decoder1) return decoder(value, charset: charset);
+    if (decoder is Decoder2) return decoder(value, kind: kind);
+    if (decoder is Decoder3) return decoder(value);
 
     // Dynamic callable or class with `call` method
     try {
       // Try full shape (value, {charset, kind})
-      return (d as dynamic)(value, charset: charset, kind: kind);
+      return (decoder as dynamic)(value, charset: charset, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -197,7 +191,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value, {charset})
-      return (d as dynamic)(value, charset: charset);
+      return (decoder as dynamic)(value, charset: charset);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -205,7 +199,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value, {kind})
-      return (d as dynamic)(value, kind: kind);
+      return (decoder as dynamic)(value, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -213,7 +207,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value)
-      return (d as dynamic)(value);
+      return (decoder as dynamic)(value);
     } on NoSuchMethodError catch (_) {
       // Fallback to default
       return Utils.decode(value, charset: charset);
