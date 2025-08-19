@@ -1,6 +1,7 @@
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
+import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
@@ -11,6 +12,9 @@ import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:weak_map/weak_map.dart';
+
+// Re-export for public API: consumers can `import 'package:qs_dart/qs.dart'` and access DecodeKind
+export 'package:qs_dart/src/enums/decode_kind.dart';
 
 part 'extensions/decode.dart';
 part 'extensions/encode.dart';
@@ -65,8 +69,10 @@ final class QS {
         : input;
 
     // Guardrail: if the top-level parameter count is large, temporarily disable
-    // list parsing to keep memory bounded (matches Node `qs`).
-    if (options.parseLists &&
+    // list parsing to keep memory bounded (matches Node `qs`). Only apply for
+    // raw string inputs, not for pre-tokenized maps.
+    if (input is String &&
+        options.parseLists &&
         options.listLimit > 0 &&
         (tempObj?.length ?? 0) > options.listLimit) {
       options = options.copyWith(parseLists: false);
