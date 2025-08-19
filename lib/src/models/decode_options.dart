@@ -172,7 +172,9 @@ final class DecodeOptions with EquatableMixin {
     final Object? decoder = _decoder;
 
     // If no custom decoder is provided, use the default decoding logic.
-    if (decoder == null) return Utils.decode(value, charset: charset);
+    if (decoder == null) {
+      return Utils.decode(value, charset: charset ?? this.charset);
+    }
 
     // Prefer strongly-typed variants first
     if (decoder is Decoder) return decoder(value, charset: charset, kind: kind);
@@ -210,10 +212,10 @@ final class DecodeOptions with EquatableMixin {
       return (decoder as dynamic)(value);
     } on NoSuchMethodError catch (_) {
       // Fallback to default
-      return Utils.decode(value, charset: charset);
+      return Utils.decode(value, charset: charset ?? this.charset);
     } on TypeError catch (_) {
       // Fallback to default
-      return Utils.decode(value, charset: charset);
+      return Utils.decode(value, charset: charset ?? this.charset);
     }
   }
 
