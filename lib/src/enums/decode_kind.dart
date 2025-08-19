@@ -13,7 +13,7 @@
 /// ### Usage
 ///
 /// ```dart
-/// import 'decode_kind.dart';
+/// import 'package:qs_dart/qs.dart';
 ///
 /// DecodeKind k = DecodeKind.key; // decode a key/segment
 /// DecodeKind v = DecodeKind.value; // decode a value
