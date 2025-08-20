@@ -51,7 +51,7 @@ typedef Decoder3 = dynamic Function(String? value);
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
-    Object? decoder,
+    Function? decoder,
     bool? decodeDotInKeys,
     this.allowEmptyLists = false,
     this.listLimit = 20,
@@ -159,7 +159,7 @@ final class DecodeOptions with EquatableMixin {
 
   /// Optional custom scalar decoder for a single token.
   /// If not provided, falls back to [Utils.decode].
-  final Object? _decoder;
+  final Function? _decoder;
 
   /// Decode a single scalar using either the custom decoder or the default
   /// implementation in [Utils.decode]. The [kind] indicates whether the token
@@ -169,23 +169,23 @@ final class DecodeOptions with EquatableMixin {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
-    final Object? decoder = _decoder;
+    final Function? fn = _decoder;
 
     // If no custom decoder is provided, use the default decoding logic.
-    if (decoder == null) {
+    if (fn == null) {
       return Utils.decode(value, charset: charset ?? this.charset);
     }
 
     // Prefer strongly-typed variants first
-    if (decoder is Decoder) return decoder(value, charset: charset, kind: kind);
-    if (decoder is Decoder1) return decoder(value, charset: charset);
-    if (decoder is Decoder2) return decoder(value, kind: kind);
-    if (decoder is Decoder3) return decoder(value);
+    if (fn is Decoder) return fn(value, charset: charset, kind: kind);
+    if (fn is Decoder1) return fn(value, charset: charset);
+    if (fn is Decoder2) return fn(value, kind: kind);
+    if (fn is Decoder3) return fn(value);
 
     // Dynamic callable or class with `call` method
     try {
       // Try full shape (value, {charset, kind})
-      return (decoder as dynamic)(value, charset: charset, kind: kind);
+      return (fn as dynamic)(value, charset: charset, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -193,7 +193,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value, {charset})
-      return (decoder as dynamic)(value, charset: charset);
+      return (fn as dynamic)(value, charset: charset);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -201,7 +201,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value, {kind})
-      return (decoder as dynamic)(value, kind: kind);
+      return (fn as dynamic)(value, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
     } on TypeError catch (_) {
@@ -209,7 +209,7 @@ final class DecodeOptions with EquatableMixin {
     }
     try {
       // Try (value)
-      return (decoder as dynamic)(value);
+      return (fn as dynamic)(value);
     } on NoSuchMethodError catch (_) {
       // Fallback to default
       return Utils.decode(value, charset: charset ?? this.charset);
@@ -237,7 +237,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
-    Object? decoder,
+    dynamic Function(String?)? decoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,

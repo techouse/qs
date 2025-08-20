@@ -2179,7 +2179,7 @@ void main() {
         () {
       final calls = <String?>[];
       // A callable object whose named parameters do not match the library typedefs.
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose1(calls)));
+      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose1(calls).call));
       // Since the dynamic path ends up invoking `(value)` with no named args,
       // both key and value get prefixed with 'X'.
       expect(res, {'Xa': 'Xb'});
@@ -2189,7 +2189,7 @@ void main() {
     test(
         'callable object with a required named param triggers Utils.decode fallback',
         () {
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2()));
+      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2().call));
       expect(res, {'a': 'b'});
     });
   });
