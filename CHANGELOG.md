@@ -1,4 +1,4 @@
-## 1.5.2
+## 1.5.1
 
 - [FIX] fix `decoder` type and include `throwOnLimitExceeded` in equality check
 
