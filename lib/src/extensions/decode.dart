@@ -147,11 +147,9 @@ extension _$Decode on QS {
       dynamic val;
       // Bare key without '=', interpret as null vs empty-string per strictNullHandling.
       if (pos == -1) {
-        // Protect %2E/%2e in keys so dot-splitting doesn’t see them unless decodeDotInKeys is true.
+        // Protect %2E/%2e in keys so dot-splitting never sees them as literal dots.
         String keyInput = part;
-        if (options.allowDots &&
-            !options.decodeDotInKeys &&
-            keyInput.contains('%2')) {
+        if (options.allowDots && keyInput.contains('%2')) {
           keyInput =
               keyInput.replaceAll('%2E', '%252E').replaceAll('%2e', '%252e');
         }
@@ -160,9 +158,7 @@ extension _$Decode on QS {
       } else {
         // Protect %2E/%2e in the key slice only; values decode normally.
         String keyInput = part.slice(0, pos);
-        if (options.allowDots &&
-            !options.decodeDotInKeys &&
-            keyInput.contains('%2')) {
+        if (options.allowDots && keyInput.contains('%2')) {
           keyInput =
               keyInput.replaceAll('%2E', '%252E').replaceAll('%2e', '%252e');
         }
@@ -316,7 +312,7 @@ extension _$Decode on QS {
 
     final segments = _splitKeyIntoSegments(
       originalKey: givenKey,
-      allowDots: options.allowDots || options.decodeDotInKeys,
+      allowDots: options.allowDots,
       maxDepth: options.depth,
       strictDepth: options.strictDepth,
     );
