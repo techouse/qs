@@ -1,3 +1,7 @@
+## 1.5.2
+
+- [FIX] fix `decoder` type and include `throwOnLimitExceeded` in equality check
+
 ## 1.5.0
 
 - [FEAT] add key-aware decoding capability to the query string decoder via `DecodeKind`
