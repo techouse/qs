@@ -1,3 +1,7 @@
+## 1.5.0
+
+- [FEAT] add key-aware decoding capability to the query string decoder via `DecodeKind`
+
 ## 1.4.3
 
 - [FIX] optimize map merging and percent-encoding logic in `Utils`
