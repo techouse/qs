@@ -237,7 +237,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
-    dynamic Function(String?)? decoder,
+    Function? decoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,
@@ -298,6 +298,7 @@ final class DecodeOptions with EquatableMixin {
         parseLists,
         strictDepth,
         strictNullHandling,
+        throwOnLimitExceeded,
         _decoder,
       ];
 }
