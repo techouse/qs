@@ -2014,4 +2014,203 @@ void main() {
       );
     });
   });
+
+  group('key-aware decoder + options isolation', () {
+    test('custom decoder receives kind for keys and values', () {
+      final kinds = <DecodeKind>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        kinds.add(kind ?? DecodeKind.value);
+        return Utils.decode(v, charset: charset);
+      }
+
+      expect(QS.decode('a=b&c=d', DecodeOptions(decoder: dec)), {
+        'a': 'b',
+        'c': 'd',
+      });
+
+      expect(kinds, [
+        DecodeKind.key, DecodeKind.value, // a=b
+        DecodeKind.key, DecodeKind.value, // c=d
+      ]);
+    });
+
+    test('legacy single-arg decoder still works', () {
+      String? dec(String? v) => v?.toUpperCase();
+      expect(QS.decode('a=b', DecodeOptions(decoder: dec)), {'A': 'B'});
+    });
+
+    test('decoder that only accepts kind also works', () {
+      dynamic dec(String? v, {DecodeKind? kind}) =>
+          kind == DecodeKind.key ? v?.toUpperCase() : v;
+
+      expect(QS.decode('aa=bb', DecodeOptions(decoder: dec)), {'AA': 'bb'});
+    });
+
+    test('parseLists toggle does not leak across calls (string input)', () {
+      // Build a query with many top-level params to trigger the internal guardrail
+      final bigQuery = List.generate(25, (i) => 'k$i=v$i').join('&');
+      final opts = const DecodeOptions(listLimit: 20);
+
+      final res1 = QS.decode(bigQuery, opts);
+      expect(res1.length, 25);
+
+      // The same options instance should still parse lists on the next call
+      final res2 = QS.decode('a[]=1&a[]=2', opts);
+      expect(res2, {
+        'a': ['1', '2']
+      });
+    });
+  });
+
+  group('DecodeKind scenarios', () {
+    test('uses KEY for bare key without = (strictNullHandling true)', () {
+      final kinds = <DecodeKind>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        kinds.add(kind ?? DecodeKind.value);
+        return Utils.decode(v, charset: charset);
+      }
+
+      final res = QS.decode(
+          'foo', DecodeOptions(strictNullHandling: true, decoder: dec));
+      expect(res, {'foo': null});
+      expect(kinds, [DecodeKind.key]);
+    });
+
+    test('comma-split invokes VALUE for each segment', () {
+      final kinds = <DecodeKind>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        kinds.add(kind ?? DecodeKind.value);
+        return Utils.decode(v, charset: charset);
+      }
+
+      final res = QS.decode('a=b,c', DecodeOptions(comma: true, decoder: dec));
+      expect(res, {
+        'a': ['b', 'c']
+      });
+      // Order: key, value(b), value(c)
+      expect(kinds, [DecodeKind.key, DecodeKind.value, DecodeKind.value]);
+    });
+
+    test('custom decoder can mutate keys only (KEY) without touching values',
+        () {
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        if (kind == DecodeKind.key) return v?.toUpperCase();
+        return v;
+      }
+
+      expect(QS.decode('a=b&c=d', DecodeOptions(decoder: dec)), {
+        'A': 'b',
+        'C': 'd',
+      });
+    });
+
+    test('custom decoder returning null for VALUE preserves null in result',
+        () {
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        if (kind == DecodeKind.value) return null;
+        return v;
+      }
+
+      expect(QS.decode('a=b', DecodeOptions(decoder: dec)), {'a': null});
+    });
+
+    test('decoder is not invoked for Map input', () {
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        throw StateError('decoder should not be called for Map input');
+      }
+
+      final input = {'a': 'b'};
+      expect(QS.decode(input, DecodeOptions(decoder: dec)), equals(input));
+    });
+
+    test('duplicates=combine yields KEY,VALUE per pair', () {
+      final kinds = <DecodeKind>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        kinds.add(kind ?? DecodeKind.value);
+        return v;
+      }
+
+      final res = QS.decode('foo=bar&foo=baz', DecodeOptions(decoder: dec));
+      expect(res, {
+        'foo': ['bar', 'baz']
+      });
+      expect(kinds, [
+        DecodeKind.key, DecodeKind.value, // first
+        DecodeKind.key, DecodeKind.value, // second
+      ]);
+    });
+
+    test('charset sentinel switches charset observed by decoder', () {
+      final seen = <Encoding?>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        seen.add(charset);
+        return v; // pass through
+      }
+
+      // Numeric entity sentinel implies latin1
+      final res = QS.decode(
+        'utf8=%26%2310003%3B&x=%C3%B8',
+        DecodeOptions(charsetSentinel: true, charset: utf8, decoder: dec),
+      );
+      expect(res, contains('x'));
+      // We expect at least one latin1 observation (for the x pair after sentinel)
+      expect(seen.any((e) => e == latin1), isTrue);
+    });
+
+    test('parseLists=false still passes KEY for keys and VALUE for values', () {
+      final kinds = <DecodeKind>[];
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) {
+        kinds.add(kind ?? DecodeKind.value);
+        return v;
+      }
+
+      final res =
+          QS.decode('a[0]=b', DecodeOptions(parseLists: false, decoder: dec));
+      expect(res, {
+        'a': {'0': 'b'}
+      });
+      expect(kinds, [DecodeKind.key, DecodeKind.value]);
+    });
+  });
+
+  group('decoder dynamic fallback', () {
+    test(
+        'callable object with mismatching named params falls back to (value) only',
+        () {
+      final calls = <String?>[];
+      // A callable object whose named parameters do not match the library typedefs.
+      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose1(calls).call));
+      // Since the dynamic path ends up invoking `(value)` with no named args,
+      // both key and value get prefixed with 'X'.
+      expect(res, {'Xa': 'Xb'});
+      expect(calls, ['a', 'b']);
+    });
+
+    test(
+        'callable object with a required named param triggers Utils.decode fallback',
+        () {
+      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2().call));
+      expect(res, {'a': 'b'});
+    });
+  });
+}
+
+// Helper callable used to exercise the dynamic function fallback in DecodeOptions.decoder.
+// Named parameters intentionally do not match `charset`/`kind` so the typed branches
+// are skipped and the dynamic ladder is exercised.
+class _Loose1 {
+  final List<String?> sink;
+
+  _Loose1(this.sink);
+
+  dynamic call(String? v, {Encoding? cs, DecodeKind? kd}) {
+    sink.add(v);
+    return v == null ? null : 'X$v';
+  }
+}
+
+// Helper callable that requires an unsupported named parameter; all dynamic attempts
+// should throw, causing the code to fall back to Utils.decode.
+class _Loose2 {
+  dynamic call(String? v, {required int must}) => 'Y$v';
 }

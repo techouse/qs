@@ -1,6 +1,7 @@
 import 'dart:convert' show Encoding, latin1, utf8;
 
 import 'package:equatable/equatable.dart';
+import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/utils.dart';
 
@@ -27,28 +28,30 @@ import 'package:qs_dart/src/utils.dart';
 /// See also: the options types in other ports for parity, and the individual
 /// doc comments below for precise semantics.
 
-/// Signature for a custom scalar decoder used by [DecodeOptions].
+/// Preferred signature for a custom scalar decoder used by [DecodeOptions].
 ///
-/// The function receives a single raw token (already split from the query)
-/// and an optional [charset] hint (either [utf8] or [latin1]). The [charset]
-/// reflects the *effective* charset after any sentinel (`utf8=✓`) handling.
-///
-/// Return the decoded value for the token — typically a `String`, `num`,
-/// `bool`, or `null`. If no decoder is provided, the library falls back to
-/// [Utils.decode].
-///
-/// Notes
-/// - This hook runs on **individual tokens only**; do not parse brackets,
-///   delimiters, or build containers here.
-/// - If you throw from this function, the error will surface out of
-///   [QS.decode].
-typedef Decoder = dynamic Function(String? value, {Encoding? charset});
+/// Implementations may choose to ignore [charset] or [kind], but both are
+/// provided to enable key-aware decoding when desired.
+typedef Decoder = dynamic Function(
+  String? value, {
+  Encoding? charset,
+  DecodeKind? kind,
+});
+
+/// Back-compat: decoder with optional [charset] only.
+typedef Decoder1 = dynamic Function(String? value, {Encoding? charset});
+
+/// Decoder that accepts only [kind] (no [charset]).
+typedef Decoder2 = dynamic Function(String? value, {DecodeKind? kind});
+
+/// Back-compat: single-argument decoder (value only).
+typedef Decoder3 = dynamic Function(String? value);
 
 /// Options that configure the output of [QS.decode].
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
-    Decoder? decoder,
+    Function? decoder,
     bool? decodeDotInKeys,
     this.allowEmptyLists = false,
     this.listLimit = 20,
@@ -65,7 +68,7 @@ final class DecodeOptions with EquatableMixin {
     this.strictDepth = false,
     this.strictNullHandling = false,
     this.throwOnLimitExceeded = false,
-  })  : allowDots = allowDots ?? decodeDotInKeys == true || false,
+  })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
         assert(
@@ -156,13 +159,65 @@ final class DecodeOptions with EquatableMixin {
 
   /// Optional custom scalar decoder for a single token.
   /// If not provided, falls back to [Utils.decode].
-  final Decoder? _decoder;
+  final Function? _decoder;
 
-  /// Decode a single scalar using either the custom [Decoder] or the default
-  /// implementation in [Utils.decode].
-  dynamic decoder(String? value, {Encoding? charset}) => _decoder is Function
-      ? _decoder?.call(value, charset: charset)
-      : Utils.decode(value, charset: charset);
+  /// Decode a single scalar using either the custom decoder or the default
+  /// implementation in [Utils.decode]. The [kind] indicates whether the token
+  /// is a key (or key segment) or a value.
+  dynamic decoder(
+    String? value, {
+    Encoding? charset,
+    DecodeKind kind = DecodeKind.value,
+  }) {
+    final Function? fn = _decoder;
+
+    // If no custom decoder is provided, use the default decoding logic.
+    if (fn == null) {
+      return Utils.decode(value, charset: charset ?? this.charset);
+    }
+
+    // Prefer strongly-typed variants first
+    if (fn is Decoder) return fn(value, charset: charset, kind: kind);
+    if (fn is Decoder1) return fn(value, charset: charset);
+    if (fn is Decoder2) return fn(value, kind: kind);
+    if (fn is Decoder3) return fn(value);
+
+    // Dynamic callable or class with `call` method
+    try {
+      // Try full shape (value, {charset, kind})
+      return (fn as dynamic)(value, charset: charset, kind: kind);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value, {charset})
+      return (fn as dynamic)(value, charset: charset);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value, {kind})
+      return (fn as dynamic)(value, kind: kind);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // Try (value)
+      return (fn as dynamic)(value);
+    } on NoSuchMethodError catch (_) {
+      // Fallback to default
+      return Utils.decode(value, charset: charset ?? this.charset);
+    } on TypeError catch (_) {
+      // Fallback to default
+      return Utils.decode(value, charset: charset ?? this.charset);
+    }
+  }
 
   /// Return a new [DecodeOptions] with the provided overrides.
   DecodeOptions copyWith({
@@ -182,7 +237,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
-    Decoder? decoder,
+    dynamic Function(String?)? decoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,

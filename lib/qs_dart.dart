@@ -19,6 +19,7 @@
 /// See the repository README for complete examples and edge‑case notes.
 library;
 
+export 'src/enums/decode_kind.dart';
 export 'src/enums/duplicates.dart';
 export 'src/enums/format.dart';
 export 'src/enums/list_format.dart';

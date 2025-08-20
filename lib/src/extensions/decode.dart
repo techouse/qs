@@ -145,12 +145,15 @@ extension _$Decode on QS {
 
       late final String key;
       dynamic val;
-      // Bare key without '=', interpret as null vs empty-string per strictNullHandling.
+      // Decode key/value using key-aware decoder, no %2E protection shim.
       if (pos == -1) {
-        key = options.decoder(part, charset: charset);
+        // Decode bare key (no '=') using key-aware decoder
+        key = options.decoder(part, charset: charset, kind: DecodeKind.key);
         val = options.strictNullHandling ? null : '';
       } else {
-        key = options.decoder(part.slice(0, pos), charset: charset);
+        // Decode key slice using key-aware decoder; values decode as value kind
+        key = options.decoder(part.slice(0, pos),
+            charset: charset, kind: DecodeKind.key);
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
         val = Utils.apply<dynamic>(
           _parseListValue(
@@ -160,7 +163,8 @@ extension _$Decode on QS {
                 ? (obj[key] as List).length
                 : 0,
           ),
-          (dynamic val) => options.decoder(val, charset: charset),
+          (dynamic v) =>
+              options.decoder(v, charset: charset, kind: DecodeKind.value),
         );
       }
 
@@ -257,7 +261,7 @@ extension _$Decode on QS {
             ? root.slice(1, root.length - 1)
             : root;
         final String decodedRoot = options.decodeDotInKeys
-            ? cleanRoot.replaceAll('%2E', '.')
+            ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
         final int? index = int.tryParse(decodedRoot);
         if (!options.parseLists && decodedRoot == '') {
