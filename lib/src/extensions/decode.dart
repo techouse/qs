@@ -147,10 +147,26 @@ extension _$Decode on QS {
       dynamic val;
       // Bare key without '=', interpret as null vs empty-string per strictNullHandling.
       if (pos == -1) {
-        key = options.decoder(part, charset: charset);
+        // Protect %2E/%2e in keys so dot-splitting doesn’t see them unless decodeDotInKeys is true.
+        String keyInput = part;
+        if (options.allowDots &&
+            !options.decodeDotInKeys &&
+            keyInput.contains('%2')) {
+          keyInput =
+              keyInput.replaceAll('%2E', '%252E').replaceAll('%2e', '%252e');
+        }
+        key = options.decoder(keyInput, charset: charset);
         val = options.strictNullHandling ? null : '';
       } else {
-        key = options.decoder(part.slice(0, pos), charset: charset);
+        // Protect %2E/%2e in the key slice only; values decode normally.
+        String keyInput = part.slice(0, pos);
+        if (options.allowDots &&
+            !options.decodeDotInKeys &&
+            keyInput.contains('%2')) {
+          keyInput =
+              keyInput.replaceAll('%2E', '%252E').replaceAll('%2e', '%252e');
+        }
+        key = options.decoder(keyInput, charset: charset);
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
         val = Utils.apply<dynamic>(
           _parseListValue(
