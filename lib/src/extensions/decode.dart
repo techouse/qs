@@ -273,7 +273,7 @@ extension _$Decode on QS {
             ? root.slice(1, root.length - 1)
             : root;
         final String decodedRoot = options.decodeDotInKeys
-            ? cleanRoot.replaceAll('%2E', '.')
+            ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
         final int? index = int.tryParse(decodedRoot);
         if (!options.parseLists && decodedRoot == '') {
@@ -316,7 +316,7 @@ extension _$Decode on QS {
 
     final segments = _splitKeyIntoSegments(
       originalKey: givenKey,
-      allowDots: options.allowDots,
+      allowDots: options.allowDots || options.decodeDotInKeys,
       maxDepth: options.depth,
       strictDepth: options.strictDepth,
     );
