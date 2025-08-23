@@ -2493,6 +2493,28 @@ void main() {
           }));
     });
 
+    test('leading dot preserved when allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('.a=x', opt),
+        equals({
+          '.a': 'x',
+        }),
+      );
+    });
+
+    test('double dot: first dot preserved as literal; second splits', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('a..b=x', opt),
+        equals({
+          'a.': {
+            'b': 'x',
+          }
+        }),
+      );
+    });
+
     test(
         'bracket segment: encoded dot mapped to \'.\' (allowDots=true, decodeDotInKeys=true)',
         () {
