@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 part of '../qs.dart';
 
 /// Decoder: query-string → nested Dart maps/lists (Node `qs` parity)
@@ -104,8 +105,7 @@ extension _$Decode on QS {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
-      if (options.throwOnLimitExceeded &&
-          currentListLength + splitVal.length > options.listLimit) {
+      if (options.throwOnLimitExceeded && splitVal.length > options.listLimit) {
         throw RangeError(
           'List limit exceeded. '
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -116,7 +116,7 @@ extension _$Decode on QS {
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
-        currentListLength + 1 > options.listLimit) {
+        currentListLength >= options.listLimit) {
       throw RangeError(
         'List limit exceeded. '
         'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -200,15 +200,14 @@ extension _$Decode on QS {
 
       late final String key;
       dynamic val;
-      // Decode key/value using key-aware decoder, no %2E protection shim.
+      // Decode key/value via DecodeOptions.decodeKey/decodeValue (kind-aware).
       if (pos == -1) {
-        // Decode bare key (no '=') using key-aware decoder
-        key = options.decoder(part, charset: charset, kind: DecodeKind.key);
+        // Decode bare key (no '=') using key-aware decoding
+        key = options.decodeKey(part, charset: charset) ?? '';
         val = options.strictNullHandling ? null : '';
       } else {
-        // Decode key slice using key-aware decoder; values decode as value kind
-        key = options.decoder(part.slice(0, pos),
-            charset: charset, kind: DecodeKind.key);
+        // Decode the key slice as a key; values decode as values
+        key = options.decodeKey(part.slice(0, pos), charset: charset) ?? '';
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
         val = Utils.apply<dynamic>(
           _parseListValue(
@@ -218,8 +217,7 @@ extension _$Decode on QS {
                 ? (obj[key] as List).length
                 : 0,
           ),
-          (dynamic v) =>
-              options.decoder(v, charset: charset, kind: DecodeKind.value),
+          (dynamic v) => options.decodeValue(v as String?, charset: charset),
         );
       }
 
