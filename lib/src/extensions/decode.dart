@@ -34,6 +34,11 @@ extension _$Decode on QS {
   ///
   /// The `currentListLength` is used to guard incremental growth when we are
   /// already building a list for a given key path.
+  ///
+  /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
+  /// elsewhere (e.g. `[2]` segments become string keys), but *list growth paths* still exist:
+  /// empty‑bracket pushes (`a[]=...`) and comma‑splits. When `throwOnLimitExceeded` is `true` and
+  /// `listLimit < 0`, any such growth throws immediately; when `false`, they are allowed.
   static dynamic _parseListValue(
     dynamic val,
     DecodeOptions options,
@@ -71,6 +76,8 @@ extension _$Decode on QS {
   /// - charset sentinel detection (`utf8=`) per `qs`
   /// - duplicate key policy (combine/first/last)
   /// - parameter and list limits with optional throwing behavior
+  /// - list‑growth checks honor `throwOnLimitExceeded` even when `listLimit` is negative (see
+  ///   `_parseListValue` and `_parseObject` for details on `[]` and comma‑splits).
   static Map<String, dynamic> _parseQueryStringValues(
     String str, [
     DecodeOptions options = const DecodeOptions(),
@@ -198,6 +205,10 @@ extension _$Decode on QS {
   /// - When `allowEmptyLists` is true, an empty string (or `null` under
   ///   `strictNullHandling`) under a `[]` segment yields an empty list.
   /// - `listLimit` applies to explicit numeric indices as an upper bound.
+  /// - A negative `listLimit` disables numeric-index parsing (bracketed numbers become map keys).
+  ///   However, empty‑bracket pushes (`[]`) still create lists unless `throwOnLimitExceeded` is
+  ///   `true`, in which case any list growth is rejected (comma‑split growth is enforced in
+  ///   `_parseListValue`).
   /// - Keys arrive already decoded (top‑level encoded dots become literal `.` before we get here).
   ///   Whether top‑level dots split was decided earlier by `_splitKeyIntoSegments` (based on
   ///   `allowDots`). Numeric list indices are only honored for *bracketed* numerics like `[3]`.
