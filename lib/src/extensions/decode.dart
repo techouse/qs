@@ -42,7 +42,8 @@ extension _$Decode on QS {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
-      if (options.throwOnLimitExceeded && splitVal.length > options.listLimit) {
+      if (options.throwOnLimitExceeded &&
+          (currentListLength + splitVal.length) > options.listLimit) {
         throw RangeError(
           'List limit exceeded. '
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
