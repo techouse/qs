@@ -15,6 +15,15 @@ import 'package:qs_dart/src/utils.dart';
 ///
 /// Highlights
 /// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
+///   If you also set [decodeDotInKeys] to `true`, [allowDots] defaults to `true`
+///   unless you explicitly set `allowDots: false` — which is an invalid
+///   combination and will throw at construction time.
+/// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
+///   [charsetSentinel] is `true`, a `utf8=✓` parameter (in either UTF‑8 or
+///   Latin‑1 form) can override [charset]; the **first such parameter** is used.
+///
+/// Highlights
+/// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
 ///   If you *explicitly* request dot decoding in keys via [decodeDotInKeys],
 ///   [allowDots] is implied and will be treated as `true`.
 /// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
@@ -96,8 +105,9 @@ final class DecodeOptions with EquatableMixin {
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
   ///
-  /// If you set [decodeDotInKeys] to `true`, this flag is implied and will be
-  /// treated as enabled even if you pass `allowDots: false`.
+  /// If you set [decodeDotInKeys] to `true` and do not pass [allowDots], this
+  /// flag defaults to `true`. Passing `allowDots: false` while
+  /// `decodeDotInKeys` is `true` is invalid and will throw at construction.
   final bool allowDots;
 
   /// When `true`, allow empty list values to be produced from inputs like
@@ -114,9 +124,9 @@ final class DecodeOptions with EquatableMixin {
   /// Only [utf8] and [latin1] are supported.
   final Encoding charset;
 
-  /// Enable opt‑in charset detection via the `utf8=✓` sentinel.
+  /// Enable opt‑in charset detection via a `utf8=✓` sentinel parameter.
   ///
-  /// If present at the start of the input, the sentinel will:
+  /// If present anywhere in the input, the *first occurrence* will:
   ///  * be omitted from the result map, and
   ///  * override [charset] based on how the checkmark was encoded (UTF‑8 or
   ///    Latin‑1).
@@ -193,7 +203,8 @@ final class DecodeOptions with EquatableMixin {
   /// For backward compatibility, a [LegacyDecoder] can be supplied and is honored
   /// when no primary [decoder] is provided. The [kind] will be [DecodeKind.key] for
   /// keys (and key segments) and [DecodeKind.value] for values. The default implementation
-  /// does not vary decoding based on [kind].
+  /// does not vary decoding based on [kind]. If your decoder returns `null`, that `null`
+  /// is preserved — no fallback decoding is applied.
   dynamic decode(
     String? value, {
     Encoding? charset,
