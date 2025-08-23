@@ -279,7 +279,9 @@ extension _$Decode on QS {
         final String decodedRoot = options.decodeDotInKeys
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
-        final int? index = int.tryParse(decodedRoot);
+        final int? index = (wasBracketed && options.parseLists)
+            ? int.tryParse(decodedRoot)
+            : null;
         if (!options.parseLists && decodedRoot == '') {
           obj = <String, dynamic>{'0': leaf};
         } else if (index != null &&
@@ -297,6 +299,7 @@ extension _$Decode on QS {
           );
           obj[index] = leaf;
         } else {
+          // Normalise numeric-looking keys back to their canonical string form when not a list index
           obj[index?.toString() ?? decodedRoot] = leaf;
         }
       }
@@ -464,6 +467,19 @@ extension _$Decode on QS {
             // Normal split: convert top-level ".a" or "a.b" into a bracket segment.
             final int start = ++i;
             int j = start;
+            // Accept [A-Za-z0-9_] at the start of a segment; otherwise, keep '.' literal.
+            bool isIdentStart(int cu) => switch (cu) {
+                  >= 0x41 && <= 0x5A => true, // A-Z
+                  >= 0x61 && <= 0x7A => true, // a-z
+                  >= 0x30 && <= 0x39 => true, // 0-9
+                  0x5F => true, // _
+                  _ => false,
+                };
+            if (start >= s.length || !isIdentStart(s.codeUnitAt(start))) {
+              // keep as literal if next char isn't an ident start
+              sb.write('.');
+              continue;
+            }
             while (j < s.length && s[j] != '.' && s[j] != '[') {
               j++;
             }
