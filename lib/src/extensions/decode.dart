@@ -273,9 +273,9 @@ extension _$Decode on QS {
         // dots inside bracket segments can be treated as literal `.` without introducing extra
         // dot‑splits. Top‑level dot splitting (which only applies to literal `.`) already
         // happened in `_splitKeyIntoSegments`.
-        final String cleanRoot = root.startsWith('[') && root.endsWith(']')
-            ? root.slice(1, root.length - 1)
-            : root;
+        final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
+        final String cleanRoot =
+            wasBracketed ? root.slice(1, root.length - 1) : root;
         final String decodedRoot = options.decodeDotInKeys
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
@@ -284,7 +284,7 @@ extension _$Decode on QS {
           obj = <String, dynamic>{'0': leaf};
         } else if (index != null &&
             index >= 0 &&
-            root != decodedRoot &&
+            wasBracketed &&
             index.toString() == decodedRoot &&
             options.parseLists &&
             index <= options.listLimit) {
