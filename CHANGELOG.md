@@ -1,3 +1,28 @@
+## 1.5.2
+
+- [FIX] enforce `decodeDotInKeys` and `allowDots` option consistency; clarify dot decoding in documentation
+- [FIX] fix dot notation encoding in key splitter; handle top-level dots and bracket depth correctly
+- [FIX] fix list limit check to account for current list length when splitting comma-separated values
+- [FIX] fix parameter splitting to correctly enforce limit and wrap excess bracket groups as single segment
+- [FIX] fix list limit enforcement and unify key/value decoding in parser
+- [FIX] preserve leading dot in key decoding except for degenerate ".[" case
+- [CHORE] add tests for `allowDots` and `decodeDotInKeys` consistency in `DecodeOptions`
+- [CHORE] add comprehensive tests for encoded dot behavior in keys to ensure C# port (QsNet) parity and option consistency
+- [CHORE]️ refactor `DecodeOptions` to support legacy decoders and unify decode logic; add `decodeKey`/`decodeValue` helpers
+- [CHORE] add tests for encoded dot handling in keys and custom decoder behavior in `DecodeOptions`
+- [CHORE] remove unused import of `DecodeKind` from qs.dart
+- [CHORE] update decode.dart comments to clarify key decoding and dot/bracket handling logic
+- [CHORE] clarify `DecodeOptions` docs for `allowDots` and `decodeDotInKeys` interaction; improve `charsetSentinel` and decoder behavior descriptions
+- [CHORE]️ simplify custom decoder handling in `DecodeOptions`; remove dynamic invocation and legacy overloads
+- [CHORE] update tests to use new decoder signature with `DecodeKind`; remove legacy dynamic invocation cases
+- [CHORE] add tests for leading and double dot handling with `allowDots=true`
+- [CHORE] remove legacy dynamic decoder fallback tests and helper class
+- [CHORE] fix custom percent-decoding logic to handle non-encoded characters and improve byte extraction
+- [CHORE] clarify negative `listLimit` behavior and list growth checks in decode logic comments
+- [CHORE] clarify `listLimit` negative value behavior and `throwOnLimitExceeded` interaction in decode options comments
+- [CHORE] improve decode tests for nested list handling, list limit error matching, and long input parsing; fix percent-decoding to handle '+' as space
+- [CHORE] clarify handling of percent-encoded dots in keys and list growth with negative `listLimit` in decode logic comments
+
 ## 1.5.1
 
 - [FIX] fix `decoder` type and include `throwOnLimitExceeded` in equality check
