@@ -2744,4 +2744,52 @@ void main() {
       );
     });
   });
+
+  group('key splitting: depth remainder & strictDepth (dot + bracket parity)',
+      () {
+    test(
+        'allowDots=true, depth=1: split once, stash remainder as literal bracket string',
+        () {
+      expect(
+        QS.decode('a.b.c=d', const DecodeOptions(allowDots: true, depth: 1)),
+        equals({
+          'a': {
+            'b': {'[c]': 'd'}
+          }
+        }),
+      );
+    });
+
+    test(
+        'allowDots=true, depth=1: two-segment remainder becomes "[c][d]" literal',
+        () {
+      expect(
+        QS.decode('a.b.c.d=e', const DecodeOptions(allowDots: true, depth: 1)),
+        equals({
+          'a': {
+            'b': {'[c][d]': 'e'}
+          }
+        }),
+      );
+    });
+
+    test('strictDepth=true + allowDots=true: well-formed overflow throws', () {
+      expect(
+        () => QS.decode('a.b.c=d',
+            const DecodeOptions(allowDots: true, depth: 1, strictDepth: true)),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test(
+        'unterminated bracket group: do not throw even with strictDepth=true; wrap raw remainder',
+        () {
+      expect(
+        QS.decode('a[b[c]=x', const DecodeOptions(depth: 5, strictDepth: true)),
+        equals({
+          'a': {'[b[c': 'x'}
+        }),
+      );
+    });
+  });
 }
