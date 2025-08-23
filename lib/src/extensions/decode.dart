@@ -426,7 +426,12 @@ extension _$Decode on QS {
         if (depth == 0) {
           final bool hasNext = i + 1 < s.length;
           final String next = hasNext ? s[i + 1] : '\u0000';
-          if (hasNext && next == '[') {
+
+          // preserve a *leading* '.' as a literal, unless it's the ".[" degenerate.
+          if (i == 0 && (!hasNext || next != '[')) {
+            sb.write('.');
+            i++;
+          } else if (hasNext && next == '[') {
             // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
             i++; // consume the '.'
           } else if (!hasNext || next == '.') {
