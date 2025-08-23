@@ -28,8 +28,8 @@ void main() {
     });
 
     test('Nested list handling in _parseObject method', () {
-      // This test targets lines 154-156 in decode.dart
-      // We need to create a scenario where val is a List and parentKey exists in the list
+      // Exercise the _parseObject branch that handles nested lists and parent indices.
+      // Create scenarios where `val` is a List and verify index-based insertion/compaction.
 
       // First, create a list with a nested list at index 0
       final list = [
@@ -80,7 +80,7 @@ void main() {
       // Now try to add to the existing list
       final queryString4 = 'a[0][2]=third';
 
-      // Decode it with the existing result as the input
+      // Decode it separately; ensure compaction yields only the provided element
       final result4 = QS.decode(queryString4);
 
       // Verify the result
@@ -1499,21 +1499,30 @@ void main() {
     test('can parse with custom encoding', () {
       final Map<String, dynamic> expected = {'県': '大阪府'};
 
-      String? decode(String? str, {Encoding? charset, DecodeKind? kind}) {
-        if (str == null) {
-          return null;
+      String? decode(String? s, {Encoding? charset, DecodeKind? kind}) {
+        if (s == null) return null;
+        final bytes = <int>[];
+        for (int i = 0; i < s.length;) {
+          final c = s.codeUnitAt(i);
+          if (c == 0x25 /* '%' */ && i + 2 < s.length) {
+            final h1 = s.codeUnitAt(i + 1), h2 = s.codeUnitAt(i + 2);
+            int d(int u) => switch (u) {
+                  >= 0x30 && <= 0x39 => u - 0x30,
+                  >= 0x61 && <= 0x66 => u - 0x61 + 10,
+                  >= 0x41 && <= 0x46 => u - 0x41 + 10,
+                  _ => -1,
+                };
+            final hi = d(h1), lo = d(h2);
+            if (hi >= 0 && lo >= 0) {
+              bytes.add((hi << 4) | lo);
+              i += 3;
+              continue;
+            }
+          }
+          bytes.add(c);
+          i++;
         }
-
-        final RegExp reg = RegExp(r'%([0-9A-F]{2})', caseSensitive: false);
-        final List<int> result = [];
-        Match? parts;
-        while ((parts = reg.firstMatch(str!)) != null && parts != null) {
-          result.add(int.parse(parts.group(1)!, radix: 16));
-          str = str.substring(parts.end);
-        }
-        return ShiftJIS().decode(
-          Uint8List.fromList(result),
-        );
+        return ShiftJIS().decode(Uint8List.fromList(bytes));
       }
 
       expect(
