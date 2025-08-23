@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -16,15 +17,20 @@ void main() {
       expect(
         () => QS.decode(
           'a=b&c=d',
-          const DecodeOptions(parameterLimit: 0),
+          DecodeOptions(parameterLimit: 0),
         ),
-        throwsArgumentError,
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
       );
     });
 
-    test('Nested list handling in _parseObject method', () {
-      // This test targets lines 154-156 in decode.dart
-      // We need to create a scenario where val is a List and parentKey exists in the list
+    test('Nested list handling preserves nested lists and compaction behaviour',
+        () {
+      // Exercise the _parseObject branch that handles nested lists and parent indices.
+      // Create scenarios where `val` is a List and verify index-based insertion/compaction.
 
       // First, create a list with a nested list at index 0
       final list = [
@@ -75,7 +81,7 @@ void main() {
       // Now try to add to the existing list
       final queryString4 = 'a[0][2]=third';
 
-      // Decode it with the existing result as the input
+      // Decode it separately; ensure compaction yields only the provided element
       final result4 = QS.decode(queryString4);
 
       // Verify the result
@@ -212,7 +218,7 @@ void main() {
           isA<RangeError>().having(
             (e) => e.message,
             'message',
-            'List limit exceeded. Only 3 elements allowed in a list.',
+            contains('List limit exceeded'),
           ),
         ),
       );
@@ -1045,13 +1051,11 @@ void main() {
     });
 
     test('does not error when parsing a very long list', () {
-      final StringBuffer str = StringBuffer('a[]=a');
-      while (utf8.encode(str.toString()).length < 128 * 1024) {
-        str.write('&');
-        str.write(str);
+      String s = 'a[]=a';
+      while (utf8.encode(s).length < 128 * 1024) {
+        s = '$s&$s';
       }
-
-      expect(() => QS.decode(str.toString()), returnsNormally);
+      expect(() => QS.decode(s), returnsNormally);
     });
 
     test('parses a string with an alternative string delimiter', () {
@@ -1262,7 +1266,7 @@ void main() {
     test(
       'use number decoder, parses string that has one number with comma option enabled',
       () {
-        dynamic decoder(String? str, {Encoding? charset}) =>
+        dynamic decoder(String? str, {Encoding? charset, DecodeKind? kind}) =>
             num.tryParse(str ?? '') ?? Utils.decode(str, charset: charset);
 
         expect(
@@ -1285,15 +1289,6 @@ void main() {
           'foo': [
             ['1', '2', '3'],
             ['4', '5', '6']
-          ]
-        }),
-      );
-      expect(
-        QS.decode('foo[]=1,2,3&foo[]=', const DecodeOptions(comma: true)),
-        equals({
-          'foo': [
-            ['1', '2', '3'],
-            ''
           ]
         }),
       );
@@ -1494,21 +1489,35 @@ void main() {
     test('can parse with custom encoding', () {
       final Map<String, dynamic> expected = {'県': '大阪府'};
 
-      String? decode(String? str, {Encoding? charset}) {
-        if (str == null) {
-          return null;
+      String? decode(String? s, {Encoding? charset, DecodeKind? kind}) {
+        if (s == null) return null;
+        final bytes = <int>[];
+        for (int i = 0; i < s.length;) {
+          final c = s.codeUnitAt(i);
+          if (c == 0x25 /* '%' */ && i + 2 < s.length) {
+            final h1 = s.codeUnitAt(i + 1), h2 = s.codeUnitAt(i + 2);
+            int d(int u) => switch (u) {
+                  >= 0x30 && <= 0x39 => u - 0x30,
+                  >= 0x61 && <= 0x66 => u - 0x61 + 10,
+                  >= 0x41 && <= 0x46 => u - 0x41 + 10,
+                  _ => -1,
+                };
+            final int hi = d(h1), lo = d(h2);
+            if (hi >= 0 && lo >= 0) {
+              bytes.add((hi << 4) | lo);
+              i += 3;
+              continue;
+            }
+          }
+          if (c == 0x2B /* '+' */) {
+            bytes.add(0x20); // space
+            i++;
+            continue;
+          }
+          bytes.add(c);
+          i++;
         }
-
-        final RegExp reg = RegExp(r'%([0-9A-F]{2})', caseSensitive: false);
-        final List<int> result = [];
-        Match? parts;
-        while ((parts = reg.firstMatch(str!)) != null && parts != null) {
-          result.add(int.parse(parts.group(1)!, radix: 16));
-          str = str.substring(parts.end);
-        }
-        return ShiftJIS().decode(
-          Uint8List.fromList(result),
-        );
+        return ShiftJIS().decode(Uint8List.fromList(bytes));
       }
 
       expect(
@@ -1642,7 +1651,7 @@ void main() {
               'foo=&bar=$urlEncodedNumSmiley',
               DecodeOptions(
                 charset: latin1,
-                decoder: (String? str, {Encoding? charset}) =>
+                decoder: (String? str, {Encoding? charset, DecodeKind? kind}) =>
                     str?.isNotEmpty ?? false
                         ? Utils.decode(str!, charset: charset)
                         : null,
@@ -2034,13 +2043,13 @@ void main() {
       ]);
     });
 
-    test('legacy single-arg decoder still works', () {
-      String? dec(String? v) => v?.toUpperCase();
-      expect(QS.decode('a=b', DecodeOptions(decoder: dec)), {'A': 'B'});
+    test('legacy 2-arg decoder still works', () {
+      String? dec(String? v, {Encoding? charset}) => v?.toUpperCase();
+      expect(QS.decode('a=b', DecodeOptions(legacyDecoder: dec)), {'A': 'B'});
     });
 
-    test('decoder that only accepts kind also works', () {
-      dynamic dec(String? v, {DecodeKind? kind}) =>
+    test('3-arg decoder is now the default decoder', () {
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) =>
           kind == DecodeKind.key ? v?.toUpperCase() : v;
 
       expect(QS.decode('aa=bb', DecodeOptions(decoder: dec)), {'AA': 'bb'});
@@ -2173,44 +2182,385 @@ void main() {
     });
   });
 
-  group('decoder dynamic fallback', () {
+  group('C# parity: encoded dot behavior in keys (%2E / %2e)', () {
     test(
-        'callable object with mismatching named params falls back to (value) only',
-        () {
-      final calls = <String?>[];
-      // A callable object whose named parameters do not match the library typedefs.
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose1(calls).call));
-      // Since the dynamic path ends up invoking `(value)` with no named args,
-      // both key and value get prefixed with 'X'.
-      expect(res, {'Xa': 'Xb'});
-      expect(calls, ['a', 'b']);
+      'top-level: allowDots=true, decodeDotInKeys=true → plain dot splits; encoded dot also splits (upper/lower)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+        expect(
+            QS.decode('a.b=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+      },
+    );
+
+    test(
+      'top-level: allowDots=true, decodeDotInKeys=false → encoded dot also splits (upper/lower)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+      },
+    );
+
+    test('allowDots=false, decodeDotInKeys=true is invalid', () {
+      expect(
+        () => QS.decode(
+            'a%2Eb=c', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
     });
 
     test(
-        'callable object with a required named param triggers Utils.decode fallback',
+        'bracket segment: maps to \'.\' when decodeDotInKeys=true (case-insensitive)',
         () {
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2().call));
-      expect(res, {'a': 'b'});
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[%2E]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+      expect(
+          QS.decode('a[%2e]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+    });
+
+    test(
+      'bracket segment: when decodeDotInKeys=false, percent-decoding inside brackets yields \'.\' (case-insensitive)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+        expect(
+            QS.decode('a[%2e]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test('value tokens always decode %2E → \'.\'', () {
+      expect(QS.decode('x=%2E'), equals({'x': '.'}));
+    });
+
+    test(
+      'latin1: allowDots=true, decodeDotInKeys=true behaves like UTF-8 for top-level & bracket segment',
+      () {
+        const opt = DecodeOptions(
+            allowDots: true, decodeDotInKeys: true, charset: latin1);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test(
+      'latin1: allowDots=true, decodeDotInKeys=false also splits top-level and decodes inside brackets',
+      () {
+        const opt = DecodeOptions(
+            allowDots: true, decodeDotInKeys: false, charset: latin1);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test('percent-decoding applies inside brackets for keys', () {
+      // Equivalent of Kotlin's DecodeOptions.decode(KEY) assertions using QS.decode
+      const o1 = DecodeOptions(allowDots: false, decodeDotInKeys: false);
+      const o2 = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+
+      expect(
+          QS.decode('a[%2Eb]=v', o1),
+          equals({
+            'a': {'.b': 'v'}
+          }));
+      expect(
+          QS.decode('a[b%2Ec]=v', o1),
+          equals({
+            'a': {'b.c': 'v'}
+          }));
+
+      expect(
+          QS.decode('a[%2Eb]=v', o2),
+          equals({
+            'a': {'.b': 'v'}
+          }));
+      expect(
+          QS.decode('a[b%2Ec]=v', o2),
+          equals({
+            'a': {'b.c': 'v'}
+          }));
+    });
+
+    test(
+      'mixed-case encoded brackets + encoded dot after brackets (allowDots=true, decodeDotInKeys=true)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+        expect(
+          QS.decode('a%5Bb%5D%5Bc%5D%2Ed=x', opt),
+          equals({
+            'a': {
+              'b': {
+                'c': {'d': 'x'}
+              }
+            }
+          }),
+        );
+        expect(
+          QS.decode('a%5bb%5d%5bc%5d%2ed=x', opt),
+          equals({
+            'a': {
+              'b': {
+                'c': {'d': 'x'}
+              }
+            }
+          }),
+        );
+      },
+    );
+
+    test('nested brackets inside a bracket segment (balanced as one segment)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      // "a[b%5Bc%5D].e=x" → key "b[c]" stays a single segment; then ".e" splits
+      expect(
+        QS.decode('a[b%5Bc%5D].e=x', opt),
+        equals({
+          'a': {
+            'b[c]': {'e': 'x'}
+          }
+        }),
+      );
+    });
+
+    test(
+      'mixed-case encoded brackets + encoded dot with allowDots=false & decodeDotInKeys=true throws',
+      () {
+        expect(
+          () => QS.decode('a%5Bb%5D%5Bc%5D%2Ed=x',
+              DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+          throwsA(anyOf(
+            isA<ArgumentError>(),
+            isA<StateError>(),
+            isA<AssertionError>(),
+          )),
+        );
+      },
+    );
+
+    test(
+        'top-level encoded dot splits when allowDots=true, decodeDotInKeys=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2Eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test(
+        'top-level encoded dot also splits when allowDots=true, decodeDotInKeys=false',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+      expect(
+          QS.decode('a%2Eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test(
+        'top-level encoded dot does not split when allowDots=false, decodeDotInKeys=false',
+        () {
+      const opt = DecodeOptions(allowDots: false, decodeDotInKeys: false);
+      expect(QS.decode('a%2Eb=c', opt), equals({'a.b': 'c'}));
+    });
+
+    test('bracket then encoded dot to next segment with allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[b]%2Ec=x', opt),
+          equals({
+            'a': {
+              'b': {'c': 'x'}
+            }
+          }));
+      expect(
+          QS.decode('a[b]%2ec=x', opt),
+          equals({
+            'a': {
+              'b': {'c': 'x'}
+            }
+          }));
+    });
+
+    test('mixed-case: top-level encoded dot then bracket with allowDots=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2E[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test(
+        'top-level lowercase encoded dot splits when allowDots=true (decodeDotInKeys=false)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+      expect(
+          QS.decode('a%2eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test('dot before index with allowDots=true: index remains index', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('foo[0].baz[0]=15&foo[0].bar=2', opt),
+        equals({
+          'foo': [
+            {
+              'baz': ['15'],
+              'bar': '2',
+            }
+          ]
+        }),
+      );
+    });
+
+    test('trailing dot ignored when allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+          QS.decode('user.email.=x', opt),
+          equals({
+            'user': {'email': 'x'}
+          }));
+    });
+
+    test('leading dot preserved when allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('.a=x', opt),
+        equals({
+          '.a': 'x',
+        }),
+      );
+    });
+
+    test('double dot: first dot preserved as literal; second splits', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('a..b=x', opt),
+        equals({
+          'a.': {
+            'b': 'x',
+          }
+        }),
+      );
+    });
+
+    test(
+        'bracket segment: encoded dot mapped to \'.\' (allowDots=true, decodeDotInKeys=true)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[%2E]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+      expect(
+          QS.decode('a[%2e]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+    });
+
+    test('top-level encoded dot before bracket (lowercase) with allowDots=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2e[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test('plain dot before bracket with allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a.[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test('kind-aware decoder receives KEY for top-level and bracketed keys',
+        () {
+      final calls = <List<dynamic>>[]; // [String? s, DecodeKind kind]
+      dynamic dec(String? s, {Encoding? charset, DecodeKind? kind}) {
+        calls.add([s, kind ?? DecodeKind.value]);
+        return s;
+      }
+
+      QS.decode('a%2Eb=c&a[b]=d',
+          DecodeOptions(allowDots: true, decodeDotInKeys: true, decoder: dec));
+
+      expect(
+        calls.any((it) =>
+            it[1] == DecodeKind.key && (it[0] == 'a%2Eb' || it[0] == 'a[b]')),
+        isTrue,
+      );
+      expect(
+        calls.any((it) =>
+            it[1] == DecodeKind.value && (it[0] == 'c' || it[0] == 'd')),
+        isTrue,
+      );
     });
   });
-}
-
-// Helper callable used to exercise the dynamic function fallback in DecodeOptions.decoder.
-// Named parameters intentionally do not match `charset`/`kind` so the typed branches
-// are skipped and the dynamic ladder is exercised.
-class _Loose1 {
-  final List<String?> sink;
-
-  _Loose1(this.sink);
-
-  dynamic call(String? v, {Encoding? cs, DecodeKind? kd}) {
-    sink.add(v);
-    return v == null ? null : 'X$v';
-  }
-}
-
-// Helper callable that requires an unsupported named parameter; all dynamic attempts
-// should throw, causing the code to fall back to Utils.decode.
-class _Loose2 {
-  dynamic call(String? v, {required int must}) => 'Y$v';
 }

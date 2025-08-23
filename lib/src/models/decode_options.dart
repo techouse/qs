@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert' show Encoding, latin1, utf8;
 
 import 'package:equatable/equatable.dart';
@@ -15,7 +16,8 @@ import 'package:qs_dart/src/utils.dart';
 /// Highlights
 /// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
 ///   If you *explicitly* request dot decoding in keys via [decodeDotInKeys],
-///   [allowDots] is implied and will be treated as `true`.
+///   [allowDots] is implied and will be treated as `true` unless you explicitly
+///   set `allowDots: false` — which is an invalid combination and will throw at construction time.
 /// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
 ///   [charsetSentinel] is `true`, a leading `utf8=✓` token (in either UTF‑8 or
 ///   Latin‑1 form) can override [charset] as a compatibility escape hatch.
@@ -38,20 +40,20 @@ typedef Decoder = dynamic Function(
   DecodeKind? kind,
 });
 
-/// Back-compat: decoder with optional [charset] only.
-typedef Decoder1 = dynamic Function(String? value, {Encoding? charset});
-
-/// Decoder that accepts only [kind] (no [charset]).
-typedef Decoder2 = dynamic Function(String? value, {DecodeKind? kind});
-
-/// Back-compat: single-argument decoder (value only).
-typedef Decoder3 = dynamic Function(String? value);
+/// Back‑compat adapter for `(value, charset) -> Any?` decoders.
+@Deprecated(
+  'Use Decoder; wrap your two‑arg lambda: '
+  'Decoder((value, {charset, kind}) => legacy(value, charset: charset))',
+)
+typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
 
 /// Options that configure the output of [QS.decode].
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
-    Function? decoder,
+    Decoder? decoder,
+    @Deprecated('Use Decoder instead; see DecodeOptions.decoder')
+    LegacyDecoder? legacyDecoder,
     bool? decodeDotInKeys,
     this.allowEmptyLists = false,
     this.listLimit = 20,
@@ -71,15 +73,25 @@ final class DecodeOptions with EquatableMixin {
   })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
+        _legacyDecoder = legacyDecoder,
         assert(
           charset == utf8 || charset == latin1,
           'Invalid charset',
+        ),
+        assert(
+          !(decodeDotInKeys ?? false) || allowDots != false,
+          'decodeDotInKeys requires allowDots to be true',
+        ),
+        assert(
+          parameterLimit > 0,
+          'Parameter limit must be positive',
         );
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
   ///
-  /// If you set [decodeDotInKeys] to `true`, this flag is implied and will be
-  /// treated as enabled even if you pass `allowDots: false`.
+  /// If you set [decodeDotInKeys] to `true` and do not pass [allowDots], this
+  /// flag defaults to `true`. Passing `allowDots: false` while
+  /// `decodeDotInKeys` is `true` is invalid and will throw at construction.
   final bool allowDots;
 
   /// When `true`, allow empty list values to be produced from inputs like
@@ -90,15 +102,24 @@ final class DecodeOptions with EquatableMixin {
   ///
   /// Keys like `a[9999999]` can cause excessively large sparse lists; above
   /// this limit, indices are treated as string map keys instead.
+  ///
+  /// **Negative values:** passing a negative `listLimit` (e.g. `-1`) disables
+  /// numeric‑index parsing entirely — any bracketed number like `a[0]` or
+  /// `a[123]` is treated as a **string map key**, not as a list index (i.e.
+  /// lists are effectively disabled).
+  ///
+  /// When [throwOnLimitExceeded] is `true` *and* [listLimit] is negative, any
+  /// operation that would grow a list (e.g. `a[]` pushes, comma‑separated values
+  /// when [comma] is `true`, or nested pushes) will throw a [RangeError].
   final int listLimit;
 
   /// Character encoding used to decode percent‑encoded bytes in the input.
   /// Only [utf8] and [latin1] are supported.
   final Encoding charset;
 
-  /// Enable opt‑in charset detection via the `utf8=✓` sentinel.
+  /// Enable opt‑in charset detection via a `utf8=✓` sentinel parameter.
   ///
-  /// If present at the start of the input, the sentinel will:
+  /// If present anywhere in the input, the *first occurrence* will:
   ///  * be omitted from the result map, and
   ///  * override [charset] based on how the checkmark was encoded (UTF‑8 or
   ///    Latin‑1).
@@ -114,9 +135,14 @@ final class DecodeOptions with EquatableMixin {
 
   /// Decode dots that appear in *keys* (e.g., `a.b=c`).
   ///
-  /// This explicitly opts into dot‑notation handling and implies [allowDots].
-  /// Setting [decodeDotInKeys] to `true` while forcing [allowDots] to `false`
-  /// is invalid and will cause an error in [QS.decode].
+  /// This explicitly opts into dot‑notation handling and **implies** [allowDots].
+  /// Passing `decodeDotInKeys: true` while forcing `allowDots: false` is an
+  /// invalid combination and will throw *at construction time*.
+  ///
+  /// Note: inside bracket segments (e.g., `a[%2E]`), percent‑decoding naturally
+  /// yields `"."`. Whether a `.` causes additional splitting is a parser concern
+  /// governed by [allowDots] at the *top level*; this flag does not suppress the
+  /// literal dot produced by percent‑decoding inside brackets.
   final bool decodeDotInKeys;
 
   /// Delimiter used to split key/value pairs. May be a [String] (e.g., `"&"`)
@@ -153,71 +179,78 @@ final class DecodeOptions with EquatableMixin {
   /// rather than `""`.
   final bool strictNullHandling;
 
-  /// When `true`, exceeding *any* limit (like [parameterLimit] or [listLimit])
-  /// throws instead of applying a soft cap.
+  /// When `true`, exceeding limits throws instead of applying a soft cap.
+  ///
+  /// This applies to:
+  ///  • parameter count over [parameterLimit],
+  ///  • list growth beyond [listLimit], and
+  ///  • (in combination with [strictDepth]) exceeding [depth].
+  ///
+  /// **Note:** even when [listLimit] is **negative** (numeric‑index parsing
+  /// disabled), any list‑growth path (empty‑bracket pushes like `a[]`, comma
+  /// splits when [comma] is `true`, or nested pushes) will immediately throw a
+  /// [RangeError].
   final bool throwOnLimitExceeded;
 
   /// Optional custom scalar decoder for a single token.
   /// If not provided, falls back to [Utils.decode].
-  final Function? _decoder;
+  final Decoder? _decoder;
 
-  /// Decode a single scalar using either the custom decoder or the default
-  /// implementation in [Utils.decode]. The [kind] indicates whether the token
-  /// is a key (or key segment) or a value.
-  dynamic decoder(
+  /// Optional legacy decoder that takes only (value, {charset}).
+  final LegacyDecoder? _legacyDecoder;
+
+  /// Unified scalar decode with key/value context.
+  ///
+  /// Uses a provided custom [Decoder] when set; otherwise falls back to [Utils.decode].
+  /// For backward compatibility, a [LegacyDecoder] can be supplied and is honored
+  /// when no primary [Decoder] is provided. The [kind] will be [DecodeKind.key] for
+  /// keys (and key segments) and [DecodeKind.value] for values. The default implementation
+  /// does not vary decoding based on [kind]. If your decoder returns `null`, that `null`
+  /// is preserved — no fallback decoding is applied.
+  dynamic decode(
     String? value, {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
-    final Function? fn = _decoder;
-
-    // If no custom decoder is provided, use the default decoding logic.
-    if (fn == null) {
-      return Utils.decode(value, charset: charset ?? this.charset);
+    if (_decoder != null) {
+      return _decoder!(value, charset: charset, kind: kind);
     }
-
-    // Prefer strongly-typed variants first
-    if (fn is Decoder) return fn(value, charset: charset, kind: kind);
-    if (fn is Decoder1) return fn(value, charset: charset);
-    if (fn is Decoder2) return fn(value, kind: kind);
-    if (fn is Decoder3) return fn(value);
-
-    // Dynamic callable or class with `call` method
-    try {
-      // Try full shape (value, {charset, kind})
-      return (fn as dynamic)(value, charset: charset, kind: kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
+    if (_legacyDecoder != null) {
+      return _legacyDecoder!(value, charset: charset);
     }
-    try {
-      // Try (value, {charset})
-      return (fn as dynamic)(value, charset: charset);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // Try (value, {kind})
-      return (fn as dynamic)(value, kind: kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // Try (value)
-      return (fn as dynamic)(value);
-    } on NoSuchMethodError catch (_) {
-      // Fallback to default
-      return Utils.decode(value, charset: charset ?? this.charset);
-    } on TypeError catch (_) {
-      // Fallback to default
-      return Utils.decode(value, charset: charset ?? this.charset);
-    }
+    return Utils.decode(value, charset: charset ?? this.charset);
   }
+
+  /// Convenience: decode a key and coerce the result to String (or null).
+  String? decodeKey(
+    String? value, {
+    Encoding? charset,
+  }) =>
+      decode(
+        value,
+        charset: charset ?? this.charset,
+        kind: DecodeKind.key,
+      )?.toString();
+
+  /// Convenience: decode a value token.
+  dynamic decodeValue(
+    String? value, {
+    Encoding? charset,
+  }) =>
+      decode(
+        value,
+        charset: charset ?? this.charset,
+        kind: DecodeKind.value,
+      );
+
+  /// **Deprecated**: use [decode]. This wrapper will be removed in a future release.
+  @Deprecated('Use decode(value, charset: ..., kind: ...) instead')
+  dynamic decoder(
+    String? value, {
+    Encoding? charset,
+    DecodeKind kind = DecodeKind.value,
+  }) =>
+      decode(value, charset: charset, kind: kind);
 
   /// Return a new [DecodeOptions] with the provided overrides.
   DecodeOptions copyWith({
@@ -237,7 +270,8 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
-    Function? decoder,
+    Decoder? decoder,
+    LegacyDecoder? legacyDecoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,
@@ -258,6 +292,7 @@ final class DecodeOptions with EquatableMixin {
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         strictDepth: strictDepth ?? this.strictDepth,
         decoder: decoder ?? _decoder,
+        legacyDecoder: legacyDecoder ?? _legacyDecoder,
       );
 
   @override
@@ -300,5 +335,6 @@ final class DecodeOptions with EquatableMixin {
         strictNullHandling,
         throwOnLimitExceeded,
         _decoder,
+        _legacyDecoder,
       ];
 }

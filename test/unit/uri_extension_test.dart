@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert' show Encoding, latin1, utf8;
 import 'dart:typed_data' show Uint8List;
 
@@ -1156,14 +1157,18 @@ void main() {
     test(
       'use number decoder, parses string that has one number with comma option enabled',
       () {
-        dynamic decoder(String? str, {Encoding? charset}) =>
+        dynamic legacyDecoder(String? str, {Encoding? charset}) =>
             num.tryParse(str ?? '') ?? Utils.decode(str, charset: charset);
 
         expect(
-          Uri.parse('$testUrl?foo=1')
-              .queryParametersQs(DecodeOptions(comma: true, decoder: decoder)),
+          Uri.parse('$testUrl?foo=1').queryParametersQs(
+              DecodeOptions(comma: true, legacyDecoder: legacyDecoder)),
           equals({'foo': 1}),
         );
+
+        dynamic decoder(String? str, {Encoding? charset, DecodeKind? kind}) =>
+            int.tryParse(str ?? '') ?? Utils.decode(str, charset: charset);
+
         expect(
           Uri.parse('$testUrl?foo=0')
               .queryParametersQs(DecodeOptions(comma: true, decoder: decoder)),
@@ -1301,7 +1306,7 @@ void main() {
     test('can parse with custom encoding', () {
       final Map<String, dynamic> expected = {'県': '大阪府'};
 
-      String? decode(String? str, {Encoding? charset}) {
+      String? decode(String? str, {Encoding? charset, DecodeKind? kind}) {
         if (str == null) {
           return null;
         }
@@ -1455,7 +1460,7 @@ void main() {
                 .queryParametersQs(
               DecodeOptions(
                 charset: latin1,
-                decoder: (String? str, {Encoding? charset}) =>
+                decoder: (String? str, {Encoding? charset, DecodeKind? kind}) =>
                     str?.isNotEmpty ?? false
                         ? Utils.decode(str!, charset: charset)
                         : null,

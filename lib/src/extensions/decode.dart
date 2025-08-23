@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 part of '../qs.dart';
 
 /// Decoder: query-string → nested Dart maps/lists (Node `qs` parity)
@@ -16,17 +17,9 @@ part of '../qs.dart';
 /// Implementation notes:
 /// - We decode key parts lazily and then "reduce" right-to-left to build the
 ///   final structure in `_parseObject`.
-/// - We never mutate caller-provided containers; fresh maps/lists are created.
-/// - No behavioral changes are introduced here; comments only.
-
-/// Split operation result used by the decoder helpers.
-/// - `parts`: collected key segments.
-/// - `exceeded`: indicates whether a configured limit was exceeded during split.
-typedef SplitResult = ({List<String> parts, bool exceeded});
-
-/// Normalizes simple dot notation to bracket notation (e.g. `a.b` → `a[b]`).
-/// Only matches \nondotted, non-bracketed tokens so `a.b.c` becomes `a[b][c]`.
-final RegExp _dotToBracket = RegExp(r'\.([^.\[]+)');
+/// - We never mutate caller-provided containers; fresh maps/lists are allocated for merges.
+/// - The implementation aims to match `qs` semantics; comments explain how each phase maps
+///   to the reference behavior.
 
 /// Internal decoding surface grouped under the `QS` extension.
 ///
@@ -41,6 +34,13 @@ extension _$Decode on QS {
   ///
   /// The `currentListLength` is used to guard incremental growth when we are
   /// already building a list for a given key path.
+  ///
+  /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
+  /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
+  /// when `throwOnLimitExceeded` is `true` and `listLimit < 0`, any non‑empty split throws
+  /// immediately; when `false`, growth is effectively capped at zero (the split produces
+  /// an empty list). Empty‑bracket pushes (`a[]=`) are handled during structure building
+  /// in `_parseObject`.
   static dynamic _parseListValue(
     dynamic val,
     DecodeOptions options,
@@ -50,18 +50,22 @@ extension _$Decode on QS {
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
       if (options.throwOnLimitExceeded &&
-          currentListLength + splitVal.length > options.listLimit) {
+          (currentListLength + splitVal.length) > options.listLimit) {
         throw RangeError(
           'List limit exceeded. '
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
         );
       }
-      return splitVal;
+      final int remaining = options.listLimit - currentListLength;
+      if (remaining <= 0) return const <String>[];
+      return splitVal.length <= remaining
+          ? splitVal
+          : splitVal.sublist(0, remaining);
     }
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
-        currentListLength + 1 > options.listLimit) {
+        currentListLength >= options.listLimit) {
       throw RangeError(
         'List limit exceeded. '
         'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
@@ -73,10 +77,13 @@ extension _$Decode on QS {
 
   /// Tokenizes the raw query-string into a flat key→value map before any
   /// structural reconstruction. Handles:
-  /// - query prefix removal (`?`), percent-decoding via `options.decoder`
+  /// - query prefix removal (`?`), and kind‑aware decoding via `DecodeOptions.decodeKey` /
+  ///   `DecodeOptions.decodeValue` (by default these percent‑decode)
   /// - charset sentinel detection (`utf8=`) per `qs`
   /// - duplicate key policy (combine/first/last)
   /// - parameter and list limits with optional throwing behavior
+  /// - Comma‑split growth honors `throwOnLimitExceeded` (see `_parseListValue`);
+  ///   empty‑bracket pushes (`[]=`) are created during structure building in `_parseObject`.
   static Map<String, dynamic> _parseQueryStringValues(
     String str, [
     DecodeOptions options = const DecodeOptions(),
@@ -99,15 +106,12 @@ extension _$Decode on QS {
     final List<String> allParts = cleanStr.split(options.delimiter);
     late final List<String> parts;
     if (limit != null && limit > 0) {
-      final int takeCount = options.throwOnLimitExceeded ? limit + 1 : limit;
-      final int count =
-          allParts.length < takeCount ? allParts.length : takeCount;
-      parts = allParts.sublist(0, count);
       if (options.throwOnLimitExceeded && allParts.length > limit) {
         throw RangeError(
           'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
         );
       }
+      parts = allParts.take(limit).toList();
     } else {
       parts = allParts;
     }
@@ -145,15 +149,14 @@ extension _$Decode on QS {
 
       late final String key;
       dynamic val;
-      // Decode key/value using key-aware decoder, no %2E protection shim.
+      // Decode key/value via DecodeOptions.decodeKey/decodeValue (kind-aware).
       if (pos == -1) {
-        // Decode bare key (no '=') using key-aware decoder
-        key = options.decoder(part, charset: charset, kind: DecodeKind.key);
+        // Decode bare key (no '=') using key-aware decoding
+        key = options.decodeKey(part, charset: charset) ?? '';
         val = options.strictNullHandling ? null : '';
       } else {
-        // Decode key slice using key-aware decoder; values decode as value kind
-        key = options.decoder(part.slice(0, pos),
-            charset: charset, kind: DecodeKind.key);
+        // Decode the key slice as a key; values decode as values
+        key = options.decodeKey(part.slice(0, pos), charset: charset) ?? '';
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
         val = Utils.apply<dynamic>(
           _parseListValue(
@@ -163,8 +166,7 @@ extension _$Decode on QS {
                 ? (obj[key] as List).length
                 : 0,
           ),
-          (dynamic v) =>
-              options.decoder(v, charset: charset, kind: DecodeKind.value),
+          (dynamic v) => options.decodeValue(v as String?, charset: charset),
         );
       }
 
@@ -206,6 +208,16 @@ extension _$Decode on QS {
   /// - When `allowEmptyLists` is true, an empty string (or `null` under
   ///   `strictNullHandling`) under a `[]` segment yields an empty list.
   /// - `listLimit` applies to explicit numeric indices as an upper bound.
+  /// - A negative `listLimit` disables numeric‑index parsing (bracketed numbers become map keys).
+  ///   Empty‑bracket pushes (`[]`) still create lists here; this method does not enforce
+  ///   `throwOnLimitExceeded` for that path. Comma‑split growth (if any) has already been
+  ///   handled by `_parseListValue`.
+  /// - Keys have been decoded per `DecodeOptions.decodeKey`; top‑level splitting applies to
+  ///   literal `.` only (including those produced by percent‑decoding). Percent‑encoded dots may
+  ///   still appear inside bracket segments here; we normalize `%2E`/`%2e` to `.` below when
+  ///   `decodeDotInKeys` is enabled.
+  ///   Whether top‑level dots split was decided earlier by `_splitKeyIntoSegments` (based on
+  ///   `allowDots`). Numeric list indices are only honored for *bracketed* numerics like `[3]`.
   static dynamic _parseObject(
     List<String> chain,
     dynamic val,
@@ -255,8 +267,12 @@ extension _$Decode on QS {
             : Utils.combine([], leaf);
       } else {
         obj = <String, dynamic>{};
-        // Normalize bracketed segments ("[k]") and optionally decode `%2E` → '.'
-        // when `decodeDotInKeys` is enabled.
+        // Normalize bracketed segments ("[k]"). Note: depending on how key decoding is configured,
+        // percent‑encoded dots *may still be present here* (e.g. `%2E` / `%2e`). We intentionally
+        // handle the `%2E`→`.` mapping in this phase (see `decodedRoot` below) so that encoded
+        // dots inside bracket segments can be treated as literal `.` without introducing extra
+        // dot‑splits. Top‑level dot splitting (which only applies to literal `.`) already
+        // happened in `_splitKeyIntoSegments`.
         final String cleanRoot = root.startsWith('[') && root.endsWith(']')
             ? root.slice(1, root.length - 1)
             : root;
@@ -313,10 +329,13 @@ extension _$Decode on QS {
   }
 
   /// Splits a key like `a[b][0][c]` into `['a', '[b]', '[0]', '[c]']` with:
-  /// - dot-notation normalization (`a.b` → `a[b]`) when `allowDots` is true
+  /// - dot‑notation normalization (`a.b` → `a[b]`) when `allowDots` is true (runs before splitting)
   /// - depth limiting (depth=0 returns the whole key as a single segment)
-  /// - bracket group balancing, preserving unterminated tails as a single
-  ///   remainder segment unless `strictDepth` is enabled (then it throws)
+  /// - balanced bracket grouping; an unterminated `[` causes the *entire key* to be treated as a
+  ///   single literal segment (matching `qs`)
+  /// - when there are additional groups/text beyond `maxDepth`:
+  ///     • if `strictDepth` is true, we throw;
+  ///     • otherwise the remainder is wrapped as one final bracket segment (e.g., `"[rest]"`)
   static List<String> _splitKeyIntoSegments({
     required String originalKey,
     required bool allowDots,
@@ -324,9 +343,8 @@ extension _$Decode on QS {
     required bool strictDepth,
   }) {
     // Optionally normalize `a.b` to `a[b]` before splitting.
-    final String key = allowDots
-        ? originalKey.replaceAllMapped(_dotToBracket, (m) => '[${m[1]}]')
-        : originalKey;
+    final String key =
+        allowDots ? _dotToBracketTopLevel(originalKey) : originalKey;
 
     // Depth==0 → do not split at all (reference `qs` behavior).
     if (maxDepth <= 0) {
@@ -335,67 +353,142 @@ extension _$Decode on QS {
 
     final List<String> segments = [];
 
-    // Extract the parent token (before the first '['), if any.
+    // Parent token before the first '[' (may be empty when key starts with '[')
     final int first = key.indexOf('[');
     final String parent = first >= 0 ? key.substring(0, first) : key;
     if (parent.isNotEmpty) segments.add(parent);
 
     final int n = key.length;
     int open = first;
-    int depth = 0;
+    int collected = 0;
+    int lastClose = -1;
 
-    while (open >= 0 && depth < maxDepth) {
-      // Balance nested brackets inside this group: "[ ... possibly [] ... ]"
+    while (open >= 0 && collected < maxDepth) {
       int level = 1;
       int i = open + 1;
       int close = -1;
 
+      // Balance nested '[' and ']' within this group.
       while (i < n) {
-        final int ch = key.codeUnitAt(i);
-        if (ch == 0x5B) {
-          // '['
+        final int cu = key.codeUnitAt(i);
+        if (cu == 0x5B) {
           level++;
-        } else if (ch == 0x5D) {
-          // ']'
+        } else if (cu == 0x5D) {
           level--;
           if (level == 0) {
             close = i;
             break;
           }
         }
-        // Advance inside the current bracket group until it balances.
         i++;
       }
 
       if (close < 0) {
-        // Unterminated group, stop collecting groups
-        break;
+        // Unterminated group: treat the entire key as a single literal segment (qs semantics).
+        return <String>[key];
       }
 
-      segments.add(key.substring(open, close + 1)); // includes enclosing [ ]
-      depth++;
+      segments
+          .add(key.substring(open, close + 1)); // balanced group, includes [ ]
+      lastClose = close;
+      collected++;
 
-      // find next group, starting after this one
+      // Find the next '[' after this balanced group.
       open = key.indexOf('[', close + 1);
     }
 
-    // If additional groups remain beyond the allowed depth, either throw or
-    // stash the remainder as a single segment, per `strictDepth`.
-    if (open >= 0) {
-      // We still have remainder starting with '['
+    // Trailing text after the last balanced group → one final bracket segment (unless it's just '.').
+    if (lastClose >= 0 && lastClose + 1 < n) {
+      final String remainder = key.substring(lastClose + 1);
+      if (remainder != '.') {
+        if (strictDepth && open >= 0) {
+          throw RangeError(
+              'Input depth exceeded $maxDepth and strictDepth is true');
+        }
+        segments.add('[$remainder]');
+      }
+    } else if (open >= 0) {
+      // There are more groups beyond the collected depth.
       if (strictDepth) {
         throw RangeError(
             'Input depth exceeded $maxDepth and strictDepth is true');
       }
-      // Stash the remainder as a single segment (qs behavior)
+      // Wrap the remaining bracket groups as a single literal segment.
+      // Example: key="a[b][c][d]", depth=2 → segment="[[c][d]]" which becomes "[c][d]" later.
       segments.add('[${key.substring(open)}]');
     }
 
     return segments;
   }
 
+  /// Convert top‑level dots to bracket segments (depth‑aware).
+  /// - Only dots at depth == 0 split.
+  /// - Dots inside `[...]` are preserved.
+  /// - Degenerate cases are preserved and do not create empty segments:
+  ///   * leading '.' (e.g., ".a") keeps the dot literal,
+  ///   * double dots ("a..b") keep the first dot literal,
+  ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
+  /// - Only literal `.` are considered for splitting here. In this library, keys are normally
+  ///   percent‑decoded before this step; thus a top‑level `%2E` typically becomes a literal `.`
+  ///   and will split when `allowDots` is true.
+  static String _dotToBracketTopLevel(String s) {
+    if (s.isEmpty || !s.contains('.')) return s;
+    final StringBuffer sb = StringBuffer();
+    int depth = 0;
+    int i = 0;
+    while (i < s.length) {
+      final ch = s[i];
+      if (ch == '[') {
+        depth++;
+        sb.write(ch);
+        i++;
+      } else if (ch == ']') {
+        if (depth > 0) depth--;
+        sb.write(ch);
+        i++;
+      } else if (ch == '.') {
+        if (depth == 0) {
+          final bool hasNext = i + 1 < s.length;
+          final String next = hasNext ? s[i + 1] : '\u0000';
+
+          // preserve a *leading* '.' as a literal, unless it's the ".[" degenerate.
+          if (i == 0 && (!hasNext || next != '[')) {
+            sb.write('.');
+            i++;
+          } else if (hasNext && next == '[') {
+            // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
+            i++; // consume the '.'
+          } else if (!hasNext || next == '.') {
+            // Preserve literal dot for trailing/duplicate dots.
+            sb.write('.');
+            i++;
+          } else {
+            // Normal split: convert a.b → a[b] at top level.
+            final int start = ++i;
+            int j = start;
+            while (j < s.length && s[j] != '.' && s[j] != '[') {
+              j++;
+            }
+            sb.write('[');
+            sb.write(s.substring(start, j));
+            sb.write(']');
+            i = j;
+          }
+        } else {
+          // Inside brackets, keep '.' as content.
+          sb.write('.');
+          i++;
+        }
+      } else {
+        sb.write(ch);
+        i++;
+      }
+    }
+    return sb.toString();
+  }
+
   /// Normalizes the raw query-string prior to tokenization:
-  /// - Optionally drops a single leading `?` (when `ignoreQueryPrefix` is set).
+  /// - Optionally drops exactly one leading `?` (when `ignoreQueryPrefix` is true).
   /// - Rewrites percent-encoded bracket characters (%5B/%5b → '[', %5D/%5d → ']')
   ///   in a single pass for faster downstream bracket parsing.
   static String _cleanQueryString(
