@@ -250,8 +250,11 @@ extension _$Decode on QS {
             : Utils.combine([], leaf);
       } else {
         obj = <String, dynamic>{};
-        // Normalize bracketed segments ("[k]"). Keys have already been percent‑decoded earlier by
-        // `decodeKey`, so `%2E/%2e` are not present here; dot‑notation splitting (if any) already
+        // Normalize bracketed segments ("[k]"). Note: depending on how key decoding is configured,
+        // percent‑encoded dots *may still be present here* (e.g. `%2E` / `%2e`). We intentionally
+        // handle the `%2E`→`.` mapping in this phase (see `decodedRoot` below) so that encoded
+        // dots inside bracket segments can be treated as literal `.` without introducing extra
+        // dot‑splits. Top‑level dot splitting (which only applies to literal `.`) already
         // happened in `_splitKeyIntoSegments`.
         final String cleanRoot = root.startsWith('[') && root.endsWith(']')
             ? root.slice(1, root.length - 1)
