@@ -309,7 +309,6 @@ extension _$Decode on QS {
           obj = <String, dynamic>{'0': leaf};
         } else if (index != null &&
             index >= 0 &&
-            wasBracketed &&
             index.toString() == decodedRoot &&
             options.parseLists &&
             index <= options.listLimit) {
