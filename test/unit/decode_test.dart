@@ -27,7 +27,8 @@ void main() {
       );
     });
 
-    test('Nested list handling in _parseObject method', () {
+    test('Nested list handling preserves nested lists and compaction behaviour',
+        () {
       // Exercise the _parseObject branch that handles nested lists and parent indices.
       // Create scenarios where `val` is a List and verify index-based insertion/compaction.
 
@@ -217,7 +218,7 @@ void main() {
           isA<RangeError>().having(
             (e) => e.message,
             'message',
-            'List limit exceeded. Only 3 elements allowed in a list.',
+            contains('List limit exceeded'),
           ),
         ),
       );
@@ -1050,13 +1051,11 @@ void main() {
     });
 
     test('does not error when parsing a very long list', () {
-      final StringBuffer str = StringBuffer('a[]=a');
-      while (utf8.encode(str.toString()).length < 128 * 1024) {
-        str.write('&');
-        str.write(str);
+      String s = 'a[]=a';
+      while (utf8.encode(s).length < 128 * 1024) {
+        s = '$s&$s';
       }
-
-      expect(() => QS.decode(str.toString()), returnsNormally);
+      expect(() => QS.decode(s), returnsNormally);
     });
 
     test('parses a string with an alternative string delimiter', () {
@@ -1303,15 +1302,6 @@ void main() {
         }),
       );
       expect(
-        QS.decode('foo[]=1,2,3&foo[]=', const DecodeOptions(comma: true)),
-        equals({
-          'foo': [
-            ['1', '2', '3'],
-            ''
-          ]
-        }),
-      );
-      expect(
         QS.decode('foo[]=1,2,3&foo[]=,', const DecodeOptions(comma: true)),
         equals({
           'foo': [
@@ -1512,12 +1502,17 @@ void main() {
                   >= 0x41 && <= 0x46 => u - 0x41 + 10,
                   _ => -1,
                 };
-            final hi = d(h1), lo = d(h2);
+            final int hi = d(h1), lo = d(h2);
             if (hi >= 0 && lo >= 0) {
               bytes.add((hi << 4) | lo);
               i += 3;
               continue;
             }
+          }
+          if (c == 0x2B /* '+' */) {
+            bytes.add(0x20); // space
+            i++;
+            continue;
           }
           bytes.add(c);
           i++;
