@@ -54,7 +54,11 @@ extension _$Decode on QS {
           'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
         );
       }
-      return splitVal;
+      final int remaining = options.listLimit - currentListLength;
+      if (remaining <= 0) return const <String>[];
+      return splitVal.length <= remaining
+          ? splitVal
+          : splitVal.sublist(0, remaining);
     }
 
     // Guard incremental growth of an existing list as we parse additional items.
@@ -105,10 +109,7 @@ extension _$Decode on QS {
           'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
         );
       }
-      parts = allParts.sublist(
-        0,
-        allParts.length < limit ? allParts.length : limit,
-      );
+      parts = allParts.take(limit).toList();
     } else {
       parts = allParts;
     }
@@ -209,7 +210,8 @@ extension _$Decode on QS {
   ///   However, empty‑bracket pushes (`[]`) still create lists unless `throwOnLimitExceeded` is
   ///   `true`, in which case any list growth is rejected (comma‑split growth is enforced in
   ///   `_parseListValue`).
-  /// - Keys arrive already decoded (top‑level encoded dots become literal `.` before we get here).
+  /// - Keys have been decoded per `DecodeOptions.decodeKey`; top‑level splitting applies to
+  ///   literal `.` only. Encoded dots can remain encoded depending on `decodeDotInKeys`.
   ///   Whether top‑level dots split was decided earlier by `_splitKeyIntoSegments` (based on
   ///   `allowDots`). Numeric list indices are only honored for *bracketed* numerics like `[3]`.
   static dynamic _parseObject(
@@ -422,8 +424,8 @@ extension _$Decode on QS {
   ///   * leading '.' (e.g., ".a") keeps the dot literal,
   ///   * double dots ("a..b") keep the first dot literal,
   ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
-  /// - Percent‑encoded dots are not handled here because keys have already been decoded by
-  ///   `DecodeOptions.decodeKey` (defaulting to percent‑decoding).
+  /// - Percent‑encoded dots may be left encoded by `DecodeOptions.decodeKey` when
+  ///   `decodeDotInKeys` is false; only literal `.` are considered for splitting here.
   static String _dotToBracketTopLevel(String s) {
     if (s.isEmpty || !s.contains('.')) return s;
     final StringBuffer sb = StringBuffer();
