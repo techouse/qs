@@ -138,4 +138,29 @@ void main() {
       );
     });
   });
+
+  group('DecodeOptions – allowDots / decodeDotInKeys interplay', () {
+    test('constructor: allowDots=false + decodeDotInKeys=true throws', () {
+      expect(
+        () => DecodeOptions(allowDots: false, decodeDotInKeys: true),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+
+    test('copyWith: making options inconsistent throws', () {
+      final base = const DecodeOptions(decodeDotInKeys: true);
+      expect(
+        () => base.copyWith(allowDots: false),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+  });
 }
