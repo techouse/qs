@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -1266,7 +1267,7 @@ void main() {
     test(
       'use number decoder, parses string that has one number with comma option enabled',
       () {
-        dynamic decoder(String? str, {Encoding? charset}) =>
+        dynamic decoder(String? str, {Encoding? charset, DecodeKind? kind}) =>
             num.tryParse(str ?? '') ?? Utils.decode(str, charset: charset);
 
         expect(
@@ -1498,7 +1499,7 @@ void main() {
     test('can parse with custom encoding', () {
       final Map<String, dynamic> expected = {'県': '大阪府'};
 
-      String? decode(String? str, {Encoding? charset}) {
+      String? decode(String? str, {Encoding? charset, DecodeKind? kind}) {
         if (str == null) {
           return null;
         }
@@ -1646,7 +1647,7 @@ void main() {
               'foo=&bar=$urlEncodedNumSmiley',
               DecodeOptions(
                 charset: latin1,
-                decoder: (String? str, {Encoding? charset}) =>
+                decoder: (String? str, {Encoding? charset, DecodeKind? kind}) =>
                     str?.isNotEmpty ?? false
                         ? Utils.decode(str!, charset: charset)
                         : null,
@@ -2038,13 +2039,13 @@ void main() {
       ]);
     });
 
-    test('legacy single-arg decoder still works', () {
-      String? dec(String? v) => v?.toUpperCase();
-      expect(QS.decode('a=b', DecodeOptions(decoder: dec)), {'A': 'B'});
+    test('legacy 2-arg decoder still works', () {
+      String? dec(String? v, {Encoding? charset}) => v?.toUpperCase();
+      expect(QS.decode('a=b', DecodeOptions(legacyDecoder: dec)), {'A': 'B'});
     });
 
-    test('decoder that only accepts kind also works', () {
-      dynamic dec(String? v, {DecodeKind? kind}) =>
+    test('3-arg decoder is now the default decoder', () {
+      dynamic dec(String? v, {Encoding? charset, DecodeKind? kind}) =>
           kind == DecodeKind.key ? v?.toUpperCase() : v;
 
       expect(QS.decode('aa=bb', DecodeOptions(decoder: dec)), {'AA': 'bb'});
@@ -2188,13 +2189,6 @@ void main() {
       // both key and value get prefixed with 'X'.
       expect(res, {'Xa': 'Xb'});
       expect(calls, ['a', 'b']);
-    });
-
-    test(
-        'callable object with a required named param triggers Utils.decode fallback',
-        () {
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2().call));
-      expect(res, {'a': 'b'});
     });
   });
 
@@ -2567,14 +2561,8 @@ class _Loose1 {
 
   _Loose1(this.sink);
 
-  dynamic call(String? v, {Encoding? cs, DecodeKind? kd}) {
+  dynamic call(String? v, {Encoding? charset, DecodeKind? kind}) {
     sink.add(v);
     return v == null ? null : 'X$v';
   }
-}
-
-// Helper callable that requires an unsupported named parameter; all dynamic attempts
-// should throw, causing the code to fall back to Utils.decode.
-class _Loose2 {
-  dynamic call(String? v, {required int must}) => 'Y$v';
 }

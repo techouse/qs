@@ -897,7 +897,7 @@ void main() {
       QS.decode(
         '%61=%82%b1%82%f1%82%c9%82%bf%82%cd%81%49',
         DecodeOptions(
-          decoder: (str, {Encoding? charset}) {
+          decoder: (String? str, {Encoding? charset, DecodeKind? kind}) {
             if (str == null) {
               return null;
             }

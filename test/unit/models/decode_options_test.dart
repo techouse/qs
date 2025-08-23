@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert';
 
 import 'package:qs_dart/src/enums/decode_kind.dart';
@@ -247,7 +248,7 @@ void main() {
     test('Decoder is used for KEY and for VALUE', () {
       final List<Map<String, Object?>> calls = [];
       final opts = DecodeOptions(
-        decoder: (String? s, Encoding? _, DecodeKind? kind) {
+        decoder: (String? s, {Encoding? charset, DecodeKind? kind}) {
           calls.add({'s': s, 'kind': kind});
           return s; // echo back
         },
@@ -264,7 +265,9 @@ void main() {
     });
 
     test('Decoder null return is honored (no fallback to default)', () {
-      final opts = DecodeOptions(decoder: (s, _, __) => null);
+      final opts = DecodeOptions(
+        decoder: (String? s, {Encoding? charset, DecodeKind? kind}) => null,
+      );
       expect(opts.decodeValue('foo'), isNull);
       expect(opts.decodeKey('bar'), isNull);
     });
@@ -273,8 +276,10 @@ void main() {
         "Single decoder acts like 'legacy' when ignoring kind (no default applied first)",
         () {
       // Emulate a legacy decoder that uppercases the raw token without percent-decoding.
-      final opts =
-          DecodeOptions(decoder: (String? s, _, __) => s?.toUpperCase());
+      final opts = DecodeOptions(
+        decoder: (String? s, {Encoding? charset, DecodeKind? kind}) =>
+            s?.toUpperCase(),
+      );
       expect(opts.decodeValue('abc'), equals('ABC'));
       // For keys, custom decoder gets the raw token; no default percent-decoding happens first.
       expect(opts.decodeKey('a%2Eb'), equals('A%2EB'));
@@ -282,8 +287,8 @@ void main() {
 
     test('copyWith preserves and allows overriding the decoder', () {
       final original = DecodeOptions(
-        decoder: (String? s, _, DecodeKind? k) =>
-            s == null ? null : 'K:${k ?? DecodeKind.value}:$s',
+        decoder: (String? s, {Encoding? charset, DecodeKind? kind}) =>
+            s == null ? null : 'K:${kind ?? DecodeKind.value}:$s',
       );
 
       final copy = original.copyWith();
@@ -291,8 +296,8 @@ void main() {
       expect(copy.decodeKey('k'), equals('K:${DecodeKind.key}:k'));
 
       final copy2 = original.copyWith(
-        decoder: (String? s, _, DecodeKind? k) =>
-            s == null ? null : 'K2:${k ?? DecodeKind.value}:$s',
+        decoder: (String? s, {Encoding? charset, DecodeKind? kind}) =>
+            s == null ? null : 'K2:${kind ?? DecodeKind.value}:$s',
       );
       expect(copy2.decodeValue('v'), equals('K2:${DecodeKind.value}:v'));
       expect(copy2.decodeKey('k'), equals('K2:${DecodeKind.key}:k'));
@@ -300,8 +305,8 @@ void main() {
 
     test('decoder wins over legacyDecoder when both are provided', () {
       String legacy(String? v, {Encoding? charset}) => 'L:${v ?? 'null'}';
-      String dec(String? v, Encoding? _, DecodeKind? k) =>
-          'K:${k ?? DecodeKind.value}:${v ?? 'null'}';
+      String dec(String? v, {Encoding? charset, DecodeKind? kind}) =>
+          'K:${kind ?? DecodeKind.value}:${v ?? 'null'}';
       final opts = DecodeOptions(decoder: dec, legacyDecoder: legacy);
 
       expect(opts.decodeKey('x'), equals('K:${DecodeKind.key}:x'));
@@ -309,7 +314,8 @@ void main() {
     });
 
     test('decodeKey coerces non-string decoder result via toString', () {
-      final opts = DecodeOptions(decoder: (_, __, ___) => 42);
+      final opts = DecodeOptions(
+          decoder: (String? s, {Encoding? charset, DecodeKind? kind}) => 42);
       expect(opts.decodeKey('anything'), equals('42'));
     });
 
