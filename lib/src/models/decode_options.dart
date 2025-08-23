@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert' show Encoding, latin1, utf8;
 
 import 'package:equatable/equatable.dart';
@@ -38,6 +39,13 @@ typedef Decoder = dynamic Function(
   DecodeKind? kind,
 });
 
+/// Back‑compat adapter for `(value, charset) -> Any?` decoders.
+@Deprecated(
+  'Use Decoder; wrap your two‑arg lambda: '
+  'Decoder((value, {charset, kind}) => legacy(value, charset: charset))',
+)
+typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
+
 /// Back-compat: decoder with optional [charset] only.
 typedef Decoder1 = dynamic Function(String? value, {Encoding? charset});
 
@@ -52,6 +60,7 @@ final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
     Function? decoder,
+    LegacyDecoder? legacyDecoder,
     bool? decodeDotInKeys,
     this.allowEmptyLists = false,
     this.listLimit = 20,
@@ -71,6 +80,7 @@ final class DecodeOptions with EquatableMixin {
   })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
+        _legacyDecoder = legacyDecoder,
         assert(
           charset == utf8 || charset == latin1,
           'Invalid charset',
@@ -174,32 +184,39 @@ final class DecodeOptions with EquatableMixin {
   /// If not provided, falls back to [Utils.decode].
   final Function? _decoder;
 
-  /// Decode a single scalar using either the custom decoder or the default
-  /// implementation in [Utils.decode]. The [kind] indicates whether the token
-  /// is a key (or key segment) or a value; the **default implementation ignores
-  /// `kind` and decodes keys identically to values**. Whether `.` participates
-  /// in key splitting is decided later by the parser (based on options).
-  dynamic decoder(
+  /// Optional legacy decoder that takes only (value, {charset}).
+  final LegacyDecoder? _legacyDecoder;
+
+  /// Unified scalar decode with key/value context.
+  ///
+  /// Uses a provided custom [decoder] when set; otherwise falls back to [Utils.decode].
+  /// For backward compatibility, a [LegacyDecoder] can be supplied and is honored
+  /// when no primary [decoder] is provided. The [kind] will be [DecodeKind.key] for
+  /// keys (and key segments) and [DecodeKind.value] for values. The default implementation
+  /// does not vary decoding based on [kind].
+  dynamic decode(
     String? value, {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
-    final Function? fn = _decoder;
+    final Function? fn = _decoder ?? _legacyDecoder;
 
-    // If no custom decoder is provided, use the default decoding logic.
+    // No custom decoder: use library default
     if (fn == null) {
       return Utils.decode(value, charset: charset ?? this.charset);
     }
 
-    // Prefer strongly-typed variants first
+    // Try strongly-typed variants first
     if (fn is Decoder) return fn(value, charset: charset, kind: kind);
     if (fn is Decoder1) return fn(value, charset: charset);
     if (fn is Decoder2) return fn(value, kind: kind);
     if (fn is Decoder3) return fn(value);
 
-    // Dynamic callable or class with `call` method
+    // Dynamic callable or object with `call`
+    // Try named-argument form first, then positional fallbacks to support
+    // decoders declared like `(String?, Encoding?, DecodeKind?)`.
     try {
-      // Try full shape (value, {charset, kind})
+      // (value, {charset, kind})
       return (fn as dynamic)(value, charset: charset, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
@@ -207,7 +224,15 @@ final class DecodeOptions with EquatableMixin {
       // fall through
     }
     try {
-      // Try (value, {charset})
+      // (value, charset, kind)
+      return (fn as dynamic)(value, charset, kind);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // (value, {charset})
       return (fn as dynamic)(value, charset: charset);
     } on NoSuchMethodError catch (_) {
       // fall through
@@ -215,7 +240,7 @@ final class DecodeOptions with EquatableMixin {
       // fall through
     }
     try {
-      // Try (value, {kind})
+      // (value, {kind})
       return (fn as dynamic)(value, kind: kind);
     } on NoSuchMethodError catch (_) {
       // fall through
@@ -223,7 +248,23 @@ final class DecodeOptions with EquatableMixin {
       // fall through
     }
     try {
-      // Try (value)
+      // (value, charset)
+      return (fn as dynamic)(value, charset);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // (value, kind)
+      return (fn as dynamic)(value, kind);
+    } on NoSuchMethodError catch (_) {
+      // fall through
+    } on TypeError catch (_) {
+      // fall through
+    }
+    try {
+      // (value)
       return (fn as dynamic)(value);
     } on NoSuchMethodError catch (_) {
       // Fallback to default
@@ -233,6 +274,37 @@ final class DecodeOptions with EquatableMixin {
       return Utils.decode(value, charset: charset ?? this.charset);
     }
   }
+
+  /// Convenience: decode a key and coerce the result to String (or null).
+  String? decodeKey(
+    String? value, {
+    Encoding? charset,
+  }) =>
+      decode(
+        value,
+        charset: charset ?? this.charset,
+        kind: DecodeKind.key,
+      )?.toString();
+
+  /// Convenience: decode a value token.
+  dynamic decodeValue(
+    String? value, {
+    Encoding? charset,
+  }) =>
+      decode(
+        value,
+        charset: charset ?? this.charset,
+        kind: DecodeKind.value,
+      );
+
+  /// **Deprecated**: use [decode]. This wrapper will be removed in a future release.
+  @Deprecated('Use decode(value, charset: ..., kind: ...) instead')
+  dynamic decoder(
+    String? value, {
+    Encoding? charset,
+    DecodeKind kind = DecodeKind.value,
+  }) =>
+      decode(value, charset: charset, kind: kind);
 
   /// Return a new [DecodeOptions] with the provided overrides.
   DecodeOptions copyWith({
@@ -253,6 +325,7 @@ final class DecodeOptions with EquatableMixin {
     bool? strictNullHandling,
     bool? strictDepth,
     Function? decoder,
+    LegacyDecoder? legacyDecoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,
@@ -273,6 +346,7 @@ final class DecodeOptions with EquatableMixin {
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         strictDepth: strictDepth ?? this.strictDepth,
         decoder: decoder ?? _decoder,
+        legacyDecoder: legacyDecoder ?? _legacyDecoder,
       );
 
   @override
@@ -315,5 +389,6 @@ final class DecodeOptions with EquatableMixin {
         strictNullHandling,
         throwOnLimitExceeded,
         _decoder,
+        _legacyDecoder,
       ];
 }
