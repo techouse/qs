@@ -36,9 +36,11 @@ extension _$Decode on QS {
   /// already building a list for a given key path.
   ///
   /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
-  /// elsewhere (e.g. `[2]` segments become string keys), but *list growth paths* still exist:
-  /// empty‑bracket pushes (`a[]=...`) and comma‑splits. When `throwOnLimitExceeded` is `true` and
-  /// `listLimit < 0`, any such growth throws immediately; when `false`, they are allowed.
+  /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
+  /// when `throwOnLimitExceeded` is `true` and `listLimit < 0`, any non‑empty split throws
+  /// immediately; when `false`, growth is effectively capped at zero (the split produces
+  /// an empty list). Empty‑bracket pushes (`a[]=`) are handled during structure building
+  /// in `_parseObject`.
   static dynamic _parseListValue(
     dynamic val,
     DecodeOptions options,
@@ -80,8 +82,8 @@ extension _$Decode on QS {
   /// - charset sentinel detection (`utf8=`) per `qs`
   /// - duplicate key policy (combine/first/last)
   /// - parameter and list limits with optional throwing behavior
-  /// - list‑growth checks honor `throwOnLimitExceeded` even when `listLimit` is negative (see
-  ///   `_parseListValue` and `_parseObject` for details on `[]` and comma‑splits).
+  /// - Comma‑split growth honors `throwOnLimitExceeded` (see `_parseListValue`);
+  ///   empty‑bracket pushes (`[]=`) are created during structure building in `_parseObject`.
   static Map<String, dynamic> _parseQueryStringValues(
     String str, [
     DecodeOptions options = const DecodeOptions(),
@@ -206,12 +208,14 @@ extension _$Decode on QS {
   /// - When `allowEmptyLists` is true, an empty string (or `null` under
   ///   `strictNullHandling`) under a `[]` segment yields an empty list.
   /// - `listLimit` applies to explicit numeric indices as an upper bound.
-  /// - A negative `listLimit` disables numeric-index parsing (bracketed numbers become map keys).
-  ///   However, empty‑bracket pushes (`[]`) still create lists unless `throwOnLimitExceeded` is
-  ///   `true`, in which case any list growth is rejected (comma‑split growth is enforced in
-  ///   `_parseListValue`).
+  /// - A negative `listLimit` disables numeric‑index parsing (bracketed numbers become map keys).
+  ///   Empty‑bracket pushes (`[]`) still create lists here; this method does not enforce
+  ///   `throwOnLimitExceeded` for that path. Comma‑split growth (if any) has already been
+  ///   handled by `_parseListValue`.
   /// - Keys have been decoded per `DecodeOptions.decodeKey`; top‑level splitting applies to
-  ///   literal `.` only. Encoded dots can remain encoded depending on `decodeDotInKeys`.
+  ///   literal `.` only (including those produced by percent‑decoding). Percent‑encoded dots may
+  ///   still appear inside bracket segments here; we normalize `%2E`/`%2e` to `.` below when
+  ///   `decodeDotInKeys` is enabled.
   ///   Whether top‑level dots split was decided earlier by `_splitKeyIntoSegments` (based on
   ///   `allowDots`). Numeric list indices are only honored for *bracketed* numerics like `[3]`.
   static dynamic _parseObject(
@@ -424,8 +428,9 @@ extension _$Decode on QS {
   ///   * leading '.' (e.g., ".a") keeps the dot literal,
   ///   * double dots ("a..b") keep the first dot literal,
   ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
-  /// - Percent‑encoded dots may be left encoded by `DecodeOptions.decodeKey` when
-  ///   `decodeDotInKeys` is false; only literal `.` are considered for splitting here.
+  /// - Only literal `.` are considered for splitting here. In this library, keys are normally
+  ///   percent‑decoded before this step; thus a top‑level `%2E` typically becomes a literal `.`
+  ///   and will split when `allowDots` is true.
   static String _dotToBracketTopLevel(String s) {
     if (s.isEmpty || !s.contains('.')) return s;
     final StringBuffer sb = StringBuffer();
