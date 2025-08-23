@@ -102,6 +102,15 @@ final class DecodeOptions with EquatableMixin {
   ///
   /// Keys like `a[9999999]` can cause excessively large sparse lists; above
   /// this limit, indices are treated as string map keys instead.
+  ///
+  /// **Negative values:** passing a negative `listLimit` (e.g. `-1`) disables
+  /// numeric‑index parsing entirely — any bracketed number like `a[0]` or
+  /// `a[123]` is treated as a **string map key**, not as a list index (i.e.
+  /// lists are effectively disabled).
+  ///
+  /// When [throwOnLimitExceeded] is `true` *and* [listLimit] is negative, any
+  /// operation that would grow a list (e.g. `a[]` pushes, comma‑separated values
+  /// when [comma] is `true`, or nested pushes) will throw a [RangeError].
   final int listLimit;
 
   /// Character encoding used to decode percent‑encoded bytes in the input.
@@ -170,8 +179,17 @@ final class DecodeOptions with EquatableMixin {
   /// rather than `""`.
   final bool strictNullHandling;
 
-  /// When `true`, exceeding *any* limit (like [parameterLimit] or [listLimit])
-  /// throws instead of applying a soft cap.
+  /// When `true`, exceeding limits throws instead of applying a soft cap.
+  ///
+  /// This applies to:
+  ///  • parameter count over [parameterLimit],
+  ///  • list growth beyond [listLimit], and
+  ///  • (in combination with [strictDepth]) exceeding [depth].
+  ///
+  /// **Note:** even when [listLimit] is **negative** (numeric‑index parsing
+  /// disabled), any list‑growth path (empty‑bracket pushes like `a[]`, comma
+  /// splits when [comma] is `true`, or nested pushes) will immediately throw a
+  /// [RangeError].
   final bool throwOnLimitExceeded;
 
   /// Optional custom scalar decoder for a single token.
