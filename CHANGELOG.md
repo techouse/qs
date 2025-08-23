@@ -1,3 +1,14 @@
+## 1.5.3
+
+* [FIX] fix handling of degenerate dot cases in key splitting logic
+* [FIX] fix bracketed key detection in dot decoding logic
+* [FIX] fix normalization of synthetic bracket segments for unterminated groups in key decoding
+* [FIX] fix list limit error messaging and improve bracket counting logic in key decoding
+* [FIX] fix list parsing logic by removing unnecessary bracketed check for index assignment
+* [CHORE] add comprehensive tests for encoded dot behavior in key decoding
+* [CHORE] add tests for key splitting behavior with depth remainder and strictDepth options
+* [CHORE] add tests for leading and encoded dot handling in key decoding
+
 ## 1.5.2
 
 - [FIX] enforce `decodeDotInKeys` and `allowDots` option consistency; clarify dot decoding in documentation
