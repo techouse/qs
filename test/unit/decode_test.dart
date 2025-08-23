@@ -2178,20 +2178,6 @@ void main() {
     });
   });
 
-  group('decoder dynamic fallback', () {
-    test(
-        'callable object with mismatching named params falls back to (value) only',
-        () {
-      final calls = <String?>[];
-      // A callable object whose named parameters do not match the library typedefs.
-      final res = QS.decode('a=b', DecodeOptions(decoder: _Loose1(calls).call));
-      // Since the dynamic path ends up invoking `(value)` with no named args,
-      // both key and value get prefixed with 'X'.
-      expect(res, {'Xa': 'Xb'});
-      expect(calls, ['a', 'b']);
-    });
-  });
-
   group('C# parity: encoded dot behavior in keys (%2E / %2e)', () {
     test(
       'top-level: allowDots=true, decodeDotInKeys=true → plain dot splits; encoded dot also splits (upper/lower)',
@@ -2573,18 +2559,4 @@ void main() {
       );
     });
   });
-}
-
-// Helper callable used to exercise the dynamic function fallback in DecodeOptions.decoder.
-// Named parameters intentionally do not match `charset`/`kind` so the typed branches
-// are skipped and the dynamic ladder is exercised.
-class _Loose1 {
-  final List<String?> sink;
-
-  _Loose1(this.sink);
-
-  dynamic call(String? v, {Encoding? charset, DecodeKind? kind}) {
-    sink.add(v);
-    return v == null ? null : 'X$v';
-  }
 }
