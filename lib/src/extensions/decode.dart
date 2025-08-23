@@ -24,9 +24,64 @@ part of '../qs.dart';
 /// - `exceeded`: indicates whether a configured limit was exceeded during split.
 typedef SplitResult = ({List<String> parts, bool exceeded});
 
-/// Normalizes simple dot notation to bracket notation (e.g. `a.b` → `a[b]`).
-/// Only matches \nondotted, non-bracketed tokens so `a.b.c` becomes `a[b][c]`.
-final RegExp _dotToBracket = RegExp(r'\.([^.\[]+)');
+/// Convert top‑level dots to bracket segments (depth‑aware).
+/// - Only dots at depth == 0 split.
+/// - Dots inside `[...]` are preserved.
+/// - Degenerate cases are preserved and do not create empty segments:
+///   * leading '.' (e.g., ".a") keeps the dot literal,
+///   * double dots ("a..b") keep the first dot literal,
+///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
+/// - Percent‑encoded dots are not handled here (keys are already percent‑decoded).
+String _dotToBracketTopLevel(String s) {
+  if (s.isEmpty || !s.contains('.')) return s;
+  final StringBuffer sb = StringBuffer();
+  int depth = 0;
+  int i = 0;
+  while (i < s.length) {
+    final ch = s[i];
+    if (ch == '[') {
+      depth++;
+      sb.write(ch);
+      i++;
+    } else if (ch == ']') {
+      if (depth > 0) depth--;
+      sb.write(ch);
+      i++;
+    } else if (ch == '.') {
+      if (depth == 0) {
+        final bool hasNext = i + 1 < s.length;
+        final String next = hasNext ? s[i + 1] : '\u0000';
+        if (hasNext && next == '[') {
+          // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
+          i++; // consume the '.'
+        } else if (!hasNext || next == '.') {
+          // Preserve literal dot for trailing/duplicate dots.
+          sb.write('.');
+          i++;
+        } else {
+          // Normal split: convert a.b → a[b] at top level.
+          final int start = ++i;
+          int j = start;
+          while (j < s.length && s[j] != '.' && s[j] != '[') {
+            j++;
+          }
+          sb.write('[');
+          sb.write(s.substring(start, j));
+          sb.write(']');
+          i = j;
+        }
+      } else {
+        // Inside brackets, keep '.' as content.
+        sb.write('.');
+        i++;
+      }
+    } else {
+      sb.write(ch);
+      i++;
+    }
+  }
+  return sb.toString();
+}
 
 /// Internal decoding surface grouped under the `QS` extension.
 ///
@@ -324,9 +379,8 @@ extension _$Decode on QS {
     required bool strictDepth,
   }) {
     // Optionally normalize `a.b` to `a[b]` before splitting.
-    final String key = allowDots
-        ? originalKey.replaceAllMapped(_dotToBracket, (m) => '[${m[1]}]')
-        : originalKey;
+    final String key =
+        allowDots ? _dotToBracketTopLevel(originalKey) : originalKey;
 
     // Depth==0 → do not split at all (reference `qs` behavior).
     if (maxDepth <= 0) {
@@ -335,59 +389,67 @@ extension _$Decode on QS {
 
     final List<String> segments = [];
 
-    // Extract the parent token (before the first '['), if any.
+    // Parent token before the first '[' (may be empty when key starts with '[')
     final int first = key.indexOf('[');
     final String parent = first >= 0 ? key.substring(0, first) : key;
     if (parent.isNotEmpty) segments.add(parent);
 
     final int n = key.length;
     int open = first;
-    int depth = 0;
+    int collected = 0;
+    int lastClose = -1;
 
-    while (open >= 0 && depth < maxDepth) {
-      // Balance nested brackets inside this group: "[ ... possibly [] ... ]"
+    while (open >= 0 && collected < maxDepth) {
       int level = 1;
       int i = open + 1;
       int close = -1;
 
+      // Balance nested '[' and ']' within this group.
       while (i < n) {
-        final int ch = key.codeUnitAt(i);
-        if (ch == 0x5B) {
-          // '['
+        final int cu = key.codeUnitAt(i);
+        if (cu == 0x5B) {
           level++;
-        } else if (ch == 0x5D) {
-          // ']'
+        } else if (cu == 0x5D) {
           level--;
           if (level == 0) {
             close = i;
             break;
           }
         }
-        // Advance inside the current bracket group until it balances.
         i++;
       }
 
       if (close < 0) {
-        // Unterminated group, stop collecting groups
-        break;
+        // Unterminated group: treat the entire key as a single literal segment (qs semantics).
+        return <String>[key];
       }
 
-      segments.add(key.substring(open, close + 1)); // includes enclosing [ ]
-      depth++;
+      segments
+          .add(key.substring(open, close + 1)); // balanced group, includes [ ]
+      lastClose = close;
+      collected++;
 
-      // find next group, starting after this one
+      // Find the next '[' after this balanced group.
       open = key.indexOf('[', close + 1);
     }
 
-    // If additional groups remain beyond the allowed depth, either throw or
-    // stash the remainder as a single segment, per `strictDepth`.
-    if (open >= 0) {
-      // We still have remainder starting with '['
+    // If there's trailing text after the last balanced group, treat it as one final segment.
+    // Ignore a lone trailing '.' (degenerate top‑level dot).
+    if (lastClose >= 0 && lastClose + 1 < n) {
+      final String remainder = key.substring(lastClose + 1);
+      if (remainder != '.') {
+        if (strictDepth && open >= 0) {
+          throw RangeError(
+              'Input depth exceeded $maxDepth and strictDepth is true');
+        }
+        segments.add('[$remainder]');
+      }
+    } else if (open >= 0) {
+      // More groups remain beyond depth; either throw or stash remainder as a single segment.
       if (strictDepth) {
         throw RangeError(
             'Input depth exceeded $maxDepth and strictDepth is true');
       }
-      // Stash the remainder as a single segment (qs behavior)
       segments.add('[${key.substring(open)}]');
     }
 
