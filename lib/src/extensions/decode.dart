@@ -276,9 +276,26 @@ extension _$Decode on QS {
         final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
         final String cleanRoot =
             wasBracketed ? root.slice(1, root.length - 1) : root;
-        final String decodedRoot = options.decodeDotInKeys
+        String decodedRoot = options.decodeDotInKeys
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
+
+        // Synthetic remainder normalization:
+        // If this segment originated from an unterminated bracket group, it will look like
+        // "[[...]]" after wrapping. After stripping the outermost brackets above, `decodedRoot`
+        // can end with a trailing ']' that does not have a matching opening bracket in the
+        // same string (e.g., "[b[c]"). In that case, drop the trailing ']' so the literal key
+        // becomes "[b[c" (matches Kotlin/Python ports).
+        if (wasBracketed &&
+            root.startsWith('[[') &&
+            decodedRoot.endsWith(']')) {
+          final int opens = RegExp(r'\[').allMatches(decodedRoot).length;
+          final int closes = RegExp(r'\]').allMatches(decodedRoot).length;
+          if (opens > closes) {
+            decodedRoot = decodedRoot.substring(0, decodedRoot.length - 1);
+          }
+        }
+
         final int? index = (wasBracketed && options.parseLists)
             ? int.tryParse(decodedRoot)
             : null;
@@ -388,8 +405,11 @@ extension _$Decode on QS {
       }
 
       if (close < 0) {
-        // Unterminated group: treat the entire key as a single literal segment (qs semantics).
-        return <String>[key];
+        // Unterminated group: keep the already-captured parent (if any),
+        // and wrap the raw remainder starting at `open` as a single synthetic
+        // bracket segment. Do not throw even if `strictDepth=true`.
+        segments.add('[${key.substring(open)}]');
+        return segments;
       }
 
       segments
