@@ -2483,7 +2483,7 @@ void main() {
           }));
     });
 
-    test('leading dot preserved when allowDots=true', () {
+    test('leading dot splits to a new segment when allowDots=true', () {
       const opt = DecodeOptions(allowDots: true);
       expect(
         QS.decode('.a=x', opt),
@@ -2565,6 +2565,18 @@ void main() {
   });
 
   group('encoded dot behavior in keys (%2E / %2e)', () {
+    test('leading dot before bracket: skip the dot (.[a]=x)', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(QS.decode('.[a]=x', opt), equals({'a': 'x'}));
+    });
+
+    test('depth=0 with encoded dot: do not split key', () {
+      expect(
+        QS.decode('a%2Eb=c', const DecodeOptions(allowDots: true, depth: 0)),
+        equals({'a.b': 'c'}),
+      );
+    });
+
     test(
         "allowDots=false, decodeDotInKeys=false: encoded dots decode to literal '.'; no dot-splitting",
         () {
