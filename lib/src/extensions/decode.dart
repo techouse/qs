@@ -51,10 +51,11 @@ extension _$Decode on QS {
       final List<String> splitVal = val.split(',');
       if (options.throwOnLimitExceeded &&
           (currentListLength + splitVal.length) > options.listLimit) {
-        throw RangeError(
-          'List limit exceeded. '
-          'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
-        );
+        final String msg = options.listLimit < 0
+            ? 'List parsing is disabled (listLimit < 0).'
+            : 'List limit exceeded. Only ${options.listLimit} '
+                'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
+        throw RangeError(msg);
       }
       final int remaining = options.listLimit - currentListLength;
       if (remaining <= 0) return const <String>[];
@@ -66,10 +67,11 @@ extension _$Decode on QS {
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
         currentListLength >= options.listLimit) {
-      throw RangeError(
-        'List limit exceeded. '
-        'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
-      );
+      final String msg = options.listLimit < 0
+          ? 'List parsing is disabled (listLimit < 0).'
+          : 'List limit exceeded. Only ${options.listLimit} '
+              'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
+      throw RangeError(msg);
     }
 
     return val;
@@ -289,8 +291,12 @@ extension _$Decode on QS {
         if (wasBracketed &&
             root.startsWith('[[') &&
             decodedRoot.endsWith(']')) {
-          final int opens = RegExp(r'\[').allMatches(decodedRoot).length;
-          final int closes = RegExp(r'\]').allMatches(decodedRoot).length;
+          int opens = 0, closes = 0;
+          for (int k = 0; k < decodedRoot.length; k++) {
+            final cu = decodedRoot.codeUnitAt(k);
+            if (cu == 0x5B) opens++;
+            if (cu == 0x5D) closes++;
+          }
           if (opens > closes) {
             decodedRoot = decodedRoot.substring(0, decodedRoot.length - 1);
           }
@@ -489,10 +495,12 @@ extension _$Decode on QS {
             int j = start;
             // Accept [A-Za-z0-9_] at the start of a segment; otherwise, keep '.' literal.
             bool isIdentStart(int cu) => switch (cu) {
-                  >= 0x41 && <= 0x5A => true, // A-Z
-                  >= 0x61 && <= 0x7A => true, // a-z
-                  >= 0x30 && <= 0x39 => true, // 0-9
-                  0x5F => true, // _
+                  (>= 0x41 && <= 0x5A) || // A-Z
+                  (>= 0x61 && <= 0x7A) || // a-z
+                  (>= 0x30 && <= 0x39) || // 0-9
+                  0x5F || // _
+                  0x2D => // -
+                    true,
                   _ => false,
                 };
             if (start >= s.length || !isIdentStart(s.codeUnitAt(start))) {
