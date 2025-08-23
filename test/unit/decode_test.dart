@@ -2483,12 +2483,12 @@ void main() {
           }));
     });
 
-    test('leading dot preserved when allowDots=true', () {
+    test('leading dot splits to a new segment when allowDots=true', () {
       const opt = DecodeOptions(allowDots: true);
       expect(
         QS.decode('.a=x', opt),
         equals({
-          '.a': 'x',
+          'a': 'x',
         }),
       );
     });
@@ -2560,6 +2560,235 @@ void main() {
         calls.any((it) =>
             it[1] == DecodeKind.value && (it[0] == 'c' || it[0] == 'd')),
         isTrue,
+      );
+    });
+  });
+
+  group('encoded dot behavior in keys (%2E / %2e)', () {
+    test('leading dot before bracket: skip the dot (.[a]=x)', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(QS.decode('.[a]=x', opt), equals({'a': 'x'}));
+    });
+
+    test('depth=0 with encoded dot: do not split key', () {
+      expect(
+        QS.decode('a%2Eb=c', const DecodeOptions(allowDots: true, depth: 0)),
+        equals({'a.b': 'c'}),
+      );
+    });
+
+    test(
+        "allowDots=false, decodeDotInKeys=false: encoded dots decode to literal '.'; no dot-splitting",
+        () {
+      const opt = DecodeOptions(allowDots: false, decodeDotInKeys: false);
+      expect(QS.decode('a%2Eb=c', opt), equals({'a.b': 'c'}));
+      expect(QS.decode('a%2eb=c', opt), equals({'a.b': 'c'}));
+    });
+
+    test(
+        'allowDots=true, decodeDotInKeys=false: double-encoded dots are preserved inside segments; encoded and plain dots split',
+        () {
+      // Plain dot splits
+      expect(
+        QS.decode('a.b=c',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'a': {'b': 'c'}
+        }),
+      );
+
+      // Encoded dot stays encoded inside the first segment (no extra split)
+      expect(
+        QS.decode('name%252Eobj.first=John',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'name%2Eobj': {'first': 'John'}
+        }),
+      );
+
+      // Lowercase variant inside first segment
+      expect(
+        QS.decode('a%2eb.c=d',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'a': {
+            'b': {'c': 'd'}
+          }
+        }),
+      );
+    });
+
+    test(
+        "allowDots=true, decodeDotInKeys=true: encoded dots become literal '.' inside a segment (no extra split)",
+        () {
+      expect(
+        QS.decode('name%252Eobj.first=John',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: true)),
+        equals({
+          'name.obj': {'first': 'John'}
+        }),
+      );
+
+      // Double-encoded single segment becomes a literal dot after post-split mapping
+      expect(
+        QS.decode('a%252Eb=c',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: true)),
+        equals({'a.b': 'c'}),
+      );
+
+      // Lowercase mapping as well (inside brackets)
+      expect(
+        QS.decode('a[%2e]=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: true)),
+        equals({
+          'a': {'.': 'x'}
+        }),
+      );
+    });
+
+    test(
+        'bracket segment: %2E mapped based on decodeDotInKeys; case-insensitive',
+        () {
+      // When disabled, percent-decoding inside brackets yields '.' (no extra split)
+      expect(
+        QS.decode('a[%2E]=x',
+            const DecodeOptions(allowDots: false, decodeDotInKeys: false)),
+        equals({
+          'a': {'.': 'x'}
+        }),
+      );
+      expect(
+        QS.decode('a[%2e]=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'a': {'.': 'x'}
+        }),
+      );
+
+      // When enabled, convert to '.' regardless of case
+      expect(
+        QS.decode('a[%2E]=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: true)),
+        equals({
+          'a': {'.': 'x'}
+        }),
+      );
+
+      // Invalid combo: allowDots=false with decodeDotInKeys=true should throw
+      expect(
+        () => QS.decode(
+            'a[%2e]=x', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+
+    test("bare-key (no '='): behavior matches key decoding path", () {
+      // allowDots=false → %2E decodes to '.'; no splitting because allowDots=false
+      expect(
+        QS.decode(
+          'a%2Eb',
+          const DecodeOptions(
+            allowDots: false,
+            decodeDotInKeys: false,
+            strictNullHandling: true,
+          ),
+        ),
+        equals({'a.b': null}),
+      );
+
+      // allowDots=true & decodeDotInKeys=false → keep %2E inside key segment (split into a nested map)
+      expect(
+        QS.decode('a%2Eb',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'a': {'b': ''}
+        }),
+      );
+    });
+
+    test('depth=0 with allowDots=true: do not split key', () {
+      expect(
+        QS.decode('a.b=c', const DecodeOptions(allowDots: true, depth: 0)),
+        equals({'a.b': 'c'}),
+      );
+    });
+
+    test(
+        'top-level dot→bracket conversion guardrails: leading/trailing/double dots',
+        () {
+      // Leading dot: ".a" should yield { "a": ... } when allowDots=true
+      expect(
+        QS.decode('.a=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({'a': 'x'}),
+      );
+
+      // Trailing dot: "a." should NOT create an empty bracket segment; remains literal
+      expect(
+        QS.decode('a.=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({'a.': 'x'}),
+      );
+
+      // Double dots: only the second dot causes a split; the empty middle segment is preserved as a literal dot
+      expect(
+        QS.decode('a..b=x',
+            const DecodeOptions(allowDots: true, decodeDotInKeys: false)),
+        equals({
+          'a.': {'b': 'x'}
+        }),
+      );
+    });
+  });
+
+  group('key splitting: depth remainder & strictDepth (dot + bracket parity)',
+      () {
+    test(
+        'allowDots=true, depth=1: split once, stash remainder as literal bracket string',
+        () {
+      expect(
+        QS.decode('a.b.c=d', const DecodeOptions(allowDots: true, depth: 1)),
+        equals({
+          'a': {
+            'b': {'[c]': 'd'}
+          }
+        }),
+      );
+    });
+
+    test(
+        'allowDots=true, depth=1: two-segment remainder becomes "[c][d]" literal',
+        () {
+      expect(
+        QS.decode('a.b.c.d=e', const DecodeOptions(allowDots: true, depth: 1)),
+        equals({
+          'a': {
+            'b': {'[c][d]': 'e'}
+          }
+        }),
+      );
+    });
+
+    test('strictDepth=true + allowDots=true: well-formed overflow throws', () {
+      expect(
+        () => QS.decode('a.b.c=d',
+            const DecodeOptions(allowDots: true, depth: 1, strictDepth: true)),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test(
+        'unterminated bracket group: do not throw even with strictDepth=true; wrap raw remainder',
+        () {
+      expect(
+        QS.decode('a[b[c]=x', const DecodeOptions(depth: 5, strictDepth: true)),
+        equals({
+          'a': {'[b[c': 'x'}
+        }),
       );
     });
   });

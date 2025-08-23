@@ -51,10 +51,11 @@ extension _$Decode on QS {
       final List<String> splitVal = val.split(',');
       if (options.throwOnLimitExceeded &&
           (currentListLength + splitVal.length) > options.listLimit) {
-        throw RangeError(
-          'List limit exceeded. '
-          'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
-        );
+        final String msg = options.listLimit < 0
+            ? 'List parsing is disabled (listLimit < 0).'
+            : 'List limit exceeded. Only ${options.listLimit} '
+                'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
+        throw RangeError(msg);
       }
       final int remaining = options.listLimit - currentListLength;
       if (remaining <= 0) return const <String>[];
@@ -66,10 +67,11 @@ extension _$Decode on QS {
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
         currentListLength >= options.listLimit) {
-      throw RangeError(
-        'List limit exceeded. '
-        'Only ${options.listLimit} element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
-      );
+      final String msg = options.listLimit < 0
+          ? 'List parsing is disabled (listLimit < 0).'
+          : 'List limit exceeded. Only ${options.listLimit} '
+              'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
+      throw RangeError(msg);
     }
 
     return val;
@@ -273,18 +275,40 @@ extension _$Decode on QS {
         // dots inside bracket segments can be treated as literal `.` without introducing extra
         // dot‑splits. Top‑level dot splitting (which only applies to literal `.`) already
         // happened in `_splitKeyIntoSegments`.
-        final String cleanRoot = root.startsWith('[') && root.endsWith(']')
-            ? root.slice(1, root.length - 1)
-            : root;
-        final String decodedRoot = options.decodeDotInKeys
+        final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
+        final String cleanRoot =
+            wasBracketed ? root.slice(1, root.length - 1) : root;
+        String decodedRoot = options.decodeDotInKeys
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
-        final int? index = int.tryParse(decodedRoot);
+
+        // Synthetic remainder normalization:
+        // If this segment originated from an unterminated bracket group, it will look like
+        // "[[...]]" after wrapping. After stripping the outermost brackets above, `decodedRoot`
+        // can end with a trailing ']' that does not have a matching opening bracket in the
+        // same string (e.g., "[b[c]"). In that case, drop the trailing ']' so the literal key
+        // becomes "[b[c" (matches Kotlin/Python ports).
+        if (wasBracketed &&
+            root.startsWith('[[') &&
+            decodedRoot.endsWith(']')) {
+          int opens = 0, closes = 0;
+          for (int k = 0; k < decodedRoot.length; k++) {
+            final cu = decodedRoot.codeUnitAt(k);
+            if (cu == 0x5B) opens++;
+            if (cu == 0x5D) closes++;
+          }
+          if (opens > closes) {
+            decodedRoot = decodedRoot.substring(0, decodedRoot.length - 1);
+          }
+        }
+
+        final int? index = (wasBracketed && options.parseLists)
+            ? int.tryParse(decodedRoot)
+            : null;
         if (!options.parseLists && decodedRoot == '') {
           obj = <String, dynamic>{'0': leaf};
         } else if (index != null &&
             index >= 0 &&
-            root != decodedRoot &&
             index.toString() == decodedRoot &&
             options.parseLists &&
             index <= options.listLimit) {
@@ -297,6 +321,7 @@ extension _$Decode on QS {
           );
           obj[index] = leaf;
         } else {
+          // Normalise numeric-looking keys back to their canonical string form when not a list index
           obj[index?.toString() ?? decodedRoot] = leaf;
         }
       }
@@ -342,14 +367,15 @@ extension _$Decode on QS {
     required int maxDepth,
     required bool strictDepth,
   }) {
-    // Optionally normalize `a.b` to `a[b]` before splitting.
+    // Depth==0 → do not split at all (reference `qs` behavior).
+    // Important: return the *original* key with no dot→bracket normalization.
+    if (maxDepth <= 0) {
+      return <String>[originalKey];
+    }
+
+    // Optionally normalize `a.b` to `a[b]` before splitting (only when depth > 0).
     final String key =
         allowDots ? _dotToBracketTopLevel(originalKey) : originalKey;
-
-    // Depth==0 → do not split at all (reference `qs` behavior).
-    if (maxDepth <= 0) {
-      return <String>[key];
-    }
 
     final List<String> segments = [];
 
@@ -384,8 +410,11 @@ extension _$Decode on QS {
       }
 
       if (close < 0) {
-        // Unterminated group: treat the entire key as a single literal segment (qs semantics).
-        return <String>[key];
+        // Unterminated group: keep the already-captured parent (if any),
+        // and wrap the raw remainder starting at `open` as a single synthetic
+        // bracket segment. Do not throw even if `strictDepth=true`.
+        segments.add('[${key.substring(open)}]');
+        return segments;
       }
 
       segments
@@ -425,9 +454,10 @@ extension _$Decode on QS {
   /// - Only dots at depth == 0 split.
   /// - Dots inside `[...]` are preserved.
   /// - Degenerate cases are preserved and do not create empty segments:
-  ///   * leading '.' (e.g., ".a") keeps the dot literal,
-  ///   * double dots ("a..b") keep the first dot literal,
-  ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
+  ///   * ".[" (e.g., "a.[b]") skips the dot so "a.[b]" behaves like "a[b]".
+  ///   * leading '.' (e.g., ".a") starts a new segment → "[a]" (leading dot is ignored).
+  ///   * double dots ("a..b") keep the first dot literal.
+  ///   * trailing dot ("a.") keeps the trailing dot (ignored by the splitter).
   /// - Only literal `.` are considered for splitting here. In this library, keys are normally
   ///   percent‑decoded before this step; thus a top‑level `%2E` typically becomes a literal `.`
   ///   and will split when `allowDots` is true.
@@ -451,11 +481,7 @@ extension _$Decode on QS {
           final bool hasNext = i + 1 < s.length;
           final String next = hasNext ? s[i + 1] : '\u0000';
 
-          // preserve a *leading* '.' as a literal, unless it's the ".[" degenerate.
-          if (i == 0 && (!hasNext || next != '[')) {
-            sb.write('.');
-            i++;
-          } else if (hasNext && next == '[') {
+          if (hasNext && next == '[') {
             // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
             i++; // consume the '.'
           } else if (!hasNext || next == '.') {
@@ -463,9 +489,24 @@ extension _$Decode on QS {
             sb.write('.');
             i++;
           } else {
-            // Normal split: convert a.b → a[b] at top level.
+            // Normal split: convert top-level ".a" or "a.b" into a bracket segment.
             final int start = ++i;
             int j = start;
+            // Accept [A-Za-z0-9_] at the start of a segment; otherwise, keep '.' literal.
+            bool isIdentStart(int cu) => switch (cu) {
+                  (>= 0x41 && <= 0x5A) || // A-Z
+                  (>= 0x61 && <= 0x7A) || // a-z
+                  (>= 0x30 && <= 0x39) || // 0-9
+                  0x5F || // _
+                  0x2D => // -
+                    true,
+                  _ => false,
+                };
+            if (start >= s.length || !isIdentStart(s.codeUnitAt(start))) {
+              // keep as literal if next char isn't an ident start
+              sb.write('.');
+              continue;
+            }
             while (j < s.length && s[j] != '.' && s[j] != '[') {
               j++;
             }
