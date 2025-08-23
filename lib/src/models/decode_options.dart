@@ -15,17 +15,9 @@ import 'package:qs_dart/src/utils.dart';
 ///
 /// Highlights
 /// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
-///   If you also set [decodeDotInKeys] to `true`, [allowDots] defaults to `true`
-///   unless you explicitly set `allowDots: false` — which is an invalid
-///   combination and will throw at construction time.
-/// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
-///   [charsetSentinel] is `true`, a `utf8=✓` parameter (in either UTF‑8 or
-///   Latin‑1 form) can override [charset]; the **first such parameter** is used.
-///
-/// Highlights
-/// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
 ///   If you *explicitly* request dot decoding in keys via [decodeDotInKeys],
-///   [allowDots] is implied and will be treated as `true`.
+///   [allowDots] is implied and will be treated as `true` unless you explicitly
+///   set `allowDots: false` — which is an invalid combination and will throw at construction time.
 /// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
 ///   [charsetSentinel] is `true`, a leading `utf8=✓` token (in either UTF‑8 or
 ///   Latin‑1 form) can override [charset] as a compatibility escape hatch.
@@ -55,20 +47,12 @@ typedef Decoder = dynamic Function(
 )
 typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
 
-/// Back-compat: decoder with optional [charset] only.
-typedef Decoder1 = dynamic Function(String? value, {Encoding? charset});
-
-/// Decoder that accepts only [kind] (no [charset]).
-typedef Decoder2 = dynamic Function(String? value, {DecodeKind? kind});
-
-/// Back-compat: single-argument decoder (value only).
-typedef Decoder3 = dynamic Function(String? value);
-
 /// Options that configure the output of [QS.decode].
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
-    Function? decoder,
+    Decoder? decoder,
+    @Deprecated('Use Decoder instead; see DecodeOptions.decoder')
     LegacyDecoder? legacyDecoder,
     bool? decodeDotInKeys,
     this.allowEmptyLists = false,
@@ -192,16 +176,16 @@ final class DecodeOptions with EquatableMixin {
 
   /// Optional custom scalar decoder for a single token.
   /// If not provided, falls back to [Utils.decode].
-  final Function? _decoder;
+  final Decoder? _decoder;
 
   /// Optional legacy decoder that takes only (value, {charset}).
   final LegacyDecoder? _legacyDecoder;
 
   /// Unified scalar decode with key/value context.
   ///
-  /// Uses a provided custom [decoder] when set; otherwise falls back to [Utils.decode].
+  /// Uses a provided custom [Decoder] when set; otherwise falls back to [Utils.decode].
   /// For backward compatibility, a [LegacyDecoder] can be supplied and is honored
-  /// when no primary [decoder] is provided. The [kind] will be [DecodeKind.key] for
+  /// when no primary [Decoder] is provided. The [kind] will be [DecodeKind.key] for
   /// keys (and key segments) and [DecodeKind.value] for values. The default implementation
   /// does not vary decoding based on [kind]. If your decoder returns `null`, that `null`
   /// is preserved — no fallback decoding is applied.
@@ -210,80 +194,13 @@ final class DecodeOptions with EquatableMixin {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
-    final Function? fn = _decoder ?? _legacyDecoder;
-
-    // No custom decoder: use library default
-    if (fn == null) {
-      return Utils.decode(value, charset: charset ?? this.charset);
+    if (_decoder != null) {
+      return _decoder!(value, charset: charset, kind: kind);
     }
-
-    // Try strongly-typed variants first
-    if (fn is Decoder) return fn(value, charset: charset, kind: kind);
-    if (fn is Decoder1) return fn(value, charset: charset);
-    if (fn is Decoder2) return fn(value, kind: kind);
-    if (fn is Decoder3) return fn(value);
-
-    // Dynamic callable or object with `call`
-    // Try named-argument form first, then positional fallbacks to support
-    // decoders declared like `(String?, Encoding?, DecodeKind?)`.
-    try {
-      // (value, {charset, kind})
-      return (fn as dynamic)(value, charset: charset, kind: kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
+    if (_legacyDecoder != null) {
+      return _legacyDecoder!(value, charset: charset);
     }
-    try {
-      // (value, charset, kind)
-      return (fn as dynamic)(value, charset, kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // (value, {charset})
-      return (fn as dynamic)(value, charset: charset);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // (value, {kind})
-      return (fn as dynamic)(value, kind: kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // (value, charset)
-      return (fn as dynamic)(value, charset);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // (value, kind)
-      return (fn as dynamic)(value, kind);
-    } on NoSuchMethodError catch (_) {
-      // fall through
-    } on TypeError catch (_) {
-      // fall through
-    }
-    try {
-      // (value)
-      return (fn as dynamic)(value);
-    } on NoSuchMethodError catch (_) {
-      // Fallback to default
-      return Utils.decode(value, charset: charset ?? this.charset);
-    } on TypeError catch (_) {
-      // Fallback to default
-      return Utils.decode(value, charset: charset ?? this.charset);
-    }
+    return Utils.decode(value, charset: charset ?? this.charset);
   }
 
   /// Convenience: decode a key and coerce the result to String (or null).
@@ -335,7 +252,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
-    Function? decoder,
+    Decoder? decoder,
     LegacyDecoder? legacyDecoder,
   }) =>
       DecodeOptions(
