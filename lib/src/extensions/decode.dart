@@ -93,15 +93,15 @@ extension _$Decode on QS {
     final List<String> allParts = cleanStr.split(options.delimiter);
     late final List<String> parts;
     if (limit != null && limit > 0) {
-      final int takeCount = options.throwOnLimitExceeded ? limit + 1 : limit;
-      final int count =
-          allParts.length < takeCount ? allParts.length : takeCount;
-      parts = allParts.sublist(0, count);
       if (options.throwOnLimitExceeded && allParts.length > limit) {
         throw RangeError(
           'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
         );
       }
+      parts = allParts.sublist(
+        0,
+        allParts.length < limit ? allParts.length : limit,
+      );
     } else {
       parts = allParts;
     }
@@ -393,6 +393,8 @@ extension _$Decode on QS {
         throw RangeError(
             'Input depth exceeded $maxDepth and strictDepth is true');
       }
+      // Wrap the remaining bracket groups as a single literal segment.
+      // Example: key="a[b][c][d]", depth=2 → segment="[[c][d]]" which becomes "[c][d]" later.
       segments.add('[${key.substring(open)}]');
     }
 
