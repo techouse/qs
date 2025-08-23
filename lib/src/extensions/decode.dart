@@ -342,14 +342,15 @@ extension _$Decode on QS {
     required int maxDepth,
     required bool strictDepth,
   }) {
-    // Optionally normalize `a.b` to `a[b]` before splitting.
+    // Depth==0 → do not split at all (reference `qs` behavior).
+    // Important: return the *original* key with no dot→bracket normalization.
+    if (maxDepth <= 0) {
+      return <String>[originalKey];
+    }
+
+    // Optionally normalize `a.b` to `a[b]` before splitting (only when depth > 0).
     final String key =
         allowDots ? _dotToBracketTopLevel(originalKey) : originalKey;
-
-    // Depth==0 → do not split at all (reference `qs` behavior).
-    if (maxDepth <= 0) {
-      return <String>[key];
-    }
 
     final List<String> segments = [];
 
@@ -425,9 +426,10 @@ extension _$Decode on QS {
   /// - Only dots at depth == 0 split.
   /// - Dots inside `[...]` are preserved.
   /// - Degenerate cases are preserved and do not create empty segments:
-  ///   * leading '.' (e.g., ".a") keeps the dot literal,
-  ///   * double dots ("a..b") keep the first dot literal,
-  ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
+  ///   * ".[" (e.g., "a.[b]") skips the dot so "a.[b]" behaves like "a[b]".
+  ///   * leading '.' (e.g., ".a") starts a new segment → "[a]" (leading dot is ignored).
+  ///   * double dots ("a..b") keep the first dot literal.
+  ///   * trailing dot ("a.") keeps the trailing dot (ignored by the splitter).
   /// - Only literal `.` are considered for splitting here. In this library, keys are normally
   ///   percent‑decoded before this step; thus a top‑level `%2E` typically becomes a literal `.`
   ///   and will split when `allowDots` is true.
@@ -451,11 +453,7 @@ extension _$Decode on QS {
           final bool hasNext = i + 1 < s.length;
           final String next = hasNext ? s[i + 1] : '\u0000';
 
-          // preserve a *leading* '.' as a literal, unless it's the ".[" degenerate.
-          if (i == 0 && (!hasNext || next != '[')) {
-            sb.write('.');
-            i++;
-          } else if (hasNext && next == '[') {
+          if (hasNext && next == '[') {
             // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
             i++; // consume the '.'
           } else if (!hasNext || next == '.') {
@@ -463,7 +461,7 @@ extension _$Decode on QS {
             sb.write('.');
             i++;
           } else {
-            // Normal split: convert a.b → a[b] at top level.
+            // Normal split: convert top-level ".a" or "a.b" into a bracket segment.
             final int start = ++i;
             int j = start;
             while (j < s.length && s[j] != '.' && s[j] != '[') {
