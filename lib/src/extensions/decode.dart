@@ -21,66 +21,6 @@ part of '../qs.dart';
 /// - The implementation aims to match `qs` semantics; comments explain how each phase maps
 ///   to the reference behavior.
 
-/// Convert top‑level dots to bracket segments (depth‑aware).
-/// - Only dots at depth == 0 split.
-/// - Dots inside `[...]` are preserved.
-/// - Degenerate cases are preserved and do not create empty segments:
-///   * leading '.' (e.g., ".a") keeps the dot literal,
-///   * double dots ("a..b") keep the first dot literal,
-///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
-/// - Percent‑encoded dots are not handled here because keys have already been decoded by
-///   `DecodeOptions.decodeKey` (defaulting to percent‑decoding).
-String _dotToBracketTopLevel(String s) {
-  if (s.isEmpty || !s.contains('.')) return s;
-  final StringBuffer sb = StringBuffer();
-  int depth = 0;
-  int i = 0;
-  while (i < s.length) {
-    final ch = s[i];
-    if (ch == '[') {
-      depth++;
-      sb.write(ch);
-      i++;
-    } else if (ch == ']') {
-      if (depth > 0) depth--;
-      sb.write(ch);
-      i++;
-    } else if (ch == '.') {
-      if (depth == 0) {
-        final bool hasNext = i + 1 < s.length;
-        final String next = hasNext ? s[i + 1] : '\u0000';
-        if (hasNext && next == '[') {
-          // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
-          i++; // consume the '.'
-        } else if (!hasNext || next == '.') {
-          // Preserve literal dot for trailing/duplicate dots.
-          sb.write('.');
-          i++;
-        } else {
-          // Normal split: convert a.b → a[b] at top level.
-          final int start = ++i;
-          int j = start;
-          while (j < s.length && s[j] != '.' && s[j] != '[') {
-            j++;
-          }
-          sb.write('[');
-          sb.write(s.substring(start, j));
-          sb.write(']');
-          i = j;
-        }
-      } else {
-        // Inside brackets, keep '.' as content.
-        sb.write('.');
-        i++;
-      }
-    } else {
-      sb.write(ch);
-      i++;
-    }
-  }
-  return sb.toString();
-}
-
 /// Internal decoding surface grouped under the `QS` extension.
 ///
 /// These static helpers are private to the library and orchestrate the
@@ -456,6 +396,66 @@ extension _$Decode on QS {
     }
 
     return segments;
+  }
+
+  /// Convert top‑level dots to bracket segments (depth‑aware).
+  /// - Only dots at depth == 0 split.
+  /// - Dots inside `[...]` are preserved.
+  /// - Degenerate cases are preserved and do not create empty segments:
+  ///   * leading '.' (e.g., ".a") keeps the dot literal,
+  ///   * double dots ("a..b") keep the first dot literal,
+  ///   * trailing dot ("a.") keeps the trailing dot (which is ignored by the splitter).
+  /// - Percent‑encoded dots are not handled here because keys have already been decoded by
+  ///   `DecodeOptions.decodeKey` (defaulting to percent‑decoding).
+  static String _dotToBracketTopLevel(String s) {
+    if (s.isEmpty || !s.contains('.')) return s;
+    final StringBuffer sb = StringBuffer();
+    int depth = 0;
+    int i = 0;
+    while (i < s.length) {
+      final ch = s[i];
+      if (ch == '[') {
+        depth++;
+        sb.write(ch);
+        i++;
+      } else if (ch == ']') {
+        if (depth > 0) depth--;
+        sb.write(ch);
+        i++;
+      } else if (ch == '.') {
+        if (depth == 0) {
+          final bool hasNext = i + 1 < s.length;
+          final String next = hasNext ? s[i + 1] : '\u0000';
+          if (hasNext && next == '[') {
+            // Degenerate ".[" → skip the dot so "a.[b]" behaves like "a[b]".
+            i++; // consume the '.'
+          } else if (!hasNext || next == '.') {
+            // Preserve literal dot for trailing/duplicate dots.
+            sb.write('.');
+            i++;
+          } else {
+            // Normal split: convert a.b → a[b] at top level.
+            final int start = ++i;
+            int j = start;
+            while (j < s.length && s[j] != '.' && s[j] != '[') {
+              j++;
+            }
+            sb.write('[');
+            sb.write(s.substring(start, j));
+            sb.write(']');
+            i = j;
+          }
+        } else {
+          // Inside brackets, keep '.' as content.
+          sb.write('.');
+          i++;
+        }
+      } else {
+        sb.write(ch);
+        i++;
+      }
+    }
+    return sb.toString();
   }
 
   /// Normalizes the raw query-string prior to tokenization:
