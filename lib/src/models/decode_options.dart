@@ -74,6 +74,14 @@ final class DecodeOptions with EquatableMixin {
         assert(
           charset == utf8 || charset == latin1,
           'Invalid charset',
+        ),
+        assert(
+          !(decodeDotInKeys ?? false) || allowDots != false,
+          'decodeDotInKeys requires allowDots to be true',
+        ),
+        assert(
+          parameterLimit > 0,
+          'Parameter limit must be positive',
         );
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
@@ -114,9 +122,14 @@ final class DecodeOptions with EquatableMixin {
 
   /// Decode dots that appear in *keys* (e.g., `a.b=c`).
   ///
-  /// This explicitly opts into dot‑notation handling and implies [allowDots].
-  /// Setting [decodeDotInKeys] to `true` while forcing [allowDots] to `false`
-  /// is invalid and will cause an error in [QS.decode].
+  /// This explicitly opts into dot‑notation handling and **implies** [allowDots].
+  /// Passing `decodeDotInKeys: true` while forcing `allowDots: false` is an
+  /// invalid combination and will throw *at construction time*.
+  ///
+  /// Note: inside bracket segments (e.g., `a[%2E]`), percent‑decoding naturally
+  /// yields `"."`. Whether a `.` causes additional splitting is a parser concern
+  /// governed by [allowDots] at the *top level*; this flag does not suppress the
+  /// literal dot produced by percent‑decoding inside brackets.
   final bool decodeDotInKeys;
 
   /// Delimiter used to split key/value pairs. May be a [String] (e.g., `"&"`)
@@ -163,7 +176,9 @@ final class DecodeOptions with EquatableMixin {
 
   /// Decode a single scalar using either the custom decoder or the default
   /// implementation in [Utils.decode]. The [kind] indicates whether the token
-  /// is a key (or key segment) or a value.
+  /// is a key (or key segment) or a value; the **default implementation ignores
+  /// `kind` and decodes keys identically to values**. Whether `.` participates
+  /// in key splitting is decided later by the parser (based on options).
   dynamic decoder(
     String? value, {
     Encoding? charset,
