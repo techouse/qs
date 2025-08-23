@@ -16,9 +16,13 @@ void main() {
       expect(
         () => QS.decode(
           'a=b&c=d',
-          const DecodeOptions(parameterLimit: 0),
+          DecodeOptions(parameterLimit: 0),
         ),
-        throwsArgumentError,
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
       );
     });
 
@@ -2191,6 +2195,366 @@ void main() {
         () {
       final res = QS.decode('a=b', DecodeOptions(decoder: _Loose2().call));
       expect(res, {'a': 'b'});
+    });
+  });
+
+  group('C# parity: encoded dot behavior in keys (%2E / %2e)', () {
+    test(
+      'top-level: allowDots=true, decodeDotInKeys=true → plain dot splits; encoded dot also splits (upper/lower)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+        expect(
+            QS.decode('a.b=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+      },
+    );
+
+    test(
+      'top-level: allowDots=true, decodeDotInKeys=false → encoded dot also splits (upper/lower)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a%2eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+      },
+    );
+
+    test('allowDots=false, decodeDotInKeys=true is invalid', () {
+      expect(
+        () => QS.decode(
+            'a%2Eb=c', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+
+    test(
+        'bracket segment: maps to \'.\' when decodeDotInKeys=true (case-insensitive)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[%2E]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+      expect(
+          QS.decode('a[%2e]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+    });
+
+    test(
+      'bracket segment: when decodeDotInKeys=false, percent-decoding inside brackets yields \'.\' (case-insensitive)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+        expect(
+            QS.decode('a[%2e]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test('value tokens always decode %2E → \'.\'', () {
+      expect(QS.decode('x=%2E'), equals({'x': '.'}));
+    });
+
+    test(
+      'latin1: allowDots=true, decodeDotInKeys=true behaves like UTF-8 for top-level & bracket segment',
+      () {
+        const opt = DecodeOptions(
+            allowDots: true, decodeDotInKeys: true, charset: latin1);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test(
+      'latin1: allowDots=true, decodeDotInKeys=false also splits top-level and decodes inside brackets',
+      () {
+        const opt = DecodeOptions(
+            allowDots: true, decodeDotInKeys: false, charset: latin1);
+        expect(
+            QS.decode('a%2Eb=c', opt),
+            equals({
+              'a': {'b': 'c'}
+            }));
+        expect(
+            QS.decode('a[%2E]=x', opt),
+            equals({
+              'a': {'.': 'x'}
+            }));
+      },
+    );
+
+    test('percent-decoding applies inside brackets for keys', () {
+      // Equivalent of Kotlin's DecodeOptions.decode(KEY) assertions using QS.decode
+      const o1 = DecodeOptions(allowDots: false, decodeDotInKeys: false);
+      const o2 = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+
+      expect(
+          QS.decode('a[%2Eb]=v', o1),
+          equals({
+            'a': {'.b': 'v'}
+          }));
+      expect(
+          QS.decode('a[b%2Ec]=v', o1),
+          equals({
+            'a': {'b.c': 'v'}
+          }));
+
+      expect(
+          QS.decode('a[%2Eb]=v', o2),
+          equals({
+            'a': {'.b': 'v'}
+          }));
+      expect(
+          QS.decode('a[b%2Ec]=v', o2),
+          equals({
+            'a': {'b.c': 'v'}
+          }));
+    });
+
+    test(
+      'mixed-case encoded brackets + encoded dot after brackets (allowDots=true, decodeDotInKeys=true)',
+      () {
+        const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+        expect(
+          QS.decode('a%5Bb%5D%5Bc%5D%2Ed=x', opt),
+          equals({
+            'a': {
+              'b': {
+                'c': {'d': 'x'}
+              }
+            }
+          }),
+        );
+        expect(
+          QS.decode('a%5bb%5d%5bc%5d%2ed=x', opt),
+          equals({
+            'a': {
+              'b': {
+                'c': {'d': 'x'}
+              }
+            }
+          }),
+        );
+      },
+    );
+
+    test('nested brackets inside a bracket segment (balanced as one segment)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      // "a[b%5Bc%5D].e=x" → key "b[c]" stays a single segment; then ".e" splits
+      expect(
+        QS.decode('a[b%5Bc%5D].e=x', opt),
+        equals({
+          'a': {
+            'b[c]': {'e': 'x'}
+          }
+        }),
+      );
+    });
+
+    test(
+      'mixed-case encoded brackets + encoded dot with allowDots=false & decodeDotInKeys=true throws',
+      () {
+        expect(
+          () => QS.decode('a%5Bb%5D%5Bc%5D%2Ed=x',
+              DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+          throwsA(anyOf(
+            isA<ArgumentError>(),
+            isA<StateError>(),
+            isA<AssertionError>(),
+          )),
+        );
+      },
+    );
+
+    test(
+        'top-level encoded dot splits when allowDots=true, decodeDotInKeys=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2Eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test(
+        'top-level encoded dot also splits when allowDots=true, decodeDotInKeys=false',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+      expect(
+          QS.decode('a%2Eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test(
+        'top-level encoded dot does not split when allowDots=false, decodeDotInKeys=false',
+        () {
+      const opt = DecodeOptions(allowDots: false, decodeDotInKeys: false);
+      expect(QS.decode('a%2Eb=c', opt), equals({'a.b': 'c'}));
+    });
+
+    test('bracket then encoded dot to next segment with allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[b]%2Ec=x', opt),
+          equals({
+            'a': {
+              'b': {'c': 'x'}
+            }
+          }));
+      expect(
+          QS.decode('a[b]%2ec=x', opt),
+          equals({
+            'a': {
+              'b': {'c': 'x'}
+            }
+          }));
+    });
+
+    test('mixed-case: top-level encoded dot then bracket with allowDots=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2E[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test(
+        'top-level lowercase encoded dot splits when allowDots=true (decodeDotInKeys=false)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: false);
+      expect(
+          QS.decode('a%2eb=c', opt),
+          equals({
+            'a': {'b': 'c'}
+          }));
+    });
+
+    test('dot before index with allowDots=true: index remains index', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+        QS.decode('foo[0].baz[0]=15&foo[0].bar=2', opt),
+        equals({
+          'foo': [
+            {
+              'baz': ['15'],
+              'bar': '2',
+            }
+          ]
+        }),
+      );
+    });
+
+    test('trailing dot ignored when allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true);
+      expect(
+          QS.decode('user.email.=x', opt),
+          equals({
+            'user': {'email': 'x'}
+          }));
+    });
+
+    test(
+        'bracket segment: encoded dot mapped to \'.\' (allowDots=true, decodeDotInKeys=true)',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a[%2E]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+      expect(
+          QS.decode('a[%2e]=x', opt),
+          equals({
+            'a': {'.': 'x'}
+          }));
+    });
+
+    test('top-level encoded dot before bracket (lowercase) with allowDots=true',
+        () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a%2e[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test('plain dot before bracket with allowDots=true', () {
+      const opt = DecodeOptions(allowDots: true, decodeDotInKeys: true);
+      expect(
+          QS.decode('a.[b]=x', opt),
+          equals({
+            'a': {'b': 'x'}
+          }));
+    });
+
+    test('kind-aware decoder receives KEY for top-level and bracketed keys',
+        () {
+      final calls = <List<dynamic>>[]; // [String? s, DecodeKind kind]
+      dynamic dec(String? s, {Encoding? charset, DecodeKind? kind}) {
+        calls.add([s, kind ?? DecodeKind.value]);
+        return s;
+      }
+
+      QS.decode('a%2Eb=c&a[b]=d',
+          DecodeOptions(allowDots: true, decodeDotInKeys: true, decoder: dec));
+
+      expect(
+        calls.any((it) =>
+            it[1] == DecodeKind.key && (it[0] == 'a%2Eb' || it[0] == 'a[b]')),
+        isTrue,
+      );
+      expect(
+        calls.any((it) =>
+            it[1] == DecodeKind.value && (it[0] == 'c' || it[0] == 'd')),
+        isTrue,
+      );
     });
   });
 }
