@@ -1,3 +1,7 @@
+## 1.5.4
+
+* [CHORE] add issue tracker and funding links to pubspec.yaml
+
 ## 1.5.3
 
 * [FIX] fix handling of degenerate dot cases in key splitting logic
