@@ -1232,6 +1232,18 @@ expect(
 
 ---
 
+## Other ports
+
+| Port                       | Repository                                                  | Package                                                                                                                                                                                       |
+|----------------------------|-------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Python                     | [techouse/qs_codec](https://github.com/techouse/qs_codec)   | [![PyPI](https://img.shields.io/pypi/v/qs-codec?logo=python&label=PyPI)](https://pypi.org/project/qs-codec/)                                                                                  |
+| Kotlin / JVM + Android AAR | [techouse/qs-kotlin](https://github.com/techouse/qs-kotlin) | [![Maven Central](https://img.shields.io/maven-central/v/io.github.techouse/qs-kotlin?logo=kotlin&label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.techouse/qs-kotlin) |
+| Swift / Objective-C        | [techouse/qs-swift](https://github.com/techouse/qs-swift)   | [![SPM](https://img.shields.io/github/v/release/techouse/qs-swift?logo=swift&label=SPM)](https://swiftpackageindex.com/techouse/qs-swift)                                                     |
+| .NET / C#                  | [techouse/qs-net](https://github.com/techouse/qs-net)       | [![NuGet](https://img.shields.io/nuget/v/QsNet?logo=dotnet&label=NuGet)](https://www.nuget.org/packages/QsNet)                                                                                |
+| Node.js (original)         | [ljharb/qs](https://github.com/ljharb/qs)                   | [![npm](https://img.shields.io/npm/v/qs?logo=javascript&label=npm)](https://www.npmjs.com/package/qs)                                                                                         |
+
+---
+
 Special thanks to the authors of [qs](https://www.npmjs.com/package/qs) for JavaScript:
 - [Jordan Harband](https://github.com/ljharb)
 - [TJ Holowaychuk](https://github.com/visionmedia/node-querystring)
