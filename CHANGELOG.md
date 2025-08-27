@@ -1,3 +1,7 @@
+## 1.5.5
+
+* [CHORE] add screenshots section with package logo to pubspec.yaml
+
 ## 1.5.4
 
 * [CHORE] add issue tracker and funding links to pubspec.yaml
