@@ -31,3 +31,7 @@ topics:
   - query-string
   - encode
   - decode
+
+screenshots:
+  - description: The qs_dart package logo.
+    path: logo.png
