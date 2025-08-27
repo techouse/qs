@@ -1,7 +1,7 @@
 # qs_dart
 
 <p align="center">
-    <img src="https://github.com/techouse/qs_codec/raw/main/logo.png?raw=true?raw=true" width="256" alt="qs_codec" />
+    <img src="https://github.com/techouse/qs/raw/main/logo.png?raw=true?raw=true" width="256" alt="qs_dart" />
 </p>
 
 A query string encoding and decoding library for Dart.
