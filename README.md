@@ -1,5 +1,9 @@
 # qs_dart
 
+<p align="center">
+    <img src="https://github.com/techouse/qs_codec/raw/main/logo.png?raw=true?raw=true" width="256" alt="qs_codec" />
+</p>
+
 A query string encoding and decoding library for Dart.
 
 Ported from [qs](https://www.npmjs.com/package/qs) for JavaScript.
