@@ -23,6 +23,19 @@ Ported from [qs](https://www.npmjs.com/package/qs) for JavaScript.
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/techouse)](https://github.com/sponsors/techouse)
 [![GitHub Repo stars](https://img.shields.io/github/stars/techouse/qs)](https://github.com/techouse/qs/stargazers)
 
+## Highlights
+
+- **Nested maps & lists**: `a[b][c]=d` ⇄ `{ 'a': { 'b': { 'c': 'd' } } }`; arrays via `a[]=b&a[]=c` or `a[0]=b&a[1]=c`.
+- **Multiple list formats**: `indices` (`a[0]=x`), `brackets` (`a[]=x`), `repeat` (`a=x&a=y`), `comma` (`a=x,y`) with optional comma round‑trip.
+- **Dot notation**: parse/encode `a.b=c` as nested; options to encode or decode literal dots in keys (`encodeDotInKeys` / `decodeDotInKeys`).
+- **Charset & sentinel**: UTF‑8 (default) and Latin‑1; `charsetSentinel` (`utf8=✓`) to auto‑detect encoding.
+- **Hooks & controls**: custom `encoder`/`decoder`, encode keys‑only or values‑only, alternate delimiters (string or `RegExp`), ignore leading `?`.
+- **Duplicates & empties**: strategies for duplicates (`combine`/`first`/`last`); allow empty list items (`foo[]`) with `allowEmptyLists`.
+- **Null handling**: `strictNullHandling`, `skipNulls`, and clear empty‑string behavior.
+- **Safety limits**: configurable `depth`, `strictDepth`, `parameterLimit`, `listLimit`, and `parseLists` toggle.
+- **Dates & ordering**: pluggable `serializeDate`, stable key ordering with `sort`, selective output via `filter`.
+- **RFC modes**: spaces as `%20` (RFC 3986, default) or `+` (RFC 1738).
+- **Dart‑friendly**: `Uri.queryParametersQs()` and `Uri.toStringQs()` extensions for idiomatic usage in Dart/Flutter.
 
 ## Installation
 
