@@ -1,3 +1,7 @@
+## 1.5.6
+
+* [CHORE] add highlights section outlining key features to README
+
 ## 1.5.5
 
 * [CHORE] add screenshots section with package logo to pubspec.yaml
