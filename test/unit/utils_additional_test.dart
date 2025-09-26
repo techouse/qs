@@ -29,6 +29,26 @@ void main() {
       );
       expect(result, equals(['seed', 'tail']));
     });
+
+    test('wraps custom iterables in a list when merging scalar sources', () {
+      final Iterable<String> iterable = Iterable.generate(1, (i) => 'it-$i');
+
+      final result = Utils.merge(iterable, 'tail');
+
+      expect(result, isA<List>());
+      final listResult = result as List;
+      expect(listResult.first, same(iterable));
+      expect(listResult.last, equals('tail'));
+    });
+
+    test('promotes iterable targets to index maps before merging maps', () {
+      final result = Utils.merge(
+        [const Undefined(), 'keep'],
+        {'extra': 1},
+      ) as Map<String, dynamic>;
+
+      expect(result, equals({'1': 'keep', 'extra': 1}));
+    });
   });
 
   group('Utils.encode surrogate handling', () {
@@ -50,6 +70,11 @@ void main() {
     test('encodes high-and-low surrogate pair to four-byte UTF-8', () {
       final emoji = String.fromCharCodes([0xD83D, 0xDE01]);
       expect(Utils.encode(emoji), equals('%F0%9F%98%81'));
+    });
+
+    test('encodes lone high surrogate as three-byte sequence', () {
+      final loneHigh = String.fromCharCode(0xD83D);
+      expect(Utils.encode(loneHigh), equals('%ED%A0%BD'));
     });
 
     test('encodes lone low surrogate as three-byte sequence', () {
