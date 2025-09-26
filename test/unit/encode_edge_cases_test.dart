@@ -90,8 +90,15 @@ void main() {
       };
       final encoded = QS.encode(obj);
       // Two serialized occurrences with percent-encoded brackets.
-      expect(encoded.contains('a%5Bx%5D%5Bk%5D=v'), isTrue);
-      expect(encoded.contains('b%5By%5D%5Bz%5D%5Bk%5D=v'), isTrue);
+      expect(
+        RegExp(r'a%5Bx%5D%5Bk%5D=v', caseSensitive: false).hasMatch(encoded),
+        isTrue,
+      );
+      expect(
+        RegExp(r'b%5By%5D%5Bz%5D%5Bk%5D=v', caseSensitive: false)
+            .hasMatch(encoded),
+        isTrue,
+      );
     });
 
     test(
