@@ -49,6 +49,16 @@ void main() {
 
       expect(result, equals({'1': 'keep', 'extra': 1}));
     });
+
+    test('wraps scalar targets into heterogeneous lists when merging maps', () {
+      final result = Utils.merge(
+        'seed',
+        {'extra': 1},
+      ) as List;
+
+      expect(result.first, equals('seed'));
+      expect(result.last, equals({'extra': 1}));
+    });
   });
 
   group('Utils.encode surrogate handling', () {
