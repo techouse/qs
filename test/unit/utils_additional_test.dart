@@ -37,7 +37,7 @@ void main() {
     String buildBoundaryString() {
       final high = String.fromCharCode(0xD83D);
       final low = String.fromCharCode(0xDE00);
-      return 'a' * (segmentLimit - 1) + high + low + 'tail';
+      return '${'a' * (segmentLimit - 1)}$high${low}tail';
     }
 
     test('avoids splitting surrogate pairs across segments', () {
