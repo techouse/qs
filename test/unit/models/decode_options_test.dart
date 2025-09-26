@@ -332,4 +332,20 @@ void main() {
           )));
     });
   });
+
+  group('DecodeOptions legacy decoder fallback', () {
+    test('prefers legacy decoder when primary decoder absent', () {
+      final calls = <Map<String, Object?>>[];
+      final opts = DecodeOptions(
+        legacyDecoder: (String? value, {Encoding? charset}) {
+          calls.add({'value': value, 'charset': charset});
+          return value?.toUpperCase();
+        },
+      );
+
+      expect(opts.decode('abc', charset: latin1), equals('ABC'));
+      expect(calls, hasLength(1));
+      expect(calls.single['charset'], equals(latin1));
+    });
+  });
 }
