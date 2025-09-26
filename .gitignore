@@ -5,6 +5,10 @@ pubspec.lock
 
 # IDE specific
 .idea/
+.history
+
+# AI Specific
+.github/copilot-instructions.md
 .junie
 AGENTS.md
 
