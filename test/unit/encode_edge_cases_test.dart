@@ -1,16 +1,38 @@
+import 'dart:collection';
 import 'dart:convert' show Encoding;
 
 import 'package:qs_dart/qs_dart.dart';
 import 'package:test/test.dart';
 
-// Dynamic indexer object used to exercise the fallback indexer try/catch path.
-class _Dyn {
-  final Map<String, dynamic> _values = {'ok': 42};
+// Map-like test double that throws when accessing the 'boom' key to exercise the
+// try/catch undefined path in the encoder's value resolution logic.
+class _Dyn extends MapBase<String, dynamic> {
+  final Map<String, dynamic> _store = {'ok': 42};
 
+  @override
   dynamic operator [](Object? key) {
     if (key == 'boom') throw ArgumentError('boom');
-    return _values[key];
+    return _store[key];
   }
+
+  @override
+  void operator []=(String key, dynamic value) => _store[key] = value;
+
+  @override
+  void clear() => _store.clear();
+
+  @override
+  Iterable<String> get keys => _store.keys;
+
+  @override
+  dynamic remove(Object? key) => _store.remove(key);
+
+  @override
+  bool containsKey(Object? key) => _store.containsKey(key);
+
+  // Explicit length getter (not abstract in MapBase but included for clarity / coverage intent)
+  @override
+  int get length => _store.length;
 }
 
 void main() {
@@ -37,22 +59,13 @@ void main() {
       expect(encoded, 'nil');
     });
 
-    test(
-        'filter iterable branch + dynamic indexer fallback (throws for one key)',
-        () {
+    test('filter iterable branch on MapBase with throwing key access', () {
       final dyn = _Dyn();
-      // Provide filter at root limiting to key 'dyn'.
-      // Inside recursion we pass function filter that returns the object (so _encode sees Function path),
-      // then manually trigger iterable filter via an inner call by encoding a child map with iterable filter.
-      final outer =
-          QS.encode({'dyn': dyn}, const EncodeOptions(filter: ['dyn']));
-      // Outer should serialize the object reference.
-      expect(outer.startsWith('dyn='), isTrue);
-      // Now directly exercise iterable filter branch by calling private logic through normal API:
-      final inner = QS.encode({'ok': 42, 'boom': null},
-          const EncodeOptions(filter: ['ok', 'boom'], skipNulls: true));
-      // 'ok' present, 'boom' skipped by skipNulls.
-      expect(inner, 'ok=42');
+      // Encode the MapBase directly with a filter that forces lookups for both 'ok'
+      // (successful) and 'boom' (throws → caught → undefined + skipped by skipNulls).
+      final encoded = QS.encode(
+          dyn, const EncodeOptions(filter: ['ok', 'boom'], skipNulls: true));
+      expect(encoded, 'ok=42');
     });
 
     test('comma list empty emits nothing but executes Undefined sentinel path',
