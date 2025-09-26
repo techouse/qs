@@ -43,9 +43,8 @@ void main() {
       final obj = {'a': shared, 'b': shared};
       // Encoded output will have two key paths referencing the same subobject; no RangeError.
       final encoded = QS.encode(obj);
-      // Accept either ordering; just verify two occurrences of '=1'.
-      final occurrences = '=1'.allMatches(encoded).length;
-      expect(occurrences, 2);
+      expect(encoded.contains('a%5Bz%5D=1'), isTrue);
+      expect(encoded.contains('b%5Bz%5D=1'), isTrue);
     });
 
     test('strictNullHandling with custom encoder emits only encoded key', () {
@@ -169,4 +168,4 @@ String _identityEncoder(dynamic v, {Encoding? charset, Format? format}) =>
     v?.toString() ?? '';
 
 String _mutatingEncoder(dynamic v, {Encoding? charset, Format? format}) =>
-    'X_${v.toString()}';
+    v == null ? '' : 'X_${v.toString()}';
