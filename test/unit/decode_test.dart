@@ -2792,4 +2792,84 @@ void main() {
       );
     });
   });
+
+  group('Targeted coverage additions', () {
+    test('comma splitting truncates to remaining list capacity', () {
+      final result = QS.decode(
+        'a=1,2,3',
+        const DecodeOptions(comma: true, listLimit: 2),
+      );
+
+      final Iterable<dynamic> iterable = result['a'] as Iterable;
+      expect(iterable.toList(), equals(['1', '2']));
+    });
+
+    test('comma splitting throws when limit exceeded in strict mode', () {
+      expect(
+        () => QS.decode(
+          'a=1,2',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 1,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('strict depth throws when additional bracket groups remain', () {
+      expect(
+        () => QS.decode(
+          'a[b][c][d]=1',
+          const DecodeOptions(depth: 2, strictDepth: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('non-strict depth keeps remainder as literal bracket segment', () {
+      final decoded = QS.decode(
+        'a[b][c][d]=1',
+        const DecodeOptions(depth: 2),
+      );
+
+      expect(
+          decoded,
+          equals({
+            'a': {
+              'b': {
+                'c': {'[d]': '1'}
+              }
+            }
+          }));
+    });
+
+    test('parameterLimit < 1 coerces to zero and triggers argument error', () {
+      expect(
+        () => QS.decode(
+          'a=b',
+          const DecodeOptions(parameterLimit: 0.5),
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('allowDots accepts hyphen-prefixed segments as identifiers', () {
+      expect(
+        QS.decode('a.-foo=1', const DecodeOptions(allowDots: true)),
+        equals({
+          'a': {'-foo': '1'}
+        }),
+      );
+    });
+
+    test('allowDots keeps literal dot when segment start is not identifier',
+        () {
+      expect(
+        QS.decode('a.@foo=1', const DecodeOptions(allowDots: true)),
+        equals({'a.@foo': '1'}),
+      );
+    });
+  });
 }
