@@ -128,30 +128,12 @@ extension _$Encode on QS {
     }
 
     // Fast path for primitives and byte buffers → return a single key=value fragment.
-    // NOTE: This occurs *before* later keyPath formatting logic where per-segment dot encoding
-    // happens. For a primitive at the root (or any path that terminates here), we must still
-    // honor encodeDotInKeys by transforming literal dots in the *final* key segment only.
     if (Utils.isNonNullishPrimitive(obj, skipNulls) || obj is ByteBuffer) {
-      String keyForPrimitive = prefix;
-      if (encodeDotInKeys && !keyForPrimitive.contains('%2E')) {
-        // Encode literal dots only if this key path has not already had per-segment
-        // dot encoding applied. When deeper recursion builds dotted paths it first
-        // encodes dots within segments (replacing them with %2E) and then *adds*
-        // structural dots between segments. At that point the prefix will contain
-        // at least one "%2E" substring. Re‑encoding would incorrectly transform
-        // structural separators into encoded dots (e.g. `name%2Eobj.first` →
-        // `name%252Eobj%252Efirst`). Guarding on `!contains('%2E')` limits the
-        // replacement to root / single‑segment primitives where all dots are
-        // intrinsic to the key, matching the expectations in encode tests.
-        keyForPrimitive = keyForPrimitive.replaceAll('.', '%2E');
-      }
-
       if (encoder != null) {
-        final String keyValue =
-            encodeValuesOnly ? keyForPrimitive : encoder(keyForPrimitive);
+        final String keyValue = encodeValuesOnly ? prefix : encoder(prefix);
         return ['${formatter(keyValue)}=${formatter(encoder(obj))}'];
       }
-      return ['${formatter(keyForPrimitive)}=${formatter(obj.toString())}'];
+      return ['${formatter(prefix)}=${formatter(obj.toString())}'];
     }
 
     // Collect per-branch fragments; empty list signifies "emit nothing" for this path.

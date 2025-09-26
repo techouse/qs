@@ -82,21 +82,6 @@ void main() {
     });
 
     test(
-        'fast path with encoder + encodeValuesOnly=true (hits keyValue assignment branch)',
-        () {
-      final encoded = QS.encode(
-          {'a.b': 'c d'},
-          EncodeOptions(
-            encoder: (v, {charset, format}) =>
-                v.toString().replaceAll(' ', '%20'),
-            encodeDotInKeys: true,
-            encodeValuesOnly: true,
-          ));
-      // Key should have dot encoded because encodeDotInKeys, value encoded by encoder.
-      expect(encoded, 'a%2Eb=c%20d');
-    });
-
-    test(
         'strictNullHandling nested null returns prefix string (non-iterable recursion branch)',
         () {
       final encoded = QS.encode({

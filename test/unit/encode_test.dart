@@ -5260,18 +5260,6 @@ void main() {
       );
     });
 
-    test('encodeDotInKeys with allowDots encodes dots only in keys', () {
-      expect(
-        QS.encode(
-            {'a.b': 'c'},
-            const EncodeOptions(
-                allowDots: true,
-                encodeDotInKeys: true,
-                encodeValuesOnly: true)),
-        'a%2Eb=c',
-      );
-    });
-
     test('cycle detection throws RangeError', () {
       final map = <String, dynamic>{};
       map['self'] = map; // self reference
