@@ -5236,4 +5236,49 @@ void main() {
       );
     });
   });
+
+  group('Additional encode coverage', () {
+    test('empty list with allowEmptyLists emits key[]', () {
+      expect(
+        QS.encode({'a': []},
+            const EncodeOptions(allowEmptyLists: true, encode: false)),
+        'a[]',
+      );
+    });
+
+    test('commaRoundTrip single item list adds []', () {
+      expect(
+        QS.encode(
+            {
+              'a': ['x']
+            },
+            const EncodeOptions(
+                listFormat: ListFormat.comma,
+                commaRoundTrip: true,
+                encode: false)),
+        'a[]=x',
+      );
+    });
+
+    test('encodeDotInKeys with allowDots encodes dots only in keys', () {
+      expect(
+        QS.encode(
+            {'a.b': 'c'},
+            const EncodeOptions(
+                allowDots: true,
+                encodeDotInKeys: true,
+                encodeValuesOnly: true)),
+        'a%2Eb=c',
+      );
+    });
+
+    test('cycle detection throws RangeError', () {
+      final map = <String, dynamic>{};
+      map['self'] = map; // self reference
+      expect(
+        () => QS.encode(map),
+        throwsA(isA<RangeError>()),
+      );
+    });
+  });
 }
