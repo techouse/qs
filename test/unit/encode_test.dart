@@ -17,7 +17,7 @@ class CustomObject {
 
   final String value;
 
-  String? operator [](String key) {
+  String operator [](String key) {
     if (key == 'prop') return value;
     throw UnsupportedError('Only prop supported');
   }
