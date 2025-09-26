@@ -2872,4 +2872,31 @@ void main() {
       );
     });
   });
+
+  group('decode depth remainder wrapping (coverage)', () {
+    test(
+        'wraps excess groups when strictDepth=false (value nested under grouped remainder)',
+        () {
+      final result = QS.decode(
+          'a[b][c][d]=1', const DecodeOptions(depth: 2, strictDepth: false));
+      // Structure: a -> b -> c -> [d] = 1 (where [d] literal becomes key '[d]').
+      final a = result['a'] as Map;
+      final b = a['b'] as Map;
+      final c = b['c'] as Map; // remainder first group 'c'
+      final dContainer = c['[d]'];
+      expect(dContainer, '1');
+    });
+
+    test(
+        'trailing text after last group captured as nested remainder structure',
+        () {
+      final result = QS.decode(
+          'a[b]tail=1', const DecodeOptions(depth: 1, strictDepth: false));
+      // depth=1 gives segments: 'a' plus wrapped remainder starting at '[b]'.
+      final a = result['a'] as Map;
+      // Remainder yields 'b' -> {'tail': '1'}
+      final bMap = a['b'] as Map;
+      expect((bMap['tail']), '1');
+    });
+  });
 }
