@@ -347,5 +347,19 @@ void main() {
       expect(calls, hasLength(1));
       expect(calls.single['charset'], equals(latin1));
     });
+
+    test('deprecated decoder forwards to decode implementation', () {
+      final opts = DecodeOptions(
+        decoder: (String? value, {Encoding? charset, DecodeKind? kind}) =>
+            'kind=$kind,value=$value,charset=$charset',
+      );
+
+      expect(
+        opts.decoder('foo', charset: latin1, kind: DecodeKind.key),
+        equals(
+          'kind=${DecodeKind.key},value=foo,charset=Instance of \'Latin1Codec\'',
+        ),
+      );
+    });
   });
 }
