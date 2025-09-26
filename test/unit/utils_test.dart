@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
+import 'dart:collection';
 import 'dart:convert' show latin1, utf8;
 
 import 'package:qs_dart/qs_dart.dart';
@@ -1157,6 +1158,139 @@ void main() {
         expect((out['a'] as Map)['y'], 1);
         // 'b' points to the same (mutated) object
         expect(identical(out['a'], out['b']), isTrue);
+      });
+    });
+
+    group('utils surrogate and charset edge cases (coverage)', () {
+      test('lone high surrogate encoded as three UTF-8 bytes', () {
+        const loneHigh = '\uD800';
+        final encoded = QS.encode({'s': loneHigh});
+        // Expect percent encoded sequence %ED%A0%80
+        expect(encoded, contains('%ED%A0%80'));
+      });
+
+      test('lone low surrogate encoded as three UTF-8 bytes', () {
+        const loneLow = '\uDC00';
+        final encoded = QS.encode({'s': loneLow});
+        expect(encoded, contains('%ED%B0%80'));
+      });
+
+      test('latin1 decode leaves invalid escape intact', () {
+        final decoded =
+            QS.decode('a=%ZZ&b=%41', const DecodeOptions(charset: latin1));
+        expect(decoded['a'], '%ZZ');
+        expect(decoded['b'], 'A');
+      });
+    });
+
+    group('Utils.merge edge branches', () {
+      test('normalizes to map when Undefined persists and parseLists is false',
+          () {
+        final result = Utils.merge(
+          [const Undefined()],
+          const [Undefined()],
+          const DecodeOptions(parseLists: false),
+        );
+
+        final splay = result as SplayTreeMap;
+        expect(splay.isEmpty, isTrue);
+      });
+
+      test('combines non-iterable scalars into a list pair', () {
+        expect(Utils.merge('left', 'right'), equals(['left', 'right']));
+      });
+
+      test('combines scalar and iterable respecting Undefined stripping', () {
+        final result = Utils.merge(
+          'seed',
+          ['tail', const Undefined()],
+        );
+        expect(result, equals(['seed', 'tail']));
+      });
+
+      test('wraps custom iterables in a list when merging scalar sources', () {
+        final Iterable<String> iterable = Iterable.generate(1, (i) => 'it-$i');
+
+        final result = Utils.merge(iterable, 'tail');
+
+        expect(result, isA<List>());
+        final listResult = result as List;
+        expect(listResult.first, same(iterable));
+        expect(listResult.last, equals('tail'));
+      });
+
+      test('promotes iterable targets to index maps before merging maps', () {
+        final result = Utils.merge(
+          [const Undefined(), 'keep'],
+          {'extra': 1},
+        ) as Map<String, dynamic>;
+
+        expect(result, equals({'1': 'keep', 'extra': 1}));
+      });
+
+      test('wraps scalar targets into heterogeneous lists when merging maps',
+          () {
+        final result = Utils.merge(
+          'seed',
+          {'extra': 1},
+        ) as List;
+
+        expect(result.first, equals('seed'));
+        expect(result.last, equals({'extra': 1}));
+      });
+    });
+
+    group('Utils.encode surrogate handling', () {
+      const int segmentLimit = 1024;
+
+      String buildBoundaryString() {
+        final high = String.fromCharCode(0xD83D);
+        final low = String.fromCharCode(0xDE00);
+        return '${'a' * (segmentLimit - 1)}$high${low}tail';
+      }
+
+      test('avoids splitting surrogate pairs across segments', () {
+        final encoded = Utils.encode(buildBoundaryString());
+        expect(encoded.startsWith('a' * (segmentLimit - 1)), isTrue);
+        expect(encoded, contains('%F0%9F%98%80'));
+        expect(encoded.endsWith('tail'), isTrue);
+      });
+
+      test('encodes high-and-low surrogate pair to four-byte UTF-8', () {
+        final emoji = String.fromCharCodes([0xD83D, 0xDE01]);
+        expect(Utils.encode(emoji), equals('%F0%9F%98%81'));
+      });
+
+      test('encodes lone high surrogate as three-byte sequence', () {
+        final loneHigh = String.fromCharCode(0xD83D);
+        expect(Utils.encode(loneHigh), equals('%ED%A0%BD'));
+      });
+
+      test('encodes lone low surrogate as three-byte sequence', () {
+        final loneLow = String.fromCharCode(0xDC00);
+        expect(Utils.encode(loneLow), equals('%ED%B0%80'));
+      });
+    });
+
+    group('Utils helpers', () {
+      test('isNonNullishPrimitive treats Uri based on skipNulls flag', () {
+        final emptyUri = Uri.parse('');
+        expect(Utils.isNonNullishPrimitive(emptyUri), isTrue);
+        expect(Utils.isNonNullishPrimitive(emptyUri, true), isFalse);
+        final populated = Uri.parse('https://example.com');
+        expect(Utils.isNonNullishPrimitive(populated, true), isTrue);
+      });
+
+      test('interpretNumericEntities handles astral plane code points', () {
+        expect(Utils.interpretNumericEntities('&#128512;'), equals('😀'));
+      });
+
+      test('createIndexMap materializes non-List iterables', () {
+        final iterable = Iterable.generate(3, (i) => i * 2);
+        expect(
+          Utils.createIndexMap(iterable),
+          equals({'0': 0, '1': 2, '2': 4}),
+        );
       });
     });
   });

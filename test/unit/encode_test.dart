@@ -13,11 +13,14 @@ import '../fixtures/dummy_enum.dart';
 
 // Custom class that is neither a Map nor an Iterable
 class CustomObject {
-  final String value;
-
   CustomObject(this.value);
 
-  String? operator [](String key) => key == 'prop' ? value : null;
+  final String value;
+
+  String operator [](String key) {
+    if (key == 'prop') return value;
+    throw UnsupportedError('Only prop supported');
+  }
 }
 
 void main() {
@@ -91,55 +94,19 @@ void main() {
           result2, 'dates=2023-01-01T00:00:00.000Z,2023-01-01T00:00:00.000Z');
     });
 
-    test('Access property of non-Map, non-Iterable object', () {
-      // This test targets line 161 in encode.dart
-      // Create a custom object that's neither a Map nor an Iterable
+    test('filter callback can expand custom objects into maps', () {
       final customObj = CustomObject('test');
 
-      // Create a test that will try to access a property of the custom object
-      // We need to modify our approach to ensure the code path is exercised
+      final result = QS.encode(
+        {'obj': customObj},
+        EncodeOptions(
+          encode: false,
+          filter: (prefix, value) =>
+              value is CustomObject ? {'prop': value.value} : value,
+        ),
+      );
 
-      // First, let's verify that our CustomObject works as expected
-      expect(customObj['prop'], equals('test'));
-
-      // Now, let's create a test that will try to access the property
-      // We'll use a different approach that's more likely to exercise the code path
-      try {
-        final result = QS.encode(
-          {'obj': customObj},
-          const EncodeOptions(encode: false),
-        );
-
-        // The result might be empty, but the important thing is that the code path is executed
-        expect(result.isEmpty, isTrue);
-      } catch (e) {
-        // If an exception is thrown, that's also fine as long as the code path is executed
-        // We're just trying to increase coverage, not test functionality
-      }
-
-      // Try another approach with a custom filter
-      try {
-        final result = QS.encode(
-          {'obj': customObj},
-          EncodeOptions(
-            encode: false,
-            filter: (prefix, value) {
-              // This should trigger the code path that accesses properties of non-Map, non-Iterable objects
-              if (value is CustomObject) {
-                return value['prop'];
-              }
-              return value;
-            },
-          ),
-        );
-
-        // The result might vary, but the important thing is that the code path is executed
-        // Check if the result contains the expected value
-        expect(result, contains('obj=test'));
-      } catch (e) {
-        // If an exception is thrown, that's also fine as long as the code path is executed
-        // Exception: $e
-      }
+      expect(result, equals('obj[prop]=test'));
     });
     test('encodes a query string map', () {
       expect(QS.encode({'a': 'b'}), equals('a=b'));
@@ -5266,6 +5233,39 @@ void main() {
           const EncodeOptions(encode: false),
         ),
         equals('[][0]=2&[][1]=3&[a]=2'),
+      );
+    });
+  });
+
+  group('Additional encode coverage', () {
+    test('empty list with allowEmptyLists emits key[]', () {
+      expect(
+        QS.encode({'a': []},
+            const EncodeOptions(allowEmptyLists: true, encode: false)),
+        'a[]',
+      );
+    });
+
+    test('commaRoundTrip single item list adds []', () {
+      expect(
+        QS.encode(
+            {
+              'a': ['x']
+            },
+            const EncodeOptions(
+                listFormat: ListFormat.comma,
+                commaRoundTrip: true,
+                encode: false)),
+        'a[]=x',
+      );
+    });
+
+    test('cycle detection throws RangeError', () {
+      final map = <String, dynamic>{};
+      map['self'] = map; // self reference
+      expect(
+        () => QS.encode(map),
+        throwsA(isA<RangeError>()),
       );
     });
   });
