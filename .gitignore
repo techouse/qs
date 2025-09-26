@@ -5,6 +5,8 @@ pubspec.lock
 
 # IDE specific
 .idea/
+.junie
+AGENTS.md
 
 # Coverage
 coverage/
