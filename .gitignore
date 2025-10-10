@@ -8,7 +8,6 @@ pubspec.lock
 .history
 
 # AI Specific
-.github/copilot-instructions.md
 .junie
 AGENTS.md
 
