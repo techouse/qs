@@ -48,6 +48,7 @@ final class EncodeOptions with EquatableMixin {
     this.skipNulls = false,
     this.strictNullHandling = false,
     this.commaRoundTrip,
+    this.commaCompactNulls = false,
     this.sort,
   })  : allowDots = allowDots ?? encodeDotInKeys || false,
         listFormat = listFormat ??
@@ -117,6 +118,9 @@ final class EncodeOptions with EquatableMixin {
   /// single-item [List]s, so that they can round trip through a parse.
   final bool? commaRoundTrip;
 
+  /// When [listFormat] is [ListFormat.comma], drop `null` items before joining.
+  final bool commaCompactNulls;
+
   /// Set a [Sorter] to affect the order of parameter keys.
   final Sorter? sort;
 
@@ -175,6 +179,7 @@ final class EncodeOptions with EquatableMixin {
     bool? skipNulls,
     bool? strictNullHandling,
     bool? commaRoundTrip,
+    bool? commaCompactNulls,
     Sorter? sort,
     dynamic filter,
     DateSerializer? serializeDate,
@@ -195,6 +200,7 @@ final class EncodeOptions with EquatableMixin {
         skipNulls: skipNulls ?? this.skipNulls,
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         commaRoundTrip: commaRoundTrip ?? this.commaRoundTrip,
+        commaCompactNulls: commaCompactNulls ?? this.commaCompactNulls,
         sort: sort ?? this.sort,
         filter: filter ?? this.filter,
         serializeDate: serializeDate ?? _serializeDate,
@@ -217,6 +223,7 @@ final class EncodeOptions with EquatableMixin {
       '  skipNulls: $skipNulls,\n'
       '  strictNullHandling: $strictNullHandling,\n'
       '  commaRoundTrip: $commaRoundTrip,\n'
+      '  commaCompactNulls: $commaCompactNulls,\n'
       '  sort: $sort,\n'
       '  filter: $filter,\n'
       '  serializeDate: $_serializeDate,\n'
@@ -239,6 +246,7 @@ final class EncodeOptions with EquatableMixin {
         skipNulls,
         strictNullHandling,
         commaRoundTrip,
+        commaCompactNulls,
         sort,
         filter,
         _serializeDate,

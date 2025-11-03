@@ -158,6 +158,8 @@ final class QS {
       final ListFormatGenerator gen = options.listFormat.generator;
       final bool crt = identical(gen, ListFormat.comma.generator) &&
           options.commaRoundTrip == true;
+      final bool ccn = identical(gen, ListFormat.comma.generator) &&
+          options.commaCompactNulls == true;
 
       final encoded = _$Encode._encode(
         obj[key],
@@ -165,6 +167,7 @@ final class QS {
         prefix: key,
         generateArrayPrefix: gen,
         commaRoundTrip: crt,
+        commaCompactNulls: ccn,
         allowEmptyLists: options.allowEmptyLists,
         strictNullHandling: options.strictNullHandling,
         skipNulls: options.skipNulls,
