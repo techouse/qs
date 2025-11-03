@@ -1,3 +1,7 @@
+## 1.6.0
+
+* [FEAT] add `EncodeOptions.commaCompactNulls`, allowing omission of `null` entries in lists when using the `ListFormat.comma`. This results in cleaner output (e.g., `[true, false, null, true]` becomes `"true,false,true"`).
+
 ## 1.5.6
 
 * [CHORE] add highlights section outlining key features to README
