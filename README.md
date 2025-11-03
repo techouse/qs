@@ -729,6 +729,7 @@ expect(
 
 **Note:** When using [EncodeOptions.listFormat] set to [ListFormat.comma], you can also pass the [EncodeOptions.commaRoundTrip]
 option set to `true` or `false`, to append `[]` on single-item [List]s, so that they can round trip through a parse.
+Set [EncodeOptions.commaCompactNulls] to `true` with the same format when you'd like to drop `null` entries instead of keeping empty slots (for example, `[true, false, null, true]` becomes `true,false,true`).
 
 When [Map]s are encoded, by default they use bracket notation:
 
