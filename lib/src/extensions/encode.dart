@@ -32,6 +32,7 @@ extension _$Encode on QS {
   /// - [prefix]: Current key path (e.g., `user[address]`). If `addQueryPrefix` is true at the root, we start with `?`.
   /// - [generateArrayPrefix]: Strategy for array key generation (brackets/indices/repeat/comma).
   /// - [commaRoundTrip]: When true and a single-element list is encountered under `.comma`, emit `[]` to ensure the value round-trips back to an array.
+  /// - [commaCompactNulls]: When true, nulls are omitted from `.comma` lists.
   /// - [allowEmptyLists]: If a list is empty, emit `key[]` instead of skipping.
   /// - [strictNullHandling]: If a present value is `null`, emit only the key (no `=`) instead of `key=`.
   /// - [skipNulls]: Skip keys whose value is `null`.
@@ -53,6 +54,7 @@ extension _$Encode on QS {
     String? prefix,
     ListFormatGenerator? generateArrayPrefix,
     bool? commaRoundTrip,
+    bool commaCompactNulls = false,
     bool allowEmptyLists = false,
     bool strictNullHandling = false,
     bool skipNulls = false,
@@ -145,6 +147,7 @@ extension _$Encode on QS {
 
     // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration
     List<dynamic>? seqList_;
+    int? commaEffectiveLength;
     final bool isSeq_ = obj is Iterable && obj is! String && obj is! Map;
     if (isSeq_) {
       if (obj is List) {
@@ -161,14 +164,28 @@ extension _$Encode on QS {
     // - Otherwise derive keys from Map/Iterable, and optionally sort them.
     if (identical(generateArrayPrefix, ListFormat.comma.generator) &&
         obj is Iterable) {
-      // we need to join elements in
-      if (encodeValuesOnly && encoder != null) {
-        obj = Utils.apply<String>(obj, encoder);
-      }
+      final Iterable<dynamic> iterableObj = obj;
+      final List<dynamic> commaItems = iterableObj is List
+          ? List<dynamic>.from(iterableObj)
+          : iterableObj.toList(growable: false);
 
-      if ((obj as Iterable).isNotEmpty) {
+      final List<dynamic> filteredItems = commaCompactNulls
+          ? commaItems.where((dynamic item) => item != null).toList()
+          : commaItems;
+
+      commaEffectiveLength = filteredItems.length;
+
+      final Iterable<dynamic> joinIterable = encodeValuesOnly && encoder != null
+          ? (Utils.apply<String>(filteredItems, encoder) as Iterable)
+          : filteredItems;
+
+      final List<dynamic> joinList = joinIterable is List
+          ? List<dynamic>.from(joinIterable)
+          : joinIterable.toList(growable: false);
+
+      if (joinList.isNotEmpty) {
         final String objKeysValue =
-            obj.map((e) => e != null ? e.toString() : '').join(',');
+            joinList.map((e) => e != null ? e.toString() : '').join(',');
 
         objKeys = [
           {
@@ -200,10 +217,15 @@ extension _$Encode on QS {
     final String encodedPrefix =
         encodeDotInKeys ? prefix.replaceAll('.', '%2E') : prefix;
 
+    final bool shouldAppendRoundTripMarker = (commaRoundTrip == true) &&
+        seqList_ != null &&
+        (identical(generateArrayPrefix, ListFormat.comma.generator) &&
+                commaEffectiveLength != null
+            ? commaEffectiveLength == 1
+            : seqList_.length == 1);
+
     final String adjustedPrefix =
-        (commaRoundTrip == true) && seqList_ != null && seqList_.length == 1
-            ? '$encodedPrefix[]'
-            : encodedPrefix;
+        shouldAppendRoundTripMarker ? '$encodedPrefix[]' : encodedPrefix;
 
     // Emit `key[]` when an empty list is allowed, to preserve shape on round-trip.
     if (allowEmptyLists && seqList_ != null && seqList_.isEmpty) {
@@ -276,6 +298,7 @@ extension _$Encode on QS {
         prefix: keyPrefix,
         generateArrayPrefix: generateArrayPrefix,
         commaRoundTrip: commaRoundTrip,
+        commaCompactNulls: commaCompactNulls,
         allowEmptyLists: allowEmptyLists,
         strictNullHandling: strictNullHandling,
         skipNulls: skipNulls,

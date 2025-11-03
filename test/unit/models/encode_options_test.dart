@@ -23,6 +23,7 @@ void main() {
         skipNulls: true,
         strictNullHandling: true,
         commaRoundTrip: true,
+        commaCompactNulls: true,
       );
 
       final EncodeOptions newOptions = options.copyWith();
@@ -41,6 +42,7 @@ void main() {
       expect(newOptions.skipNulls, isTrue);
       expect(newOptions.strictNullHandling, isTrue);
       expect(newOptions.commaRoundTrip, isTrue);
+      expect(newOptions.commaCompactNulls, isTrue);
       expect(newOptions, equals(options));
     });
 
@@ -60,6 +62,7 @@ void main() {
         skipNulls: true,
         strictNullHandling: true,
         commaRoundTrip: true,
+        commaCompactNulls: true,
       );
 
       final EncodeOptions newOptions = options.copyWith(
@@ -77,6 +80,7 @@ void main() {
         skipNulls: false,
         strictNullHandling: false,
         commaRoundTrip: false,
+        commaCompactNulls: false,
         filter: (String key, dynamic value) => false,
       );
 
@@ -90,6 +94,10 @@ void main() {
       expect(newOptions.encode, isFalse);
       expect(newOptions.encodeDotInKeys, isFalse);
       expect(newOptions.encodeValuesOnly, isFalse);
+      expect(newOptions.skipNulls, isFalse);
+      expect(newOptions.strictNullHandling, isFalse);
+      expect(newOptions.commaRoundTrip, isFalse);
+      expect(newOptions.commaCompactNulls, isFalse);
     });
 
     test('toString', () {
@@ -108,6 +116,7 @@ void main() {
         skipNulls: true,
         strictNullHandling: true,
         commaRoundTrip: true,
+        commaCompactNulls: true,
       );
 
       expect(
@@ -127,6 +136,7 @@ void main() {
             '  skipNulls: true,\n'
             '  strictNullHandling: true,\n'
             '  commaRoundTrip: true,\n'
+            '  commaCompactNulls: true,\n'
             '  sort: null,\n'
             '  filter: null,\n'
             '  serializeDate: null,\n'

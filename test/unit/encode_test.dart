@@ -5260,6 +5260,57 @@ void main() {
       );
     });
 
+    test('commaCompactNulls drops null entries before joining', () {
+      expect(
+        QS.encode(
+          {
+            'a': {
+              'b': [true, false, null, true]
+            }
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            commaCompactNulls: true,
+            encode: false,
+          ),
+        ),
+        'a[b]=true,false,true',
+      );
+    });
+
+    test('commaCompactNulls omits key when all entries are null', () {
+      expect(
+        QS.encode(
+          {
+            'a': [null, null]
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            commaCompactNulls: true,
+            encode: false,
+          ),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('commaCompactNulls keeps round-trip marker after filtering', () {
+      expect(
+        QS.encode(
+          {
+            'a': [null, 'foo']
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            commaRoundTrip: true,
+            commaCompactNulls: true,
+            encode: false,
+          ),
+        ),
+        'a[]=foo',
+      );
+    });
+
     test('cycle detection throws RangeError', () {
       final map = <String, dynamic>{};
       map['self'] = map; // self reference
