@@ -6,6 +6,7 @@ pubspec.lock
 # IDE specific
 .idea/
 .history
+.vscode/
 
 # AI Specific
 .junie
