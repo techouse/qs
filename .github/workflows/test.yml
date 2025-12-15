@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "~/.pub-cache/hosted"
           key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart;commands:codegen-test"
@@ -63,7 +63,7 @@ jobs:
           - platform: vm
     steps:
       - name: Cache Pub hosted dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "~/.pub-cache/hosted"
           key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart;commands:codegen-test"
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "~/.pub-cache/hosted"
           key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:qs_dart;commands:codegen-test"
