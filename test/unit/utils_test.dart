@@ -1068,6 +1068,16 @@ void main() {
           expect(combined, {'0': 'a', '1': 'b', '2': 'c'});
         });
 
+        test('spreads iterable into existing overflow object', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+          final combined = Utils.combine(overflow, ['c', 'd'], listLimit: 10)
+              as Map<String, dynamic>;
+
+          expect(combined, same(overflow));
+          expect(combined, {'0': 'a', '1': 'b', '2': 'c', '3': 'd'});
+        });
+
         test('does not treat plain object with numeric keys as overflow', () {
           final plainObj = {'0': 'a', '1': 'b'};
           expect(Utils.isOverflow(plainObj), isFalse);
