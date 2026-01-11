@@ -2107,6 +2107,36 @@ void main() {
         }),
       );
     });
+
+    test('mixed [] and [0] under tight listLimit', () {
+      final resultZero =
+          QS.decode('a[]=b&a[0]=c', const DecodeOptions(listLimit: 0));
+      expect(resultZero['a'], isA<Map<String, dynamic>>());
+      expect(resultZero['a'], {
+        '0': ['b', 'c']
+      });
+      expect(Utils.isOverflow(resultZero['a']), isTrue);
+
+      final resultOne =
+          QS.decode('a[]=b&a[0]=c', const DecodeOptions(listLimit: 1));
+      expect(resultOne['a'], ['b', 'c']);
+      expect(Utils.isOverflow(resultOne['a']), isFalse);
+    });
+
+    test('mixed [0] and [] under tight listLimit', () {
+      final resultZero =
+          QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 0));
+      expect(resultZero['a'], isA<Map<String, dynamic>>());
+      expect(resultZero['a'], {
+        '0': ['b', 'c']
+      });
+      expect(Utils.isOverflow(resultZero['a']), isFalse);
+
+      final resultOne =
+          QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 1));
+      expect(resultOne['a'], ['b', 'c']);
+      expect(Utils.isOverflow(resultOne['a']), isFalse);
+    });
   });
 
   group('key-aware decoder + options isolation', () {

@@ -37,9 +37,6 @@ final class QS {
   ///   * a query [String] (e.g. `"a=1&b[c]=2"`), or
   ///   * a pre-tokenized `Map<String, dynamic>` produced by a custom tokenizer.
   /// - When `input` is `null` or the empty string, `{}` is returned.
-  /// - If [DecodeOptions.parseLists] is `true` and the number of top‑level
-  ///   parameters exceeds [DecodeOptions.listLimit], list parsing is
-  ///   temporarily disabled for this call to bound memory (mirrors Node `qs`).
   /// - Throws [ArgumentError] if `input` is neither a `String` nor a
   ///   `Map<String, dynamic>`.
   ///
@@ -66,16 +63,6 @@ final class QS {
     final Map<String, dynamic>? tempObj = input is String
         ? _$Decode._parseQueryStringValues(input, options)
         : input;
-
-    // Guardrail: if the top-level parameter count is large, temporarily disable
-    // list parsing to keep memory bounded (matches Node `qs`). Only apply for
-    // raw string inputs, not for pre-tokenized maps.
-    if (input is String &&
-        options.parseLists &&
-        options.listLimit > 0 &&
-        (tempObj?.length ?? 0) > options.listLimit) {
-      options = options.copyWith(parseLists: false);
-    }
 
     Map<String, dynamic> obj = {};
 

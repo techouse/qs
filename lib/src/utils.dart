@@ -158,6 +158,13 @@ final class Utils {
           }
         }
       } else if (target is Map) {
+        if (source is Iterable) {
+          final Map<String, dynamic> sourceMap = {
+            for (final (int i, dynamic item) in source.indexed)
+              if (item is! Undefined) i.toString(): item
+          };
+          return merge(target, sourceMap, options);
+        }
         if (isOverflow(target)) {
           int newIndex = _getOverflowIndex(target);
           if (source is Iterable) {
@@ -192,11 +199,23 @@ final class Utils {
 
     if (target == null || target is! Map) {
       if (target is Iterable) {
-        return Map<String, dynamic>.of({
+        final Map<String, dynamic> mergeTarget = {
           for (final (int i, dynamic item) in target.indexed)
             if (item is! Undefined) i.toString(): item,
-          ...source,
-        });
+        };
+        for (final MapEntry entry in source.entries) {
+          final String key = entry.key.toString();
+          if (mergeTarget.containsKey(key)) {
+            mergeTarget[key] = merge(
+              mergeTarget[key],
+              entry.value,
+              options,
+            );
+          } else {
+            mergeTarget[key] = entry.value;
+          }
+        }
+        return mergeTarget;
       }
 
       if (isOverflow(source)) {
