@@ -645,6 +645,9 @@ final class Utils {
   ///
   /// When [listLimit] is provided and exceeded, returns a map with string keys.
   ///
+  /// **Note:** If [a] is already an overflow object, this method mutates [a]
+  /// in place by appending entries from [b].
+  ///
   /// Examples:
   /// ```dart
   /// combine([1,2], 3); // [1,2,3]
