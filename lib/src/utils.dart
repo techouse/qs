@@ -159,8 +159,16 @@ final class Utils {
         }
       } else if (target is Map) {
         if (isOverflow(target)) {
-          final int newIndex = _getOverflowIndex(target) + 1;
-          target[newIndex.toString()] = source;
+          int newIndex = _getOverflowIndex(target);
+          if (source is Iterable) {
+            for (final item in source.whereNotType<Undefined>()) {
+              newIndex++;
+              target[newIndex.toString()] = item;
+            }
+          } else {
+            newIndex++;
+            target[newIndex.toString()] = source;
+          }
           _setOverflowIndex(target, newIndex);
           return target;
         }
