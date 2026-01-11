@@ -675,6 +675,7 @@ final class Utils {
   /// Concatenates two values, spreading iterables.
   ///
   /// When [listLimit] is provided and exceeded, returns a map with string keys.
+  /// Any throwing behavior is enforced earlier during parsing, matching Node `qs`.
   ///
   /// **Note:** If [a] is already an overflow object, this method mutates [a]
   /// in place by appending entries from [b].
