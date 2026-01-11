@@ -2112,6 +2112,7 @@ void main() {
     });
 
     test('mixed [] and [0] under tight listLimit', () {
+      // Note: overflow tagging is order-dependent in Node qs; we mirror that.
       final resultZero =
           QS.decode('a[]=b&a[0]=c', const DecodeOptions(listLimit: 0));
       expect(resultZero['a'], isA<Map<String, dynamic>>());
@@ -2127,6 +2128,7 @@ void main() {
     });
 
     test('mixed [0] and [] under tight listLimit', () {
+      // Same structure as above but overflow is not tagged when order flips.
       final resultZero =
           QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 0));
       expect(resultZero['a'], isA<Map<String, dynamic>>());
