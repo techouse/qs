@@ -209,7 +209,8 @@ extension _$Decode on QS {
   /// - When `parseLists` is false, numeric segments are treated as string keys.
   /// - When `allowEmptyLists` is true, an empty string (or `null` under
   ///   `strictNullHandling`) under a `[]` segment yields an empty list.
-  /// - `listLimit` applies to explicit numeric indices as an upper bound.
+  /// - `listLimit` applies to explicit numeric indices and list growth via `[]`;
+  ///   when exceeded, lists are converted into maps with string indices.
   /// - A negative `listLimit` disables numeric‑index parsing (bracketed numbers become map keys).
   ///   Empty‑bracket pushes (`[]`) still create lists here; this method does not enforce
   ///   `throwOnLimitExceeded` for that path. Comma‑split growth (if any) has already been

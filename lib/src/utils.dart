@@ -643,7 +643,7 @@ final class Utils {
 
   /// Concatenates two values, spreading iterables.
   ///
-  /// When [listLimit] is provided and exceeded, returns a map with numeric keys.
+  /// When [listLimit] is provided and exceeded, returns a map with string keys.
   ///
   /// Examples:
   /// ```dart

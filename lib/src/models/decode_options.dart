@@ -98,10 +98,13 @@ final class DecodeOptions with EquatableMixin {
   /// `a[]=` without coercing or discarding them.
   final bool allowEmptyLists;
 
-  /// Maximum list index that will be honored when decoding bracket indices.
+  /// Maximum list size/index that will be honored when decoding bracket lists.
   ///
   /// Keys like `a[9999999]` can cause excessively large sparse lists; above
-  /// this limit, indices are treated as string map keys instead.
+  /// this limit, indices are treated as string map keys instead. The same
+  /// limit also applies to empty-bracket pushes (`a[]`) and duplicate combines:
+  /// once growth exceeds the limit, the list is converted to a map with string
+  /// indices to preserve values (matching Node `qs` arrayLimit semantics).
   ///
   /// **Negative values:** passing a negative `listLimit` (e.g. `-1`) disables
   /// numeric‑index parsing entirely — any bracketed number like `a[0]` or
