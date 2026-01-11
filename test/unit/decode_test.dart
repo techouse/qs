@@ -2032,6 +2032,7 @@ void main() {
       final aValue = result['a'];
       expect(aValue, isA<Map<String, dynamic>>());
       expect((aValue as Map<String, dynamic>).length, 105);
+      expect(Utils.isOverflow(aValue), isTrue);
     });
 
     test('listLimit boundary conditions', () {
@@ -2051,10 +2052,12 @@ void main() {
         '2': '3',
         '3': '4',
       });
+      expect(Utils.isOverflow(resultOverLimit['a']), isTrue);
 
       final resultLimitOne =
           QS.decode('a[]=1&a[]=2', const DecodeOptions(listLimit: 1));
       expect(resultLimitOne['a'], {'0': '1', '1': '2'});
+      expect(Utils.isOverflow(resultLimitOne['a']), isTrue);
     });
 
     test('mixed array and object notation', () {

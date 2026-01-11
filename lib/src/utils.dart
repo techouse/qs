@@ -32,6 +32,7 @@ final class Utils {
   static final Expando<int> _overflowIndex = Expando<int>('qsOverflowIndex');
 
   /// Marks a map as an overflow container with the given max index.
+  @internal
   @visibleForTesting
   static Map<String, dynamic> markOverflow(
     Map<String, dynamic> obj,

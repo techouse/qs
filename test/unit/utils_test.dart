@@ -958,6 +958,29 @@ void main() {
           final merged = Utils.merge('a', overflow) as Map<String, dynamic>;
           expect(merged, {'0': 'a', '1': 'b', '2': 'c'});
         });
+
+        test('merges overflow object with list values by key', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+          final merged =
+              Utils.merge(overflow, ['x', 'y']) as Map<String, dynamic>;
+          expect(merged, {
+            '0': ['a', 'x'],
+            '1': ['b', 'y'],
+          });
+          expect(Utils.isOverflow(merged), isTrue);
+        });
+
+        test('merges list with overflow object into index map', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+          final merged = Utils.merge(['x'], overflow) as Map<String, dynamic>;
+          expect(merged, {
+            '0': ['x', 'a'],
+            '1': 'b',
+          });
+          expect(Utils.isOverflow(merged), isFalse);
+        });
       });
     });
 

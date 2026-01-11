@@ -265,7 +265,8 @@ extension _$Decode on QS {
       // single-element list with the leaf combined in.
       if (root == '[]' && options.parseLists) {
         if (Utils.isOverflow(leaf)) {
-          // leaf is already an overflow object, preserve it
+          // leaf can already be overflow (e.g. duplicates combine/listLimit),
+          // so preserve it instead of re-wrapping into a list.
           obj = leaf;
         } else {
           obj = options.allowEmptyLists &&
