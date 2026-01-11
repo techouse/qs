@@ -47,12 +47,15 @@ final class Utils {
   static bool isOverflow(dynamic obj) =>
       obj is Map && _overflowIndex[obj] != null;
 
+  /// Returns the tracked max numeric index for an overflow map, or -1 if absent.
   static int _getOverflowIndex(Map obj) => _overflowIndex[obj] ?? -1;
 
+  /// Updates the tracked max numeric index for an overflow map.
   static void _setOverflowIndex(Map obj, int maxIndex) {
     _overflowIndex[obj] = maxIndex;
   }
 
+  /// Returns the larger of the current max and the parsed numeric key (if any).
   static int _updateOverflowMax(int current, String key) {
     final int? parsed = int.tryParse(key);
     if (parsed == null || parsed < 0) {
