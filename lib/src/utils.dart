@@ -170,26 +170,10 @@ final class Utils {
           return merge(target, sourceMap, options);
         }
         if (isOverflow(target)) {
-          int newIndex = _getOverflowIndex(target);
-          if (source is Iterable) {
-            for (final item in source.whereNotType<Undefined>()) {
-              newIndex++;
-              target[newIndex.toString()] = item;
-            }
-          } else {
-            newIndex++;
-            target[newIndex.toString()] = source;
-          }
+          final int newIndex = _getOverflowIndex(target) + 1;
+          target[newIndex.toString()] = source;
           _setOverflowIndex(target, newIndex);
           return target;
-        }
-        if (source is Iterable) {
-          target = <String, dynamic>{
-            for (final MapEntry entry in target.entries)
-              entry.key.toString(): entry.value,
-            for (final (int i, dynamic item) in source.indexed)
-              if (item is! Undefined) i.toString(): item
-          };
         }
       } else if (source != null) {
         if (target is! Iterable && source is Iterable) {
