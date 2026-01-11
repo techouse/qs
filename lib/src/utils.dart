@@ -28,6 +28,38 @@ part 'constants/hex_table.dart';
 final class Utils {
   static const int _segmentLimit = 1024;
 
+  /// Tracks array-overflow objects (from listLimit) without mutating user data.
+  static final Expando<int> _overflowIndex = Expando<int>('qsOverflowIndex');
+
+  /// Marks a map as an overflow container with the given max index.
+  @visibleForTesting
+  static Map<String, dynamic> markOverflow(
+    Map<String, dynamic> obj,
+    int maxIndex,
+  ) {
+    _overflowIndex[obj] = maxIndex;
+    return obj;
+  }
+
+  /// Returns `true` if the given object is marked as an overflow container.
+  @internal
+  static bool isOverflow(dynamic obj) =>
+      obj is Map && _overflowIndex[obj] != null;
+
+  static int _getOverflowIndex(Map obj) => _overflowIndex[obj] ?? -1;
+
+  static void _setOverflowIndex(Map obj, int maxIndex) {
+    _overflowIndex[obj] = maxIndex;
+  }
+
+  static int _updateOverflowMax(int current, String key) {
+    final int? parsed = int.tryParse(key);
+    if (parsed == null || parsed < 0) {
+      return current;
+    }
+    return parsed > current ? parsed : current;
+  }
+
   /// Deeply merges `source` into `target` while preserving insertion order
   /// and list semantics used by `qs`.
   ///
@@ -126,6 +158,12 @@ final class Utils {
           }
         }
       } else if (target is Map) {
+        if (isOverflow(target)) {
+          final int newIndex = _getOverflowIndex(target) + 1;
+          target[newIndex.toString()] = source;
+          _setOverflowIndex(target, newIndex);
+          return target;
+        }
         if (source is Iterable) {
           target = <String, dynamic>{
             for (final MapEntry entry in target.entries)
@@ -153,6 +191,23 @@ final class Utils {
         });
       }
 
+      if (isOverflow(source)) {
+        final int sourceMax = _getOverflowIndex(source);
+        final Map<String, dynamic> result = {
+          if (target != null) '0': target,
+        };
+        for (final MapEntry entry in source.entries) {
+          final String key = entry.key.toString();
+          final int? oldIndex = int.tryParse(key);
+          if (oldIndex == null) {
+            result[key] = entry.value;
+          } else {
+            result[(oldIndex + 1).toString()] = entry.value;
+          }
+        }
+        return markOverflow(result, sourceMax + 1);
+      }
+
       return [
         if (target is Iterable)
           ...target.whereNotType<Undefined>()
@@ -165,6 +220,9 @@ final class Utils {
       ];
     }
 
+    final bool targetOverflow = isOverflow(target);
+    int? overflowMax = targetOverflow ? _getOverflowIndex(target) : null;
+
     Map<String, dynamic> mergeTarget = target is Iterable && source is! Iterable
         ? {
             for (final (int i, dynamic item) in (target as Iterable).indexed)
@@ -176,6 +234,9 @@ final class Utils {
           };
 
     for (final MapEntry entry in source.entries) {
+      if (overflowMax != null) {
+        overflowMax = _updateOverflowMax(overflowMax, entry.key.toString());
+      }
       mergeTarget.update(
         entry.key.toString(),
         (value) => merge(
@@ -185,6 +246,9 @@ final class Utils {
         ),
         ifAbsent: () => entry.value,
       );
+    }
+    if (overflowMax != null) {
+      markOverflow(mergeTarget, overflowMax);
     }
     return mergeTarget;
   }
@@ -577,17 +641,43 @@ final class Utils {
     return root;
   }
 
-  /// Concatenates two values as a typed `List<T>`, spreading iterables.
+  /// Concatenates two values, spreading iterables.
+  ///
+  /// When [listLimit] is provided and exceeded, returns a map with numeric keys.
   ///
   /// Examples:
   /// ```dart
-  /// combine&lt;int&gt;([1,2], 3); // [1,2,3]
-  /// combine&lt;String&gt;('a', ['b','c']); // ['a','b','c']
+  /// combine([1,2], 3); // [1,2,3]
+  /// combine('a', ['b','c']); // ['a','b','c']
   /// ```
-  static List<T> combine<T>(dynamic a, dynamic b) => <T>[
-        if (a is Iterable<T>) ...a else a,
-        if (b is Iterable<T>) ...b else b,
-      ];
+  static dynamic combine(dynamic a, dynamic b, {int? listLimit}) {
+    if (isOverflow(a)) {
+      int newIndex = _getOverflowIndex(a);
+      if (b is Iterable) {
+        for (final item in b) {
+          newIndex++;
+          a[newIndex.toString()] = item;
+        }
+      } else {
+        newIndex++;
+        a[newIndex.toString()] = b;
+      }
+      _setOverflowIndex(a, newIndex);
+      return a;
+    }
+
+    final List<dynamic> result = <dynamic>[
+      if (a is Iterable) ...a else a,
+      if (b is Iterable) ...b else b,
+    ];
+
+    if (listLimit != null && listLimit >= 0 && result.length > listLimit) {
+      final Map<String, dynamic> overflow = createIndexMap(result);
+      return markOverflow(overflow, result.length - 1);
+    }
+
+    return result;
+  }
 
   /// Applies `fn` to a scalar or maps it over an iterable, returning the result.
   ///

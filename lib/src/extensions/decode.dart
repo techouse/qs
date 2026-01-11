@@ -192,7 +192,7 @@ extension _$Decode on QS {
       // Duplicate key policy: combine/first/last (default: combine).
       final bool existing = obj.containsKey(key);
       if (existing && options.duplicates == Duplicates.combine) {
-        obj[key] = Utils.combine(obj[key], val);
+        obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
       } else if (!existing || options.duplicates == Duplicates.last) {
         obj[key] = val;
       }
@@ -263,10 +263,15 @@ extension _$Decode on QS {
       // Anonymous list segment `[]` — either an empty list (when allowed) or a
       // single-element list with the leaf combined in.
       if (root == '[]' && options.parseLists) {
-        obj = options.allowEmptyLists &&
-                (leaf == '' || (options.strictNullHandling && leaf == null))
-            ? List<dynamic>.empty(growable: true)
-            : Utils.combine([], leaf);
+        if (Utils.isOverflow(leaf)) {
+          // leaf is already an overflow object, preserve it
+          obj = leaf;
+        } else {
+          obj = options.allowEmptyLists &&
+                  (leaf == '' || (options.strictNullHandling && leaf == null))
+              ? List<dynamic>.empty(growable: true)
+              : Utils.combine([], leaf, listLimit: options.listLimit);
+        }
       } else {
         obj = <String, dynamic>{};
         // Normalize bracketed segments ("[k]"). Note: depending on how key decoding is configured,

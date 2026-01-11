@@ -931,13 +931,41 @@ void main() {
           isA<Set>(),
         );
       });
+
+      group('with overflow objects (from listLimit)', () {
+        test('merges primitive into overflow object at next index', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+          expect(Utils.isOverflow(overflow), isTrue);
+
+          final merged = Utils.merge(overflow, 'c') as Map<String, dynamic>;
+          expect(merged, {'0': 'a', '1': 'b', '2': 'c'});
+        });
+
+        test('merges overflow object into primitive', () {
+          final overflow =
+              Utils.combine([], 'b', listLimit: 0) as Map<String, dynamic>;
+          expect(Utils.isOverflow(overflow), isTrue);
+
+          final merged = Utils.merge('a', overflow) as Map<String, dynamic>;
+          expect(Utils.isOverflow(merged), isTrue);
+          expect(merged, {'0': 'a', '1': 'b'});
+        });
+
+        test('merges overflow object with multiple values into primitive', () {
+          final overflow =
+              Utils.combine(['b'], 'c', listLimit: 1) as Map<String, dynamic>;
+          final merged = Utils.merge('a', overflow) as Map<String, dynamic>;
+          expect(merged, {'0': 'a', '1': 'b', '2': 'c'});
+        });
+      });
     });
 
     group('combine', () {
       test('both lists', () {
         const List<int> a = [1];
         const List<int> b = [2];
-        final List<int> combined = Utils.combine(a, b);
+        final combined = Utils.combine(a, b);
 
         expect(a, equals([1]));
         expect(b, equals([2]));
@@ -952,7 +980,7 @@ void main() {
         const int bN = 2;
         const List<int> b = [bN];
 
-        final List<int> combinedAnB = Utils.combine(aN, b);
+        final combinedAnB = Utils.combine(aN, b);
         expect(b, equals([bN]));
         expect(aN, isNot(same(combinedAnB)));
         expect(a, isNot(same(combinedAnB)));
@@ -960,7 +988,7 @@ void main() {
         expect(b, isNot(same(combinedAnB)));
         expect(combinedAnB, equals([1, 2]));
 
-        final List<int> combinedABn = Utils.combine(a, bN);
+        final combinedABn = Utils.combine(a, bN);
         expect(a, equals([aN]));
         expect(aN, isNot(same(combinedABn)));
         expect(a, isNot(same(combinedABn)));
@@ -972,11 +1000,61 @@ void main() {
       test('neither is a list', () {
         const int a = 1;
         const int b = 2;
-        final List<int> combined = Utils.combine(a, b);
+        final combined = Utils.combine(a, b);
 
         expect(a, isNot(same(combined)));
         expect(b, isNot(same(combined)));
         expect(combined, equals([1, 2]));
+      });
+
+      group('with listLimit', () {
+        test('under the limit returns a list', () {
+          final combined = Utils.combine(['a', 'b'], 'c', listLimit: 10);
+          expect(combined, ['a', 'b', 'c']);
+          expect(combined, isA<List>());
+        });
+
+        test('exactly at the limit stays a list', () {
+          final combined = Utils.combine(['a', 'b'], 'c', listLimit: 3);
+          expect(combined, ['a', 'b', 'c']);
+          expect(combined, isA<List>());
+        });
+
+        test('over the limit converts to a map', () {
+          final combined = Utils.combine(['a', 'b', 'c'], 'd', listLimit: 3);
+          expect(combined, {'0': 'a', '1': 'b', '2': 'c', '3': 'd'});
+          expect(combined, isA<Map<String, dynamic>>());
+        });
+
+        test('listLimit 0 converts to a map', () {
+          final combined = Utils.combine([], 'a', listLimit: 0);
+          expect(combined, {'0': 'a'});
+          expect(combined, isA<Map<String, dynamic>>());
+        });
+      });
+
+      group('with existing overflow object', () {
+        test('adds to existing overflow object at next index', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+          expect(Utils.isOverflow(overflow), isTrue);
+
+          final combined = Utils.combine(overflow, 'c', listLimit: 10)
+              as Map<String, dynamic>;
+          expect(combined, same(overflow));
+          expect(combined, {'0': 'a', '1': 'b', '2': 'c'});
+        });
+
+        test('does not treat plain object with numeric keys as overflow', () {
+          final plainObj = {'0': 'a', '1': 'b'};
+          expect(Utils.isOverflow(plainObj), isFalse);
+
+          final combined = Utils.combine(plainObj, 'c', listLimit: 10);
+          expect(combined, [
+            {'0': 'a', '1': 'b'},
+            'c'
+          ]);
+        });
       });
     });
 

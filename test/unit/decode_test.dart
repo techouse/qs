@@ -517,7 +517,7 @@ void main() {
       expect(
         QS.decode('a[]=b&a=c', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b', 'c']
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
@@ -536,7 +536,7 @@ void main() {
       expect(
         QS.decode('a=b&a[]=c', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b', 'c']
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
@@ -916,7 +916,7 @@ void main() {
           const DecodeOptions(strictNullHandling: true, listLimit: 0),
         ),
         equals({
-          'a': ['b', null, 'c', '']
+          'a': {'0': 'b', '1': null, '2': 'c', '3': ''}
         }),
       );
 
@@ -936,7 +936,7 @@ void main() {
           const DecodeOptions(strictNullHandling: true, listLimit: 0),
         ),
         equals({
-          'a': ['b', '', 'c', null]
+          'a': {'0': 'b', '1': '', '2': 'c', '3': null}
         }),
       );
 
@@ -1998,7 +1998,7 @@ void main() {
           const DecodeOptions(listLimit: 0),
         ),
         equals({
-          'a': ['1', '2']
+          'a': {'0': '1', '1': '2'}
         }),
       );
     });
@@ -2020,6 +2020,91 @@ void main() {
           const DecodeOptions(listLimit: 3, throwOnLimitExceeded: true),
         ),
         throwsA(isA<RangeError>()),
+      );
+    });
+  });
+
+  group('array limit parity', () {
+    test('prevents list DOS with [] notation', () {
+      final List<String> values = List.filled(105, 'x');
+      final String attack = 'a[]=${values.join('&a[]=')}';
+      final result = QS.decode(attack, const DecodeOptions(listLimit: 100));
+      final aValue = result['a'];
+      expect(aValue, isA<Map<String, dynamic>>());
+      expect((aValue as Map<String, dynamic>).length, 105);
+    });
+
+    test('listLimit boundary conditions', () {
+      final resultAtLimit =
+          QS.decode('a[]=1&a[]=2&a[]=3', const DecodeOptions(listLimit: 3));
+      expect(resultAtLimit['a'], isA<List>());
+      expect(resultAtLimit['a'], ['1', '2', '3']);
+
+      final resultOverLimit = QS.decode(
+        'a[]=1&a[]=2&a[]=3&a[]=4',
+        const DecodeOptions(listLimit: 3),
+      );
+      expect(resultOverLimit['a'], isA<Map<String, dynamic>>());
+      expect(resultOverLimit['a'], {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+        '3': '4',
+      });
+
+      final resultLimitOne =
+          QS.decode('a[]=1&a[]=2', const DecodeOptions(listLimit: 1));
+      expect(resultLimitOne['a'], {'0': '1', '1': '2'});
+    });
+
+    test('mixed array and object notation', () {
+      expect(
+        QS.decode('a[]=b&a[c]=d'),
+        equals({
+          'a': {'0': 'b', 'c': 'd'}
+        }),
+      );
+
+      expect(
+        QS.decode('a[0]=b&a[c]=d'),
+        equals({
+          'a': {'0': 'b', 'c': 'd'}
+        }),
+      );
+
+      expect(
+        QS.decode('a=b&a[]=c', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': ['b', 'c']
+        }),
+      );
+
+      expect(
+        QS.decode('a[]=b&a=c', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': ['b', 'c']
+        }),
+      );
+
+      expect(
+        QS.decode('a=b&a[0]=c', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': ['b', 'c']
+        }),
+      );
+
+      expect(
+        QS.decode('a=b&a=c&a=d', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': ['b', 'c', 'd']
+        }),
+      );
+
+      expect(
+        QS.decode('a=b&a=c&a=d', const DecodeOptions(listLimit: 2)),
+        equals({
+          'a': {'0': 'b', '1': 'c', '2': 'd'}
+        }),
       );
     });
   });
