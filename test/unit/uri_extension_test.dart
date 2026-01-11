@@ -447,7 +447,7 @@ void main() {
         Uri.parse('$testUrl?a[]=b&a=c')
             .queryParametersQs(const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b', 'c']
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
@@ -468,7 +468,7 @@ void main() {
         Uri.parse('$testUrl?a=b&a[]=c')
             .queryParametersQs(const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b', 'c']
+          'a': {'0': 'b', '1': 'c'}
         }),
       );
       expect(
@@ -830,7 +830,7 @@ void main() {
           const DecodeOptions(strictNullHandling: true, listLimit: 0),
         ),
         equals({
-          'a': ['b', null, 'c', '']
+          'a': {'0': 'b', '1': null, '2': 'c', '3': ''}
         }),
       );
 
@@ -848,7 +848,7 @@ void main() {
           const DecodeOptions(strictNullHandling: true, listLimit: 0),
         ),
         equals({
-          'a': ['b', '', 'c', null]
+          'a': {'0': 'b', '1': '', '2': 'c', '3': null}
         }),
       );
 

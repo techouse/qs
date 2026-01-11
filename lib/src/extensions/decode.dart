@@ -192,7 +192,7 @@ extension _$Decode on QS {
       // Duplicate key policy: combine/first/last (default: combine).
       final bool existing = obj.containsKey(key);
       if (existing && options.duplicates == Duplicates.combine) {
-        obj[key] = Utils.combine(obj[key], val);
+        obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
       } else if (!existing || options.duplicates == Duplicates.last) {
         obj[key] = val;
       }
@@ -209,7 +209,8 @@ extension _$Decode on QS {
   /// - When `parseLists` is false, numeric segments are treated as string keys.
   /// - When `allowEmptyLists` is true, an empty string (or `null` under
   ///   `strictNullHandling`) under a `[]` segment yields an empty list.
-  /// - `listLimit` applies to explicit numeric indices as an upper bound.
+  /// - `listLimit` applies to explicit numeric indices and list growth via `[]`;
+  ///   when exceeded, lists are converted into maps with string indices.
   /// - A negative `listLimit` disables numeric‑index parsing (bracketed numbers become map keys).
   ///   Empty‑bracket pushes (`[]`) still create lists here; this method does not enforce
   ///   `throwOnLimitExceeded` for that path. Comma‑split growth (if any) has already been
@@ -263,10 +264,16 @@ extension _$Decode on QS {
       // Anonymous list segment `[]` — either an empty list (when allowed) or a
       // single-element list with the leaf combined in.
       if (root == '[]' && options.parseLists) {
-        obj = options.allowEmptyLists &&
-                (leaf == '' || (options.strictNullHandling && leaf == null))
-            ? List<dynamic>.empty(growable: true)
-            : Utils.combine([], leaf);
+        if (Utils.isOverflow(leaf)) {
+          // leaf can already be overflow (e.g. duplicates combine/listLimit),
+          // so preserve it instead of re-wrapping into a list.
+          obj = leaf;
+        } else {
+          obj = options.allowEmptyLists &&
+                  (leaf == '' || (options.strictNullHandling && leaf == null))
+              ? List<dynamic>.empty(growable: true)
+              : Utils.combine([], leaf, listLimit: options.listLimit);
+        }
       } else {
         obj = <String, dynamic>{};
         // Normalize bracketed segments ("[k]"). Note: depending on how key decoding is configured,
