@@ -12,6 +12,37 @@ import 'package:qs_dart/src/models/undefined.dart';
 
 part 'constants/hex_table.dart';
 
+enum _MergePhase {
+  start,
+  mapIter,
+  listIter,
+}
+
+final class _MergeFrame {
+  _MergeFrame({
+    required this.target,
+    required this.source,
+    required this.options,
+    required this.onResult,
+  });
+
+  dynamic target;
+  dynamic source;
+  final DecodeOptions? options;
+  final void Function(dynamic result) onResult;
+
+  _MergePhase phase = _MergePhase.start;
+
+  Map<String, dynamic>? mergeTarget;
+  Iterator<MapEntry<dynamic, dynamic>>? mapIterator;
+  int? overflowMax;
+
+  SplayTreeMap<int, dynamic>? indexedTarget;
+  List<dynamic>? sourceList;
+  int listIndex = 0;
+  bool targetIsSet = false;
+}
+
 /// Internal utilities and helpers used by the library.
 ///
 /// This class gathers low-level building blocks used by the public
@@ -92,180 +123,286 @@ final class Utils {
     dynamic source, [
     DecodeOptions? options = const DecodeOptions(),
   ]) {
-    if (source == null) {
-      return target;
-    }
+    dynamic result;
+    final List<_MergeFrame> stack = [
+      _MergeFrame(
+        target: target,
+        source: source,
+        options: options,
+        onResult: (dynamic value) => result = value,
+      ),
+    ];
 
-    if (source is! Map) {
-      if (target is Iterable) {
-        if (target.any((el) => el is Undefined)) {
-          // use a SplayTreeMap to keep the keys in order
-          final SplayTreeMap<int, dynamic> target_ = _toIndexedTreeMap(target);
+    while (stack.isNotEmpty) {
+      final _MergeFrame frame = stack.last;
 
-          if (source is Iterable) {
-            for (final (int i, dynamic item) in source.indexed) {
-              if (item is! Undefined) {
-                target_[i] = item;
-              }
-            }
-          } else {
-            target_[target_.length] = source;
-          }
+      if (frame.phase == _MergePhase.start) {
+        final dynamic currentTarget = frame.target;
+        final dynamic currentSource = frame.source;
 
-          target = options?.parseLists == false &&
-                  target_.values.any((el) => el is Undefined)
-              ? SplayTreeMap.from({
-                  for (final MapEntry<int, dynamic> entry in target_.entries)
-                    if (entry.value is! Undefined) entry.key: entry.value,
-                })
-              : target is Set
-                  ? target_.values.toSet()
-                  : target_.values.toList();
-        } else {
-          if (source is Iterable) {
-            // check if source is a list of maps and target is a list of maps
-            if (target.every((el) => el is Map || el is Undefined) &&
-                source.every((el) => el is Map || el is Undefined)) {
-              // loop through the target list and merge the maps
-              // then loop through the source list and add any new maps
+        if (currentSource == null) {
+          stack.removeLast();
+          frame.onResult(currentTarget);
+          continue;
+        }
+
+        if (currentSource is! Map) {
+          if (currentTarget is Iterable) {
+            if (currentTarget.any((el) => el is Undefined)) {
               final SplayTreeMap<int, dynamic> target_ =
-                  _toIndexedTreeMap(target);
-              for (final (int i, dynamic item) in source.indexed) {
-                target_.update(
-                  i,
-                  (value) => merge(value, item, options),
-                  ifAbsent: () => item,
+                  _toIndexedTreeMap(currentTarget);
+
+              if (currentSource is Iterable) {
+                for (final (int i, dynamic item) in currentSource.indexed) {
+                  if (item is! Undefined) {
+                    target_[i] = item;
+                  }
+                }
+              } else {
+                target_[target_.length] = currentSource;
+              }
+
+              if (frame.options?.parseLists == false &&
+                  target_.values.any((el) => el is Undefined)) {
+                stack.removeLast();
+                frame.onResult(
+                  SplayTreeMap.from({
+                    for (final MapEntry<int, dynamic> entry in target_.entries)
+                      if (entry.value is! Undefined) entry.key: entry.value,
+                  }),
                 );
+                continue;
               }
-              if (target is Set) {
-                target = target_.values.toSet();
-              } else {
-                target = target_.values.toList();
-              }
-            } else {
-              if (target is Set) {
-                target = Set.of(target)
-                  ..addAll(source.whereNotType<Undefined>());
-              } else {
-                target = List.of(target)
-                  ..addAll(source.whereNotType<Undefined>());
-              }
+
+              stack.removeLast();
+              frame.onResult(
+                currentTarget is Set
+                    ? target_.values.toSet()
+                    : target_.values.toList(),
+              );
+              continue;
             }
-          } else if (source != null) {
-            if (target is List) {
-              target.add(source);
-            } else if (target is Set) {
-              target.add(source);
-            } else {
-              target = [target, source];
+
+            if (currentSource is Iterable) {
+              final bool targetMaps =
+                  currentTarget.every((el) => el is Map || el is Undefined);
+              final bool sourceMaps =
+                  currentSource.every((el) => el is Map || el is Undefined);
+
+              if (targetMaps && sourceMaps) {
+                frame.indexedTarget = _toIndexedTreeMap(currentTarget);
+                frame.sourceList = currentSource is List
+                    ? currentSource
+                    : currentSource.toList(growable: false);
+                frame.targetIsSet = currentTarget is Set;
+                frame.listIndex = 0;
+                frame.phase = _MergePhase.listIter;
+                continue;
+              }
+
+              stack.removeLast();
+              frame.onResult(
+                currentTarget is Set
+                    ? (Set.of(currentTarget)
+                      ..addAll(currentSource.whereNotType<Undefined>()))
+                    : (List.of(currentTarget)
+                      ..addAll(currentSource.whereNotType<Undefined>())),
+              );
+              continue;
             }
+
+            if (currentSource != null) {
+              if (currentTarget is List) {
+                currentTarget.add(currentSource);
+                stack.removeLast();
+                frame.onResult(currentTarget);
+                continue;
+              }
+              if (currentTarget is Set) {
+                currentTarget.add(currentSource);
+                stack.removeLast();
+                frame.onResult(currentTarget);
+                continue;
+              }
+              stack.removeLast();
+              frame.onResult([currentTarget, currentSource]);
+              continue;
+            }
+          } else if (currentTarget is Map) {
+            if (currentSource is Iterable) {
+              final Map<String, dynamic> sourceMap = {
+                for (final (int i, dynamic item) in currentSource.indexed)
+                  if (item is! Undefined) i.toString(): item,
+              };
+              frame.source = sourceMap;
+              frame.phase = _MergePhase.start;
+              continue;
+            }
+            if (isOverflow(currentTarget)) {
+              final int newIndex = _getOverflowIndex(currentTarget) + 1;
+              currentTarget[newIndex.toString()] = currentSource;
+              _setOverflowIndex(currentTarget, newIndex);
+              stack.removeLast();
+              frame.onResult(currentTarget);
+              continue;
+            }
+          } else if (currentSource != null) {
+            if (currentTarget is! Iterable && currentSource is Iterable) {
+              stack.removeLast();
+              frame.onResult(
+                [currentTarget, ...currentSource.whereNotType<Undefined>()],
+              );
+              continue;
+            }
+            stack.removeLast();
+            frame.onResult([currentTarget, currentSource]);
+            continue;
           }
+
+          stack.removeLast();
+          frame.onResult(currentTarget);
+          continue;
         }
-      } else if (target is Map) {
-        if (source is Iterable) {
-          final Map<String, dynamic> sourceMap = {
-            for (final (int i, dynamic item) in source.indexed)
-              if (item is! Undefined) i.toString(): item
-          };
-          return merge(target, sourceMap, options);
+
+        if (currentTarget == null || currentTarget is! Map) {
+          if (currentTarget is Iterable) {
+            final Map<String, dynamic> mergeTarget = {
+              for (final (int i, dynamic item) in currentTarget.indexed)
+                if (item is! Undefined) i.toString(): item,
+            };
+            frame.mergeTarget = mergeTarget;
+            frame.mapIterator = currentSource.entries.iterator;
+            frame.overflowMax = null;
+            frame.phase = _MergePhase.mapIter;
+            continue;
+          }
+
+          if (isOverflow(currentSource)) {
+            final int sourceMax = _getOverflowIndex(currentSource);
+            final Map<String, dynamic> resultMap = {
+              if (currentTarget != null) '0': currentTarget,
+            };
+            for (final MapEntry entry in currentSource.entries) {
+              final String key = entry.key.toString();
+              final int? oldIndex = int.tryParse(key);
+              if (oldIndex == null) {
+                resultMap[key] = entry.value;
+              } else {
+                resultMap[(oldIndex + 1).toString()] = entry.value;
+              }
+            }
+            stack.removeLast();
+            frame.onResult(markOverflow(resultMap, sourceMax + 1));
+            continue;
+          }
+
+          stack.removeLast();
+          frame.onResult(
+            [
+              if (currentTarget is Iterable)
+                ...currentTarget.whereNotType<Undefined>()
+              else if (currentTarget != null)
+                currentTarget,
+              if (currentSource is Iterable)
+                ...(currentSource as Iterable).whereNotType<Undefined>()
+              else
+                currentSource,
+            ],
+          );
+          continue;
         }
-        if (isOverflow(target)) {
-          final int newIndex = _getOverflowIndex(target) + 1;
-          target[newIndex.toString()] = source;
-          _setOverflowIndex(target, newIndex);
-          return target;
-        }
-      } else if (source != null) {
-        if (target is! Iterable && source is Iterable) {
-          return [target, ...source.whereNotType<Undefined>()];
-        }
-        return [target, source];
+
+        final bool targetOverflow = isOverflow(currentTarget);
+        final int? overflowMax =
+            targetOverflow ? _getOverflowIndex(currentTarget) : null;
+
+        final Map<String, dynamic> mergeTarget =
+            currentTarget is Iterable && currentSource is! Iterable
+                ? {
+                    for (final (int i, dynamic item)
+                        in (currentTarget as Iterable).indexed)
+                      if (item is! Undefined) i.toString(): item,
+                  }
+                : {
+                    for (final MapEntry entry in currentTarget.entries)
+                      entry.key.toString(): entry.value,
+                  };
+
+        frame.mergeTarget = mergeTarget;
+        frame.mapIterator = currentSource.entries.iterator;
+        frame.overflowMax = overflowMax;
+        frame.phase = _MergePhase.mapIter;
+        continue;
       }
 
-      return target;
-    }
-
-    if (target == null || target is! Map) {
-      if (target is Iterable) {
-        final Map<String, dynamic> mergeTarget = {
-          for (final (int i, dynamic item) in target.indexed)
-            if (item is! Undefined) i.toString(): item,
-        };
-        for (final MapEntry entry in source.entries) {
+      if (frame.phase == _MergePhase.mapIter) {
+        if (frame.mapIterator!.moveNext()) {
+          final MapEntry entry = frame.mapIterator!.current;
           final String key = entry.key.toString();
-          if (mergeTarget.containsKey(key)) {
-            mergeTarget[key] = merge(
-              mergeTarget[key],
-              entry.value,
-              options,
+
+          if (frame.overflowMax != null) {
+            frame.overflowMax = _updateOverflowMax(frame.overflowMax!, key);
+          }
+
+          if (frame.mergeTarget!.containsKey(key)) {
+            final dynamic childTarget = frame.mergeTarget![key];
+            stack.add(
+              _MergeFrame(
+                target: childTarget,
+                source: entry.value,
+                options: frame.options,
+                onResult: (dynamic value) {
+                  frame.mergeTarget![key] = value;
+                },
+              ),
             );
-          } else {
-            mergeTarget[key] = entry.value;
+            continue;
           }
+
+          frame.mergeTarget![key] = entry.value;
+          continue;
         }
-        return mergeTarget;
-      }
 
-      if (isOverflow(source)) {
-        final int sourceMax = _getOverflowIndex(source);
-        final Map<String, dynamic> result = {
-          if (target != null) '0': target,
-        };
-        for (final MapEntry entry in source.entries) {
-          final String key = entry.key.toString();
-          final int? oldIndex = int.tryParse(key);
-          if (oldIndex == null) {
-            result[key] = entry.value;
-          } else {
-            result[(oldIndex + 1).toString()] = entry.value;
-          }
+        if (frame.overflowMax != null) {
+          markOverflow(frame.mergeTarget!, frame.overflowMax!);
         }
-        return markOverflow(result, sourceMax + 1);
+
+        stack.removeLast();
+        frame.onResult(frame.mergeTarget!);
+        continue;
       }
 
-      return [
-        if (target is Iterable)
-          ...target.whereNotType<Undefined>()
-        else if (target != null)
-          target,
-        if (source is Iterable)
-          ...(source as Iterable).whereNotType<Undefined>()
-        else
-          source,
-      ];
-    }
-
-    final bool targetOverflow = isOverflow(target);
-    int? overflowMax = targetOverflow ? _getOverflowIndex(target) : null;
-
-    Map<String, dynamic> mergeTarget = target is Iterable && source is! Iterable
-        ? {
-            for (final (int i, dynamic item) in (target as Iterable).indexed)
-              if (item is! Undefined) i.toString(): item
-          }
-        : {
-            for (final MapEntry entry in target.entries)
-              entry.key.toString(): entry.value
-          };
-
-    for (final MapEntry entry in source.entries) {
-      if (overflowMax != null) {
-        overflowMax = _updateOverflowMax(overflowMax, entry.key.toString());
+      if (frame.listIndex >= frame.sourceList!.length) {
+        final resultList = frame.targetIsSet
+            ? frame.indexedTarget!.values.toSet()
+            : frame.indexedTarget!.values.toList();
+        stack.removeLast();
+        frame.onResult(resultList);
+        continue;
       }
-      mergeTarget.update(
-        entry.key.toString(),
-        (value) => merge(
-          value,
-          entry.value,
-          options,
-        ),
-        ifAbsent: () => entry.value,
-      );
+
+      final int idx = frame.listIndex++;
+      final dynamic item = frame.sourceList![idx];
+
+      if (frame.indexedTarget!.containsKey(idx)) {
+        final dynamic childTarget = frame.indexedTarget![idx];
+        stack.add(
+          _MergeFrame(
+            target: childTarget,
+            source: item,
+            options: frame.options,
+            onResult: (dynamic value) {
+              frame.indexedTarget![idx] = value;
+            },
+          ),
+        );
+        continue;
+      }
+
+      frame.indexedTarget![idx] = item;
     }
-    if (overflowMax != null) {
-      markOverflow(mergeTarget, overflowMax);
-    }
-    return mergeTarget;
+
+    return result;
   }
 
   /// Converts an iterable to a zero-indexed [SplayTreeMap].

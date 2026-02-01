@@ -1,4 +1,4 @@
-import 'dart:convert' show Encoding, utf8, latin1;
+import 'dart:convert' show Encoding, utf8;
 
 import 'package:equatable/equatable.dart';
 import 'package:qs_dart/src/enums/format.dart';
@@ -55,15 +55,7 @@ final class EncodeOptions with EquatableMixin {
             (indices == false ? ListFormat.repeat : null) ??
             ListFormat.indices,
         _serializeDate = serializeDate,
-        _encoder = encoder,
-        assert(
-          charset == utf8 || charset == latin1,
-          'Invalid charset',
-        ),
-        assert(
-          filter == null || filter is Function || filter is Iterable,
-          'Invalid filter',
-        );
+        _encoder = encoder;
 
   /// Set to `true` to add a question mark `?` prefix to the encoded output.
   final bool addQueryPrefix;

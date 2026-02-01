@@ -73,19 +73,7 @@ final class DecodeOptions with EquatableMixin {
   })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
-        _legacyDecoder = legacyDecoder,
-        assert(
-          charset == utf8 || charset == latin1,
-          'Invalid charset',
-        ),
-        assert(
-          !(decodeDotInKeys ?? false) || allowDots != false,
-          'decodeDotInKeys requires allowDots to be true',
-        ),
-        assert(
-          parameterLimit > 0,
-          'Parameter limit must be positive',
-        );
+        _legacyDecoder = legacyDecoder;
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
   ///
