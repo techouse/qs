@@ -17,6 +17,7 @@ export 'package:qs_dart/src/enums/decode_kind.dart';
 
 part 'extensions/decode.dart';
 part 'extensions/encode.dart';
+part 'models/encode_frame.dart';
 
 /// # QS (Dart)
 ///
