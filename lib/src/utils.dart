@@ -433,7 +433,9 @@ final class Utils {
     }
 
     final String? str = value is ByteBuffer
-        ? charset.decode(value.asUint8List())
+        ? (charset == utf8
+            ? utf8.decode(value.asUint8List(), allowMalformed: true)
+            : latin1.decode(value.asUint8List()))
         : value?.toString();
 
     if (str?.isEmpty ?? true) {
