@@ -158,8 +158,7 @@ void main() {
   });
 
   group('DecodeOptions – allowDots / decodeDotInKeys interplay', () {
-    test('constructor: allowDots=false + decodeDotInKeys=true throws on use',
-        () {
+    test('allowDots=false + decodeDotInKeys=true throws on use', () {
       final opts = const DecodeOptions(allowDots: false, decodeDotInKeys: true);
       expect(
         () => QS.decode('a=b', opts),
