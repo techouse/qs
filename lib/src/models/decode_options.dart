@@ -204,6 +204,7 @@ final class DecodeOptions with EquatableMixin {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
+    // Validate here to cover direct decodeKey/decodeValue usage; cached via Expando.
     validate();
     if (_decoder != null) {
       return _decoder!(value, charset: charset, kind: kind);
