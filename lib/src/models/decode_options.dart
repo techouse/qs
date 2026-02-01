@@ -273,6 +273,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
+    bool? throwOnLimitExceeded,
     Decoder? decoder,
     LegacyDecoder? legacyDecoder,
   }) =>
@@ -294,6 +295,7 @@ final class DecodeOptions with EquatableMixin {
         parseLists: parseLists ?? this.parseLists,
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         strictDepth: strictDepth ?? this.strictDepth,
+        throwOnLimitExceeded: throwOnLimitExceeded ?? this.throwOnLimitExceeded,
         decoder: decoder ?? _decoder,
         legacyDecoder: legacyDecoder ?? _legacyDecoder,
       );
@@ -315,6 +317,7 @@ final class DecodeOptions with EquatableMixin {
       '  parameterLimit: $parameterLimit,\n'
       '  parseLists: $parseLists,\n'
       '  strictDepth: $strictDepth,\n'
+      '  throwOnLimitExceeded: $throwOnLimitExceeded,\n'
       '  strictNullHandling: $strictNullHandling\n'
       ')';
 
