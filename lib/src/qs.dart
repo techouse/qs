@@ -46,7 +46,7 @@ final class QS {
   static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
     options ??= const DecodeOptions();
     // Default to the library's safe, Node-`qs` compatible settings.
-    _validateDecodeOptions(options);
+    options.validate();
 
     // Fail fast on unsupported input shapes to avoid ambiguous behavior.
     if (!(input is String? || input is Map<String, dynamic>?)) {
@@ -211,22 +211,6 @@ final class QS {
     }
 
     return out.toString();
-  }
-}
-
-void _validateDecodeOptions(DecodeOptions options) {
-  final Encoding charset = options.charset;
-  if (charset != utf8 && charset != latin1) {
-    throw ArgumentError.value(charset, 'charset', 'Invalid charset');
-  }
-
-  if (options.decodeDotInKeys && !options.allowDots) {
-    throw ArgumentError('decodeDotInKeys requires allowDots to be true');
-  }
-
-  final num limit = options.parameterLimit;
-  if (limit.isNaN || (limit.isFinite && limit <= 0)) {
-    throw ArgumentError('Parameter limit must be a positive number.');
   }
 }
 
