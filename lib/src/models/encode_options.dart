@@ -1,4 +1,4 @@
-import 'dart:convert' show Encoding, utf8;
+import 'dart:convert' show Encoding, latin1, utf8;
 
 import 'package:equatable/equatable.dart';
 import 'package:qs_dart/src/enums/format.dart';
@@ -154,6 +154,19 @@ final class EncodeOptions with EquatableMixin {
   String serializeDate(DateTime date) => _serializeDate != null
       ? _serializeDate!.call(date)
       : date.toIso8601String();
+
+  /// Validates the encoding options, throwing [ArgumentError] on invalid values.
+  void validate() {
+    final Encoding charset = this.charset;
+    if (charset != utf8 && charset != latin1) {
+      throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+    }
+
+    final dynamic filter = this.filter;
+    if (filter != null && filter is! Function && filter is! Iterable) {
+      throw ArgumentError.value(filter, 'filter', 'Invalid filter');
+    }
+  }
 
   /// Returns a new [EncodeOptions] instance with updated values.
   EncodeOptions copyWith({

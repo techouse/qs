@@ -104,7 +104,7 @@ final class QS {
   static String encode(Object? object, [EncodeOptions? options]) {
     options ??= const EncodeOptions();
     // Use default encoding settings unless overridden by the caller.
-    _validateEncodeOptions(options);
+    options.validate();
 
     // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {
@@ -211,17 +211,5 @@ final class QS {
     }
 
     return out.toString();
-  }
-}
-
-void _validateEncodeOptions(EncodeOptions options) {
-  final Encoding charset = options.charset;
-  if (charset != utf8 && charset != latin1) {
-    throw ArgumentError.value(charset, 'charset', 'Invalid charset');
-  }
-
-  final dynamic filter = options.filter;
-  if (filter != null && filter is! Function && filter is! Iterable) {
-    throw ArgumentError.value(filter, 'filter', 'Invalid filter');
   }
 }
