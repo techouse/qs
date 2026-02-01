@@ -17,7 +17,7 @@ void main() {
       expect(
         () => QS.decode(
           'a=b&c=d',
-          DecodeOptions(parameterLimit: 0),
+          const DecodeOptions(parameterLimit: 0),
         ),
         throwsA(anyOf(
           isA<ArgumentError>(),
@@ -1539,10 +1539,14 @@ void main() {
     });
 
     group('charset', () {
-      test('throws an AssertionError when given an unknown charset', () {
+      test('throws when given an unknown charset', () {
         expect(
           () => QS.decode('a=b', DecodeOptions(charset: ShiftJIS())),
-          throwsA(isA<AssertionError>()),
+          throwsA(anyOf(
+            isA<ArgumentError>(),
+            isA<StateError>(),
+            isA<AssertionError>(),
+          )),
         );
       });
 
@@ -2344,8 +2348,8 @@ void main() {
 
     test('allowDots=false, decodeDotInKeys=true is invalid', () {
       expect(
-        () => QS.decode(
-            'a%2Eb=c', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+        () => QS.decode('a%2Eb=c',
+            const DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<StateError>(),
@@ -2501,7 +2505,7 @@ void main() {
       () {
         expect(
           () => QS.decode('a%5Bb%5D%5Bc%5D%2Ed=x',
-              DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+              const DecodeOptions(allowDots: false, decodeDotInKeys: true)),
           throwsA(anyOf(
             isA<ArgumentError>(),
             isA<StateError>(),
@@ -2796,8 +2800,8 @@ void main() {
 
       // Invalid combo: allowDots=false with decodeDotInKeys=true should throw
       expect(
-        () => QS.decode(
-            'a[%2e]=x', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
+        () => QS.decode('a[%2e]=x',
+            const DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<StateError>(),

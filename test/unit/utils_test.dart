@@ -1349,6 +1349,33 @@ void main() {
         expect(result.first, equals('seed'));
         expect(result.last, equals({'extra': 1}));
       });
+
+      test('merges deep maps without stack overflow', () {
+        const depth = 2048;
+        Map<String, dynamic> left = {};
+        Map<String, dynamic> cursor = left;
+        for (var i = 0; i < depth; i++) {
+          final next = <String, dynamic>{};
+          cursor['a'] = next;
+          cursor = next;
+        }
+
+        Map<String, dynamic> right = {};
+        Map<String, dynamic> rightCursor = right;
+        for (var i = 0; i < depth; i++) {
+          final next = <String, dynamic>{};
+          rightCursor['a'] = next;
+          rightCursor = next;
+        }
+        rightCursor['leaf'] = 'x';
+
+        final merged = Utils.merge(left, right) as Map<String, dynamic>;
+        dynamic walk = merged;
+        for (var i = 0; i < depth; i++) {
+          walk = (walk as Map<String, dynamic>)['a'];
+        }
+        expect((walk as Map<String, dynamic>)['leaf'], equals('x'));
+      });
     });
 
     group('Utils.encode surrogate handling', () {

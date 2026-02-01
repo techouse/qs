@@ -161,6 +161,17 @@ void main() {
       expect(occurrences, 2);
       expect(encoded.contains('c=2'), isTrue);
     });
+
+    test('encodes deep nesting without stack overflow', () {
+      const depth = 2048;
+      Map<String, dynamic> obj = {'leaf': 'x'};
+      for (var i = 0; i < depth; i++) {
+        obj = {'a': obj};
+      }
+
+      final encoded = QS.encode(obj);
+      expect(encoded, contains('leaf'));
+    });
   });
 }
 
