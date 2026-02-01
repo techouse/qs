@@ -571,6 +571,7 @@ final class Utils {
 
     final String? str = value is ByteBuffer
         ? (charset == utf8
+            // UTF-8 may contain malformed sequences; Latin-1 is 1:1 for all bytes.
             ? utf8.decode(value.asUint8List(), allowMalformed: true)
             : latin1.decode(value.asUint8List()))
         : value?.toString();
