@@ -45,6 +45,7 @@ final class QS {
   static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
     options ??= const DecodeOptions();
     // Default to the library's safe, Node-`qs` compatible settings.
+    _validateDecodeOptions(options);
 
     // Fail fast on unsupported input shapes to avoid ambiguous behavior.
     if (!(input is String? || input is Map<String, dynamic>?)) {
@@ -102,6 +103,7 @@ final class QS {
   static String encode(Object? object, [EncodeOptions? options]) {
     options ??= const EncodeOptions();
     // Use default encoding settings unless overridden by the caller.
+    _validateEncodeOptions(options);
 
     // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {
@@ -208,5 +210,33 @@ final class QS {
     }
 
     return out.toString();
+  }
+}
+
+void _validateDecodeOptions(DecodeOptions options) {
+  final Encoding charset = options.charset;
+  if (charset != utf8 && charset != latin1) {
+    throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+  }
+
+  if (options.decodeDotInKeys && !options.allowDots) {
+    throw ArgumentError('decodeDotInKeys requires allowDots to be true');
+  }
+
+  final num limit = options.parameterLimit;
+  if (limit.isNaN || (limit.isFinite && limit <= 0)) {
+    throw ArgumentError('Parameter limit must be a positive number.');
+  }
+}
+
+void _validateEncodeOptions(EncodeOptions options) {
+  final Encoding charset = options.charset;
+  if (charset != utf8 && charset != latin1) {
+    throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+  }
+
+  final dynamic filter = options.filter;
+  if (filter != null && filter is! Function && filter is! Iterable) {
+    throw ArgumentError.value(filter, 'filter', 'Invalid filter');
   }
 }
