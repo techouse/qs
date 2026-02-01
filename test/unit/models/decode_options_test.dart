@@ -96,6 +96,21 @@ void main() {
       expect(newOptions.strictNullHandling, isFalse);
     });
 
+    test('copyWith preserves throwOnLimitExceeded', () {
+      const DecodeOptions options = DecodeOptions(throwOnLimitExceeded: true);
+      final DecodeOptions newOptions = options.copyWith();
+
+      expect(newOptions.throwOnLimitExceeded, isTrue);
+    });
+
+    test('copyWith overrides throwOnLimitExceeded', () {
+      const DecodeOptions options = DecodeOptions(throwOnLimitExceeded: false);
+      final DecodeOptions newOptions =
+          options.copyWith(throwOnLimitExceeded: true);
+
+      expect(newOptions.throwOnLimitExceeded, isTrue);
+    });
+
     test('toString', () {
       final DecodeOptions options = const DecodeOptions(
         allowDots: true,
@@ -134,6 +149,7 @@ void main() {
           '  parameterLimit: 100,\n'
           '  parseLists: false,\n'
           '  strictDepth: false,\n'
+          '  throwOnLimitExceeded: false,\n'
           '  strictNullHandling: true\n'
           ')',
         ),
