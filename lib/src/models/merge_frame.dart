@@ -1,11 +1,16 @@
-part of '../utils.dart';
+import 'dart:collection' show SplayTreeMap;
+
+import 'package:meta/meta.dart' show internal;
+import 'package:qs_dart/qs_dart.dart' show DecodeOptions;
+import 'package:qs_dart/src/enums/merge_phase.dart';
 
 /// Stack frame for the iterative [Utils.merge] traversal.
 ///
 /// Captures the current target/source pair plus intermediate iterators and
 /// buffers so the merge can walk deeply nested structures without recursion.
-final class _MergeFrame {
-  _MergeFrame({
+@internal
+final class MergeFrame {
+  MergeFrame({
     required this.target,
     required this.source,
     required this.options,
@@ -17,7 +22,7 @@ final class _MergeFrame {
   final DecodeOptions? options;
   final void Function(dynamic result) onResult;
 
-  _MergePhase phase = _MergePhase.start;
+  MergePhase phase = MergePhase.start;
 
   Map<String, dynamic>? mergeTarget;
   Iterator<MapEntry<dynamic, dynamic>>? mapIterator;

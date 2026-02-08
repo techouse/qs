@@ -6,13 +6,13 @@ import 'dart:typed_data' show ByteBuffer;
 
 import 'package:meta/meta.dart' show internal, visibleForTesting;
 import 'package:qs_dart/src/enums/format.dart';
+import 'package:qs_dart/src/enums/merge_phase.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
+import 'package:qs_dart/src/models/merge_frame.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 
 part 'constants/hex_table.dart';
-part 'enums/merge_phase.dart';
-part 'models/merge_frame.dart';
 
 /// Internal utilities and helpers used by the library.
 ///
@@ -95,8 +95,8 @@ final class Utils {
     DecodeOptions? options = const DecodeOptions(),
   ]) {
     dynamic result;
-    final List<_MergeFrame> stack = [
-      _MergeFrame(
+    final List<MergeFrame> stack = [
+      MergeFrame(
         target: target,
         source: source,
         options: options,
@@ -105,9 +105,9 @@ final class Utils {
     ];
 
     while (stack.isNotEmpty) {
-      final _MergeFrame frame = stack.last;
+      final MergeFrame frame = stack.last;
 
-      if (frame.phase == _MergePhase.start) {
+      if (frame.phase == MergePhase.start) {
         final dynamic currentTarget = frame.target;
         final dynamic currentSource = frame.source;
 
@@ -198,7 +198,7 @@ final class Utils {
                     : currentSource.toList(growable: false);
                 frame.targetIsSet = currentTarget is Set;
                 frame.listIndex = 0;
-                frame.phase = _MergePhase.listIter;
+                frame.phase = MergePhase.listIter;
                 continue;
               }
 
@@ -237,7 +237,7 @@ final class Utils {
                   if (item is! Undefined) i.toString(): item,
               };
               frame.source = sourceMap;
-              frame.phase = _MergePhase.start;
+              frame.phase = MergePhase.start;
               continue;
             }
             if (isOverflow(currentTarget)) {
@@ -275,7 +275,7 @@ final class Utils {
             frame.mergeTarget = mergeTarget;
             frame.mapIterator = currentSource.entries.iterator;
             frame.overflowMax = null;
-            frame.phase = _MergePhase.mapIter;
+            frame.phase = MergePhase.mapIter;
             continue;
           }
 
@@ -333,11 +333,11 @@ final class Utils {
         frame.mergeTarget = mergeTarget;
         frame.mapIterator = currentSource.entries.iterator;
         frame.overflowMax = overflowMax;
-        frame.phase = _MergePhase.mapIter;
+        frame.phase = MergePhase.mapIter;
         continue;
       }
 
-      if (frame.phase == _MergePhase.mapIter) {
+      if (frame.phase == MergePhase.mapIter) {
         if (frame.mapIterator!.moveNext()) {
           final MapEntry entry = frame.mapIterator!.current;
           final String key = entry.key.toString();
@@ -349,7 +349,7 @@ final class Utils {
           if (frame.mergeTarget!.containsKey(key)) {
             final dynamic childTarget = frame.mergeTarget![key];
             stack.add(
-              _MergeFrame(
+              MergeFrame(
                 target: childTarget,
                 source: entry.value,
                 options: frame.options,
@@ -400,7 +400,7 @@ final class Utils {
       if (frame.indexedTarget!.containsKey(idx)) {
         final dynamic childTarget = frame.indexedTarget![idx];
         stack.add(
-          _MergeFrame(
+          MergeFrame(
             target: childTarget,
             source: item,
             options: frame.options,
