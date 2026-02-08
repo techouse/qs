@@ -372,6 +372,8 @@ final class DecodeOptions with EquatableMixin {
         _legacyDecoder,
       ];
 
+  // Expando does not keep keys alive; cached flags vanish when the options
+  // instance is GC'd, so this avoids repeat validation without leaking.
   static final Expando<bool> _validated =
       Expando<bool>('qsDecodeOptionsValidated');
 }
