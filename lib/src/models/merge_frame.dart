@@ -1,7 +1,7 @@
 import 'dart:collection' show SplayTreeMap;
 
 import 'package:meta/meta.dart' show internal;
-import 'package:qs_dart/qs_dart.dart' show DecodeOptions;
+import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/enums/merge_phase.dart';
 
 /// Stack frame for the iterative [Utils.merge] traversal.
