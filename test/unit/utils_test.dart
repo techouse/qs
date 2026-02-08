@@ -1,6 +1,5 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
-import 'dart:collection';
 import 'dart:convert' show latin1, utf8;
 
 import 'package:qs_dart/qs_dart.dart';
@@ -1303,8 +1302,8 @@ void main() {
           const DecodeOptions(parseLists: false),
         );
 
-        final splay = result as SplayTreeMap;
-        expect(splay.isEmpty, isTrue);
+        final map = result as Map<String, dynamic>;
+        expect(map, isEmpty);
       });
 
       test('combines non-iterable scalars into a list pair', () {

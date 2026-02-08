@@ -119,11 +119,47 @@ final class Utils {
 
         if (currentSource is! Map) {
           if (currentTarget is Iterable) {
-            if (currentTarget.any((el) => el is Undefined)) {
+            final bool sourceIsIterable = currentSource is Iterable;
+            bool hasHoles = false;
+            bool targetMaps = true;
+            bool targetHasMap = false;
+            for (final el in currentTarget) {
+              if (el is Undefined) {
+                hasHoles = true;
+                continue;
+              }
+              if (el is Map) {
+                targetHasMap = true;
+                continue;
+              }
+              targetMaps = false;
+            }
+
+            bool sourceMaps = false;
+            bool sourceHasMap = false;
+            if (sourceIsIterable) {
+              sourceMaps = true;
+              for (final el in currentSource) {
+                if (el is Undefined) {
+                  continue;
+                }
+                if (el is Map) {
+                  sourceHasMap = true;
+                  continue;
+                }
+                sourceMaps = false;
+              }
+            }
+
+            final bool canMergeMapLists =
+                sourceIsIterable && targetMaps && sourceMaps;
+            final bool hasAnyMap = targetHasMap || sourceHasMap;
+
+            if (hasHoles && !(canMergeMapLists && hasAnyMap)) {
               final SplayTreeMap<int, dynamic> target_ =
                   _toIndexedTreeMap(currentTarget);
 
-              if (currentSource is Iterable) {
+              if (sourceIsIterable) {
                 for (final (int i, dynamic item) in currentSource.indexed) {
                   if (item is! Undefined) {
                     target_[i] = item;
@@ -135,13 +171,13 @@ final class Utils {
 
               if (frame.options?.parseLists == false &&
                   target_.values.any((el) => el is Undefined)) {
+                final Map<String, dynamic> normalized = {
+                  for (final MapEntry<int, dynamic> entry in target_.entries)
+                    if (entry.value is! Undefined)
+                      entry.key.toString(): entry.value,
+                };
                 stack.removeLast();
-                frame.onResult(
-                  SplayTreeMap.from({
-                    for (final MapEntry<int, dynamic> entry in target_.entries)
-                      if (entry.value is! Undefined) entry.key: entry.value,
-                  }),
-                );
+                frame.onResult(normalized);
                 continue;
               }
 
@@ -154,13 +190,8 @@ final class Utils {
               continue;
             }
 
-            if (currentSource is Iterable) {
-              final bool targetMaps =
-                  currentTarget.every((el) => el is Map || el is Undefined);
-              final bool sourceMaps =
-                  currentSource.every((el) => el is Map || el is Undefined);
-
-              if (targetMaps && sourceMaps) {
+            if (sourceIsIterable) {
+              if (canMergeMapLists && hasAnyMap) {
                 frame.indexedTarget = _toIndexedTreeMap(currentTarget);
                 frame.sourceList = currentSource is List
                     ? currentSource
@@ -344,6 +375,17 @@ final class Utils {
       }
 
       if (frame.listIndex >= frame.sourceList!.length) {
+        if (frame.options?.parseLists == false &&
+            frame.indexedTarget!.values.any((el) => el is Undefined)) {
+          final Map<String, dynamic> normalized = {
+            for (final MapEntry<int, dynamic> entry
+                in frame.indexedTarget!.entries)
+              if (entry.value is! Undefined) entry.key.toString(): entry.value,
+          };
+          stack.removeLast();
+          frame.onResult(normalized);
+          continue;
+        }
         final resultList = frame.targetIsSet
             ? frame.indexedTarget!.values.toSet()
             : frame.indexedTarget!.values.toList();
