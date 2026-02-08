@@ -589,7 +589,8 @@ final class Utils {
 
     final String? str = value is ByteBuffer
         ? (charset == utf8
-            // UTF-8 may contain malformed sequences; Latin-1 is 1:1 for all bytes.
+            // Match Node Buffer.toString('utf8'): replace malformed sequences.
+            // Strict decoding would throw and break Node qs parity for raw byte buffers.
             ? utf8.decode(value.asUint8List(), allowMalformed: true)
             : latin1.decode(value.asUint8List()))
         : value?.toString();
