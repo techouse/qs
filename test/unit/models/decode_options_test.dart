@@ -166,7 +166,6 @@ void main() {
         ),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -178,7 +177,6 @@ void main() {
         () => QS.decode('a=b', base.copyWith(allowDots: false)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -369,7 +367,6 @@ void main() {
           () => QS.decode('a=b', original.copyWith(allowDots: false)),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )));
     });

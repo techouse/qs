@@ -21,7 +21,6 @@ void main() {
         ),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -1544,7 +1543,6 @@ void main() {
           () => QS.decode('a=b', DecodeOptions(charset: ShiftJIS())),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )),
         );
@@ -2352,7 +2350,6 @@ void main() {
             'a%2Eb=c', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -2508,7 +2505,6 @@ void main() {
               DecodeOptions(allowDots: false, decodeDotInKeys: true)),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )),
         );
@@ -2804,7 +2800,6 @@ void main() {
             'a[%2e]=x', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );

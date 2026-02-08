@@ -1348,7 +1348,6 @@ void main() {
               .queryParametersQs(DecodeOptions(charset: ShiftJIS())),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )),
         );
