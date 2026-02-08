@@ -16,10 +16,10 @@ part of '../qs.dart';
 /// - *prefix*: current key path being built (e.g., `user[address]`), with optional `?` prefix.
 
 extension _$Encode on QS {
-  /// Core encoder (recursive).
+  /// Core encoder (iterative, stack-based).
   ///
-  /// Returns either a `String` (single key=value) or `List<String>` fragments, which the
-  /// top-level caller ultimately joins with the chosen delimiter.
+  /// Returns a `List<String>` of encoded fragments; the top-level caller joins
+  /// them with the chosen delimiter.
   ///
   /// Parameters (most mirror Node `qs`):
   /// - [object]: The current value to encode (map/iterable/scalar/byte buffer/date).
