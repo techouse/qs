@@ -159,9 +159,11 @@ void main() {
 
   group('DecodeOptions – allowDots / decodeDotInKeys interplay', () {
     test('allowDots=false + decodeDotInKeys=true throws on use', () {
-      final opts = const DecodeOptions(allowDots: false, decodeDotInKeys: true);
       expect(
-        () => QS.decode('a=b', opts),
+        () => QS.decode(
+          'a=b',
+          DecodeOptions(allowDots: false, decodeDotInKeys: true),
+        ),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<StateError>(),
@@ -172,9 +174,8 @@ void main() {
 
     test('copyWith: making options inconsistent throws', () {
       final base = const DecodeOptions(decodeDotInKeys: true);
-      final invalid = base.copyWith(allowDots: false);
       expect(
-        () => QS.decode('a=b', invalid),
+        () => QS.decode('a=b', base.copyWith(allowDots: false)),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<StateError>(),
@@ -186,18 +187,23 @@ void main() {
 
   group('DecodeOptions runtime validation', () {
     test('throws for invalid charset', () {
-      final opts = const DecodeOptions(charset: _FakeEncoding());
       expect(
-        () => QS.decode('a=b', opts),
-        throwsA(isA<ArgumentError>()),
+        // ignore: prefer_const_constructors
+        () => QS.decode('a=b', DecodeOptions(charset: _FakeEncoding())),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<AssertionError>(),
+        )),
       );
     });
 
     test('throws for NaN parameterLimit', () {
-      final opts = const DecodeOptions(parameterLimit: double.nan);
       expect(
-        () => QS.decode('a=b', opts),
-        throwsA(isA<ArgumentError>()),
+        () => QS.decode('a=b', DecodeOptions(parameterLimit: double.nan)),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<AssertionError>(),
+        )),
       );
     });
   });
@@ -359,9 +365,8 @@ void main() {
         'copyWith to an inconsistent combination (allowDots=false with decodeDotInKeys=true) throws',
         () {
       final original = const DecodeOptions(decodeDotInKeys: true);
-      final invalid = original.copyWith(allowDots: false);
       expect(
-          () => QS.decode('a=b', invalid),
+          () => QS.decode('a=b', original.copyWith(allowDots: false)),
           throwsA(anyOf(
             isA<ArgumentError>(),
             isA<StateError>(),

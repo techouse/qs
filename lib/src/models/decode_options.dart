@@ -49,6 +49,9 @@ typedef Decoder = dynamic Function(
 typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
 
 /// Options that configure the output of [QS.decode].
+///
+/// Invariants are asserted in debug builds and validated at runtime via
+/// [validate] (used by decode entry points).
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
@@ -74,7 +77,20 @@ final class DecodeOptions with EquatableMixin {
   })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
         decodeDotInKeys = decodeDotInKeys ?? false,
         _decoder = decoder,
-        _legacyDecoder = legacyDecoder;
+        _legacyDecoder = legacyDecoder,
+        assert(
+          charset == utf8 || charset == latin1,
+          'Invalid charset',
+        ),
+        assert(
+          !(decodeDotInKeys ?? false) ||
+              (allowDots ?? (decodeDotInKeys ?? false)),
+          'decodeDotInKeys requires allowDots to be true',
+        ),
+        assert(
+          parameterLimit > 0,
+          'Parameter limit must be a positive number.',
+        );
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
   ///
@@ -305,7 +321,7 @@ final class DecodeOptions with EquatableMixin {
     }
 
     final num limit = parameterLimit;
-    if (limit.isNaN || (limit.isFinite && limit <= 0)) {
+    if (limit.isNaN || limit <= 0) {
       throw ArgumentError('Parameter limit must be a positive number.');
     }
 
