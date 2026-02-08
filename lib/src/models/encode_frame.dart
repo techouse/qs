@@ -1,12 +1,19 @@
-part of '../qs.dart';
+import 'dart:convert' show Encoding;
+
+import 'package:meta/meta.dart' show internal;
+import 'package:qs_dart/src/enums/format.dart';
+import 'package:qs_dart/src/enums/list_format.dart';
+import 'package:qs_dart/src/models/encode_options.dart';
+import 'package:weak_map/weak_map.dart';
 
 /// Internal encoder stack frame used by the iterative `_encode` traversal.
 ///
 /// Stores the current object, derived key paths, and accumulated child results
 /// so the encoder can walk deep graphs without recursion while preserving
 /// Node `qs` ordering and cycle detection behavior.
-final class _EncodeFrame {
-  _EncodeFrame({
+@internal
+final class EncodeFrame {
+  EncodeFrame({
     required this.object,
     required this.undefined,
     required this.sideChannel,

@@ -7,6 +7,7 @@ import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
+import 'package:qs_dart/src/models/encode_frame.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
@@ -17,7 +18,6 @@ export 'package:qs_dart/src/enums/decode_kind.dart';
 
 part 'extensions/decode.dart';
 part 'extensions/encode.dart';
-part 'models/encode_frame.dart';
 
 /// # QS (Dart)
 ///

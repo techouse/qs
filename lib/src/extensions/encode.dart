@@ -73,8 +73,8 @@ extension _$Encode on QS {
     formatter ??= format.formatter;
 
     List<String>? result;
-    final List<_EncodeFrame> stack = [
-      _EncodeFrame(
+    final List<EncodeFrame> stack = [
+      EncodeFrame(
         object: object,
         undefined: undefined,
         sideChannel: sideChannel,
@@ -100,7 +100,7 @@ extension _$Encode on QS {
     ];
 
     while (stack.isNotEmpty) {
-      final _EncodeFrame frame = stack.last;
+      final EncodeFrame frame = stack.last;
 
       if (!frame.prepared) {
         dynamic obj = frame.object;
@@ -352,7 +352,7 @@ extension _$Encode on QS {
               : '${frame.adjustedPrefix!}${frame.allowDots ? '.$encodedKey' : '[$encodedKey]'}');
 
       stack.add(
-        _EncodeFrame(
+        EncodeFrame(
           object: value,
           undefined: valueUndefined,
           sideChannel: frame.sideChannel,
