@@ -572,6 +572,11 @@ final class Utils {
     Encoding charset = utf8,
     Format? format = Format.rfc3986,
   }) {
+    assert(charset == utf8 || charset == latin1, 'Invalid charset');
+    if (charset != utf8 && charset != latin1) {
+      throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+    }
+
     // these can not be encoded
     if (value is Iterable ||
         value is Map ||
