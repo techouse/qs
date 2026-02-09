@@ -374,6 +374,10 @@ final class Utils {
         continue;
       }
 
+      if (frame.phase != MergePhase.listIter) {
+        throw StateError('Invalid merge phase: ${frame.phase}');
+      }
+
       if (frame.listIndex >= frame.sourceList!.length) {
         if (frame.options?.parseLists == false &&
             frame.indexedTarget!.values.any((el) => el is Undefined)) {
