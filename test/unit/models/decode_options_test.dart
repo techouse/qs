@@ -6,6 +6,8 @@ import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/qs.dart';
 import 'package:test/test.dart';
 
+import '../../support/fake_encoding.dart';
+
 void main() {
   group('DecodeOptions', () {
     test('copyWith no modifications', () {
@@ -187,7 +189,7 @@ void main() {
     test('throws for invalid charset', () {
       expect(
         // ignore: prefer_const_constructors
-        () => QS.decode('a=b', DecodeOptions(charset: _FakeEncoding())),
+        () => QS.decode('a=b', DecodeOptions(charset: FakeEncoding())),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<AssertionError>(),
@@ -401,17 +403,4 @@ void main() {
       );
     });
   });
-}
-
-class _FakeEncoding extends Encoding {
-  const _FakeEncoding();
-
-  @override
-  String get name => 'fake';
-
-  @override
-  Converter<List<int>, String> get decoder => utf8.decoder;
-
-  @override
-  Converter<String, List<int>> get encoder => utf8.encoder;
 }

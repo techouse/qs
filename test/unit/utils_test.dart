@@ -1,11 +1,13 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
-import 'dart:convert' show Converter, Encoding, latin1, utf8;
+import 'dart:convert' show latin1, utf8;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
+
+import '../support/fake_encoding.dart';
 
 import '../fixtures/dummy_enum.dart';
 
@@ -52,7 +54,7 @@ void main() {
 
     test('encode throws for invalid charset', () {
       expect(
-        () => Utils.encode('x', charset: const _FakeEncoding()),
+        () => Utils.encode('x', charset: const FakeEncoding()),
         throwsA(anyOf(
           isA<ArgumentError>(),
           isA<AssertionError>(),
@@ -1515,17 +1517,4 @@ void main() {
       });
     });
   });
-}
-
-class _FakeEncoding extends Encoding {
-  const _FakeEncoding();
-
-  @override
-  String get name => 'fake';
-
-  @override
-  Converter<List<int>, String> get decoder => utf8.decoder;
-
-  @override
-  Converter<String, List<int>> get encoder => utf8.encoder;
 }
