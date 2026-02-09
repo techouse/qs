@@ -322,7 +322,11 @@ final class DecodeOptions with EquatableMixin {
 
     final num limit = parameterLimit;
     if (limit.isNaN || limit <= 0) {
-      throw ArgumentError('Parameter limit must be a positive number.');
+      throw ArgumentError.value(
+        limit,
+        'parameterLimit',
+        'Parameter limit must be a positive number.',
+      );
     }
 
     _validated[this] = true;
