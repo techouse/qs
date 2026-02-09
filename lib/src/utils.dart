@@ -586,7 +586,11 @@ final class Utils {
     Format? format = Format.rfc3986,
   }) {
     if (charset != utf8 && charset != latin1) {
-      throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+      throw ArgumentError.value(
+        charset,
+        'charset',
+        'Invalid charset; only utf8 and latin1 are supported',
+      );
     }
 
     // these can not be encoded
