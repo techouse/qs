@@ -55,10 +55,7 @@ void main() {
     test('encode throws for invalid charset', () {
       expect(
         () => Utils.encode('x', charset: const FakeEncoding()),
-        throwsA(anyOf(
-          isA<ArgumentError>(),
-          isA<AssertionError>(),
-        )),
+        throwsA(isA<ArgumentError>()),
       );
     });
 
