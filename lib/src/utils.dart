@@ -213,25 +213,23 @@ final class Utils {
               continue;
             }
 
-            if (currentSource != null) {
-              if (currentTarget is List) {
-                final List<dynamic> merged = List<dynamic>.of(currentTarget)
-                  ..add(currentSource);
-                stack.removeLast();
-                frame.onResult(merged);
-                continue;
-              }
-              if (currentTarget is Set) {
-                final Set<dynamic> merged = Set<dynamic>.of(currentTarget)
-                  ..add(currentSource);
-                stack.removeLast();
-                frame.onResult(merged);
-                continue;
-              }
+            if (currentTarget is List) {
+              final List<dynamic> merged = List<dynamic>.of(currentTarget)
+                ..add(currentSource);
               stack.removeLast();
-              frame.onResult([currentTarget, currentSource]);
+              frame.onResult(merged);
               continue;
             }
+            if (currentTarget is Set) {
+              final Set<dynamic> merged = Set<dynamic>.of(currentTarget)
+                ..add(currentSource);
+              stack.removeLast();
+              frame.onResult(merged);
+              continue;
+            }
+            stack.removeLast();
+            frame.onResult([currentTarget, currentSource]);
+            continue;
           } else if (currentTarget is Map) {
             if (currentSource is Iterable) {
               final Map<String, dynamic> sourceMap = {
@@ -250,7 +248,7 @@ final class Utils {
               frame.onResult(currentTarget);
               continue;
             }
-          } else if (currentSource != null) {
+          } else {
             if (currentTarget is! Iterable && currentSource is Iterable) {
               stack.removeLast();
               frame.onResult(
