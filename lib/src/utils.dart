@@ -94,7 +94,7 @@ final class Utils {
     dynamic source, [
     DecodeOptions? options = const DecodeOptions(),
   ]) {
-    dynamic result;
+    late dynamic result;
     final List<MergeFrame> stack = [
       MergeFrame(
         target: target,
