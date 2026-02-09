@@ -1371,6 +1371,25 @@ void main() {
         expect(map['2'], equals({'b': 2}));
       });
 
+      test('list-merge replaces holes when merging maps by index', () {
+        final result = Utils.merge(
+          [
+            const Undefined(),
+            {'a': 1}
+          ],
+          [
+            {'a': 2}
+          ],
+        );
+
+        expect(
+            result,
+            equals([
+              {'a': 2},
+              {'a': 1}
+            ]));
+      });
+
       test('combines non-iterable scalars into a list pair', () {
         expect(Utils.merge('left', 'right'), equals(['left', 'right']));
       });

@@ -403,6 +403,15 @@ final class Utils {
 
       if (frame.indexedTarget!.containsKey(idx)) {
         final dynamic childTarget = frame.indexedTarget![idx];
+        if (childTarget is Undefined) {
+          if (item is! Undefined) {
+            frame.indexedTarget![idx] = item;
+          }
+          continue;
+        }
+        if (item is Undefined) {
+          continue;
+        }
         stack.add(
           MergeFrame(
             target: childTarget,
