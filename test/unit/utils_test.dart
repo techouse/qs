@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
-import 'dart:convert' show latin1, utf8;
+import 'dart:convert' show Converter, Encoding, latin1, utf8;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/utils.dart';
@@ -47,6 +48,26 @@ void main() {
         Utils.encode(const Undefined()),
         equals(''),
       );
+    });
+
+    test('encode throws for invalid charset', () {
+      expect(
+        () => Utils.encode('x', charset: const _FakeEncoding()),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+
+    test('encode ByteBuffer uses utf8 decoding', () {
+      final buffer = Uint8List.fromList([0x68, 0x69]).buffer;
+      expect(Utils.encode(buffer, charset: utf8), equals('hi'));
+    });
+
+    test('encode ByteBuffer uses latin1 decoding', () {
+      final buffer = Uint8List.fromList([0xE4]).buffer;
+      expect(Utils.encode(buffer, charset: latin1), equals('%E4'));
     });
 
     test('encode huge string', () {
@@ -1297,13 +1318,57 @@ void main() {
       test('normalizes to map when Undefined persists and parseLists is false',
           () {
         final result = Utils.merge(
-          [const Undefined()],
-          const [Undefined()],
+          [const Undefined(), 'keep'],
+          const [Undefined(), 'add'],
           const DecodeOptions(parseLists: false),
         );
 
         final map = result as Map<String, dynamic>;
-        expect(map, isEmpty);
+        expect(map, equals({'1': 'add'}));
+      });
+
+      test('overflow merge keeps non-numeric keys', () {
+        final overflow = Utils.markOverflow({'foo': 'bar', '0': 'x'}, 0);
+        final result = Utils.merge(null, overflow);
+
+        expect(result, isA<Map<String, dynamic>>());
+        final map = result as Map<String, dynamic>;
+        expect(map['foo'], equals('bar'));
+        expect(map['1'], equals('x'));
+      });
+
+      test('wraps scalar targets into list with map element when merging maps',
+          () {
+        final result = Utils.merge('seed', {'a': 'b'});
+        expect(result, isA<List>());
+        final list = result as List;
+        expect(list.first, equals('seed'));
+        final map = list[1] as Map<String, dynamic>;
+        expect(map, equals({'a': 'b'}));
+      });
+
+      test('list-merge normalizes to map when Undefined persists', () {
+        final result = Utils.merge(
+          [
+            {'a': 1},
+            const Undefined(),
+            {'b': 2},
+          ],
+          [
+            {'a': 2}
+          ],
+          const DecodeOptions(parseLists: false),
+        );
+
+        expect(result, isA<Map<String, dynamic>>());
+        final map = result as Map<String, dynamic>;
+        expect(map.containsKey('1'), isFalse);
+        expect(
+            map['0'],
+            equals({
+              'a': [1, 2]
+            }));
+        expect(map['2'], equals({'b': 2}));
       });
 
       test('combines non-iterable scalars into a list pair', () {
@@ -1431,4 +1496,17 @@ void main() {
       });
     });
   });
+}
+
+class _FakeEncoding extends Encoding {
+  const _FakeEncoding();
+
+  @override
+  String get name => 'fake';
+
+  @override
+  Converter<List<int>, String> get decoder => utf8.decoder;
+
+  @override
+  Converter<String, List<int>> get encoder => utf8.encoder;
 }

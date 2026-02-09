@@ -2964,6 +2964,24 @@ void main() {
           }));
     });
 
+    test('depth=0 keeps the original key intact (strictDepth ignored)', () {
+      final decoded = QS.decode(
+        'a[b]=1',
+        const DecodeOptions(depth: 0, strictDepth: true),
+      );
+
+      expect(decoded, equals({'a[b]': '1'}));
+    });
+
+    test('depth=0 keeps the original key intact', () {
+      final decoded = QS.decode(
+        'a[b]=1',
+        const DecodeOptions(depth: 0),
+      );
+
+      expect(decoded, equals({'a[b]': '1'}));
+    });
+
     test('parameterLimit < 1 coerces to zero and triggers argument error', () {
       expect(
         () => QS.decode(

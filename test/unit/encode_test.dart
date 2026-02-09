@@ -108,6 +108,19 @@ void main() {
 
       expect(result, equals('obj[prop]=test'));
     });
+
+    test('filter iterable exercises dynamic indexer path', () {
+      final result = QS.encode(
+        {'u': const Undefined()},
+        const EncodeOptions(
+          encode: false,
+          filter: ['u'],
+        ),
+      );
+
+      expect(result, isEmpty);
+    });
+
     test('encodes a query string map', () {
       expect(QS.encode({'a': 'b'}), equals('a=b'));
       expect(QS.encode({'a': 1}), equals('a=1'));
