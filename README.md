@@ -575,6 +575,10 @@ expect(
 );
 ```
 
+Note: when a value is a `ByteBuffer`, it is still decoded using the selected
+charset even when `encode` is `false`, so the emitted value reflects the buffer
+contents.
+
 Encoding can be disabled for keys by setting the [EncodeOptions.encodeValuesOnly] option to `true`:
 
 ```dart
