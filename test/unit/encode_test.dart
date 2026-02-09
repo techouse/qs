@@ -3192,6 +3192,16 @@ void main() {
       expect(QS.encode({'a': utf8.encode('test').buffer}), equals('a=test'));
     });
 
+    test('encodes a buffer value without encoding', () {
+      expect(
+        QS.encode(
+          {'a': latin1.encode('ä').buffer},
+          const EncodeOptions(encode: false, charset: latin1),
+        ),
+        equals('a=ä'),
+      );
+    });
+
     test('encodes a date value', () {
       final DateTime now = DateTime.now();
       final String str = 'a=${Uri.encodeComponent(now.toIso8601String())}';

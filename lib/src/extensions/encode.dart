@@ -164,8 +164,16 @@ extension _$Encode on QS {
             fragment =
                 '${frame.formatter(keyValue)}=${frame.formatter(frame.encoder!(obj))}';
           } else {
+            final String valueString = obj is ByteBuffer
+                ? (frame.charset == utf8
+                    ? utf8.decode(
+                        obj.asUint8List(),
+                        allowMalformed: true,
+                      )
+                    : latin1.decode(obj.asUint8List()))
+                : obj.toString();
             fragment =
-                '${frame.formatter(frame.prefix)}=${frame.formatter(obj.toString())}';
+                '${frame.formatter(frame.prefix)}=${frame.formatter(valueString)}';
           }
           if (frame.tracked) {
             frame.sideChannel.remove(frame.trackedObject ?? frame.object);
