@@ -215,15 +215,17 @@ final class Utils {
 
             if (currentSource != null) {
               if (currentTarget is List) {
-                currentTarget.add(currentSource);
+                final List<dynamic> merged = List<dynamic>.of(currentTarget)
+                  ..add(currentSource);
                 stack.removeLast();
-                frame.onResult(currentTarget);
+                frame.onResult(merged);
                 continue;
               }
               if (currentTarget is Set) {
-                currentTarget.add(currentSource);
+                final Set<dynamic> merged = Set<dynamic>.of(currentTarget)
+                  ..add(currentSource);
                 stack.removeLast();
-                frame.onResult(currentTarget);
+                frame.onResult(merged);
                 continue;
               }
               stack.removeLast();
