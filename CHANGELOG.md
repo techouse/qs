@@ -2,6 +2,8 @@
 
 * [FEAT] add `DecodeOptions.throwOnLimitExceeded` for strict limit enforcement on parameter, list, and depth overflows
 * [FIX] tolerate malformed UTF-8 when encoding `ByteBuffer` values to match Node `Buffer.toString('utf8')`
+* [FIX] decode `ByteBuffer` values via charset even when `encode=false` (avoid `Instance of 'ByteBuffer'` output)
+* [FIX] ensure invalid charset in `Utils.encode` consistently throws `ArgumentError`
 * [FIX] improve merge semantics for lists/maps (hole replacement, undefined normalization under `parseLists=false`, and non-mutating list/set merges)
 * [FIX] add runtime validation and DecodeOptions constructor asserts for invalid charsets and inconsistent dot options
 * [CHORE] refactor encode/merge internals to stack-based frames (`EncodeFrame`, `MergeFrame`, `MergePhase`) for deep-nesting safety
