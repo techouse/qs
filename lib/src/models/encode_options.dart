@@ -159,12 +159,20 @@ final class EncodeOptions with EquatableMixin {
   void validate() {
     final Encoding charset = this.charset;
     if (charset != utf8 && charset != latin1) {
-      throw ArgumentError.value(charset, 'charset', 'Invalid charset');
+      throw ArgumentError.value(
+        charset,
+        'charset',
+        'Invalid charset; only utf8 and latin1 are supported',
+      );
     }
 
     final dynamic filter = this.filter;
     if (filter != null && filter is! Function && filter is! Iterable) {
-      throw ArgumentError.value(filter, 'filter', 'Invalid filter');
+      throw ArgumentError.value(
+        filter,
+        'filter',
+        'Invalid filter; expected Function or Iterable',
+      );
     }
   }
 
