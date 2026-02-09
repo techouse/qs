@@ -19,8 +19,10 @@ Purpose: Provide just enough project context so an AI assistant can make correct
 * Decode limits: default `depth=5`, `parameterLimit=1000`, `listLimit=20`; exceeding may coerce indices into object keys or (with strict flags) throw.
 * List vs Map merging mimics Node: duplicate keys accumulate to lists unless `duplicates` option changes strategy.
 * `Undefined` entries are placeholders stripped by `Utils.compact` post‑decode / during encode pruning; never serialize `Undefined` itself.
+* `Utils.encode` uses `allowMalformed: true` when decoding `ByteBuffer` as UTF‑8 to match Node `Buffer.toString('utf8')`.
 * Charset sentinel: when `charsetSentinel=true`, `utf8=✓` token (encoded differently per charset) overrides provided `charset` and is omitted from output.
 * `allowDots` & `decodeDotInKeys`: invalid combination (`decodeDotInKeys: true` with `allowDots: false`) must throw (constructor asserts). Preserve that invariant.
+* Merge semantics: list holes are treated as missing values when merging list‑of‑maps by index (no `[Undefined, map]` pair at an index); `parseLists=false` normalizes list results into string‑key maps.
 * Negative `listLimit` disables numeric indexing; with `throwOnLimitExceeded` certain pushes must throw `RangeError` (match existing patterns in decode logic—consult decode part file before altering behavior).
 * Encoding pipeline can inject custom encoder/decoder hooks; preserve argument order and named params (`charset`, `format`, `kind`).
 
