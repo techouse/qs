@@ -17,7 +17,8 @@ import 'package:qs_dart/src/utils.dart';
 /// - **Dot notation**: set [allowDots] to treat `a.b=c` like `{a: {b: "c"}}`.
 ///   If you *explicitly* request dot decoding in keys via [decodeDotInKeys],
 ///   [allowDots] is implied and will be treated as `true` unless you explicitly
-///   set `allowDots: false` — which is an invalid combination and will throw at construction time.
+///   set `allowDots: false` — which is an invalid combination and will throw
+///   when validated/used.
 /// - **Charset handling**: [charset] selects UTF‑8 or Latin‑1 decoding. When
 ///   [charsetSentinel] is `true`, a leading `utf8=✓` token (in either UTF‑8 or
 ///   Latin‑1 form) can override [charset] as a compatibility escape hatch.
@@ -48,6 +49,9 @@ typedef Decoder = dynamic Function(
 typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
 
 /// Options that configure the output of [QS.decode].
+///
+/// Invariants are asserted in debug builds and validated at runtime via
+/// [validate] (used by decode entry points).
 final class DecodeOptions with EquatableMixin {
   const DecodeOptions({
     bool? allowDots,
@@ -79,19 +83,20 @@ final class DecodeOptions with EquatableMixin {
           'Invalid charset',
         ),
         assert(
-          !(decodeDotInKeys ?? false) || allowDots != false,
+          !(decodeDotInKeys ?? false) ||
+              (allowDots ?? (decodeDotInKeys ?? false)),
           'decodeDotInKeys requires allowDots to be true',
         ),
         assert(
           parameterLimit > 0,
-          'Parameter limit must be positive',
+          'Parameter limit must be a positive number.',
         );
 
   /// When `true`, decode dot notation in keys: `a.b=c` → `{a: {b: "c"}}`.
   ///
   /// If you set [decodeDotInKeys] to `true` and do not pass [allowDots], this
   /// flag defaults to `true`. Passing `allowDots: false` while
-  /// `decodeDotInKeys` is `true` is invalid and will throw at construction.
+  /// `decodeDotInKeys` is `true` is invalid and will throw when validated/used.
   final bool allowDots;
 
   /// When `true`, allow empty list values to be produced from inputs like
@@ -140,7 +145,7 @@ final class DecodeOptions with EquatableMixin {
   ///
   /// This explicitly opts into dot‑notation handling and **implies** [allowDots].
   /// Passing `decodeDotInKeys: true` while forcing `allowDots: false` is an
-  /// invalid combination and will throw *at construction time*.
+  /// invalid combination and will throw when validated/used.
   ///
   /// Note: inside bracket segments (e.g., `a[%2E]`), percent‑decoding naturally
   /// yields `"."`. Whether a `.` causes additional splitting is a parser concern
@@ -215,6 +220,8 @@ final class DecodeOptions with EquatableMixin {
     Encoding? charset,
     DecodeKind kind = DecodeKind.value,
   }) {
+    // Validate here to cover direct decodeKey/decodeValue usage; cached via Expando.
+    validate();
     if (_decoder != null) {
       return _decoder!(value, charset: charset, kind: kind);
     }
@@ -273,6 +280,7 @@ final class DecodeOptions with EquatableMixin {
     bool? parseLists,
     bool? strictNullHandling,
     bool? strictDepth,
+    bool? throwOnLimitExceeded,
     Decoder? decoder,
     LegacyDecoder? legacyDecoder,
   }) =>
@@ -294,9 +302,40 @@ final class DecodeOptions with EquatableMixin {
         parseLists: parseLists ?? this.parseLists,
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         strictDepth: strictDepth ?? this.strictDepth,
+        throwOnLimitExceeded: throwOnLimitExceeded ?? this.throwOnLimitExceeded,
         decoder: decoder ?? _decoder,
         legacyDecoder: legacyDecoder ?? _legacyDecoder,
       );
+
+  /// Validates option invariants (used by [QS.decode] and direct decoder calls).
+  void validate() {
+    if (_validated[this] == true) return;
+
+    final Encoding currentCharset = charset;
+    if (currentCharset != utf8 && currentCharset != latin1) {
+      throw ArgumentError.value(currentCharset, 'charset', 'Invalid charset');
+    }
+
+    if (decodeDotInKeys && !allowDots) {
+      throw ArgumentError.value(
+        decodeDotInKeys,
+        'decodeDotInKeys',
+        'Invalid combination: decodeDotInKeys=$decodeDotInKeys requires '
+            'allowDots=true (currently allowDots=$allowDots).',
+      );
+    }
+
+    final num limit = parameterLimit;
+    if (limit.isNaN || limit <= 0) {
+      throw ArgumentError.value(
+        limit,
+        'parameterLimit',
+        'Parameter limit must be a positive number.',
+      );
+    }
+
+    _validated[this] = true;
+  }
 
   @override
   String toString() => 'DecodeOptions(\n'
@@ -315,6 +354,7 @@ final class DecodeOptions with EquatableMixin {
       '  parameterLimit: $parameterLimit,\n'
       '  parseLists: $parseLists,\n'
       '  strictDepth: $strictDepth,\n'
+      '  throwOnLimitExceeded: $throwOnLimitExceeded,\n'
       '  strictNullHandling: $strictNullHandling\n'
       ')';
 
@@ -340,4 +380,9 @@ final class DecodeOptions with EquatableMixin {
         _decoder,
         _legacyDecoder,
       ];
+
+  // Expando does not keep keys alive; cached flags vanish when the options
+  // instance is GC'd, so this avoids repeat validation without leaking.
+  static final Expando<bool> _validated =
+      Expando<bool>('qsDecodeOptionsValidated');
 }

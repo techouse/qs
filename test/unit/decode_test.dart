@@ -21,7 +21,6 @@ void main() {
         ),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -1539,10 +1538,13 @@ void main() {
     });
 
     group('charset', () {
-      test('throws an AssertionError when given an unknown charset', () {
+      test('throws when given an unknown charset', () {
         expect(
           () => QS.decode('a=b', DecodeOptions(charset: ShiftJIS())),
-          throwsA(isA<AssertionError>()),
+          throwsA(anyOf(
+            isA<ArgumentError>(),
+            isA<AssertionError>(),
+          )),
         );
       });
 
@@ -2348,7 +2350,6 @@ void main() {
             'a%2Eb=c', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -2504,7 +2505,6 @@ void main() {
               DecodeOptions(allowDots: false, decodeDotInKeys: true)),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )),
         );
@@ -2800,7 +2800,6 @@ void main() {
             'a[%2e]=x', DecodeOptions(allowDots: false, decodeDotInKeys: true)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -2963,6 +2962,24 @@ void main() {
               }
             }
           }));
+    });
+
+    test('depth=0 keeps the original key intact (strictDepth ignored)', () {
+      final decoded = QS.decode(
+        'a[b]=1',
+        const DecodeOptions(depth: 0, strictDepth: true),
+      );
+
+      expect(decoded, equals({'a[b]': '1'}));
+    });
+
+    test('depth=0 keeps the original key intact', () {
+      final decoded = QS.decode(
+        'a[b]=1',
+        const DecodeOptions(depth: 0),
+      );
+
+      expect(decoded, equals({'a[b]': '1'}));
     });
 
     test('parameterLimit < 1 coerces to zero and triggers argument error', () {

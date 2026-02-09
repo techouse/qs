@@ -1,10 +1,12 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert';
 
-import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
+import 'package:qs_dart/src/qs.dart';
 import 'package:test/test.dart';
+
+import '../../support/fake_encoding.dart';
 
 void main() {
   group('DecodeOptions', () {
@@ -96,6 +98,21 @@ void main() {
       expect(newOptions.strictNullHandling, isFalse);
     });
 
+    test('copyWith preserves throwOnLimitExceeded', () {
+      const DecodeOptions options = DecodeOptions(throwOnLimitExceeded: true);
+      final DecodeOptions newOptions = options.copyWith();
+
+      expect(newOptions.throwOnLimitExceeded, isTrue);
+    });
+
+    test('copyWith overrides throwOnLimitExceeded', () {
+      const DecodeOptions options = DecodeOptions(throwOnLimitExceeded: false);
+      final DecodeOptions newOptions =
+          options.copyWith(throwOnLimitExceeded: true);
+
+      expect(newOptions.throwOnLimitExceeded, isTrue);
+    });
+
     test('toString', () {
       final DecodeOptions options = const DecodeOptions(
         allowDots: true,
@@ -134,6 +151,7 @@ void main() {
           '  parameterLimit: 100,\n'
           '  parseLists: false,\n'
           '  strictDepth: false,\n'
+          '  throwOnLimitExceeded: false,\n'
           '  strictNullHandling: true\n'
           ')',
         ),
@@ -142,12 +160,14 @@ void main() {
   });
 
   group('DecodeOptions – allowDots / decodeDotInKeys interplay', () {
-    test('constructor: allowDots=false + decodeDotInKeys=true throws', () {
+    test('allowDots=false + decodeDotInKeys=true throws on use', () {
       expect(
-        () => DecodeOptions(allowDots: false, decodeDotInKeys: true),
+        () => QS.decode(
+          'a=b',
+          DecodeOptions(allowDots: false, decodeDotInKeys: true),
+        ),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
           isA<AssertionError>(),
         )),
       );
@@ -156,10 +176,32 @@ void main() {
     test('copyWith: making options inconsistent throws', () {
       final base = const DecodeOptions(decodeDotInKeys: true);
       expect(
-        () => base.copyWith(allowDots: false),
+        () => QS.decode('a=b', base.copyWith(allowDots: false)),
         throwsA(anyOf(
           isA<ArgumentError>(),
-          isA<StateError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+  });
+
+  group('DecodeOptions runtime validation', () {
+    test('throws for invalid charset', () {
+      expect(
+        // ignore: prefer_const_constructors
+        () => QS.decode('a=b', DecodeOptions(charset: FakeEncoding())),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
+          isA<AssertionError>(),
+        )),
+      );
+    });
+
+    test('throws for NaN parameterLimit', () {
+      expect(
+        () => QS.decode('a=b', DecodeOptions(parameterLimit: double.nan)),
+        throwsA(anyOf(
+          isA<ArgumentError>(),
           isA<AssertionError>(),
         )),
       );
@@ -324,10 +366,9 @@ void main() {
         () {
       final original = const DecodeOptions(decodeDotInKeys: true);
       expect(
-          () => original.copyWith(allowDots: false),
+          () => QS.decode('a=b', original.copyWith(allowDots: false)),
           throwsA(anyOf(
             isA<ArgumentError>(),
-            isA<StateError>(),
             isA<AssertionError>(),
           )));
     });

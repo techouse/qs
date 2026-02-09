@@ -35,6 +35,45 @@ class _Dyn extends MapBase<String, dynamic> {
   int get length => _store.length;
 }
 
+class _WeirdMap extends MapBase<String, dynamic> {
+  final Map<String, dynamic> _store = {'real': 1};
+
+  @override
+  dynamic operator [](Object? key) {
+    if (key == 'ghost') return {'nested': 1};
+    return _store[key];
+  }
+
+  @override
+  void operator []=(String key, dynamic value) => _store[key] = value;
+
+  @override
+  void clear() => _store.clear();
+
+  @override
+  Iterable<String> get keys => const ['ghost'];
+
+  @override
+  dynamic remove(Object? key) => _store.remove(key);
+
+  @override
+  bool containsKey(Object? key) => key != 'ghost' && _store.containsKey(key);
+
+  @override
+  int get length => 1;
+}
+
+class _Indexable {
+  _Indexable(this._store);
+
+  final Map<String, dynamic> _store;
+
+  dynamic operator [](Object? key) => _store[key];
+
+  @override
+  String toString() => 'indexable';
+}
+
 void main() {
   group('encode edge cases', () {
     test('cycle detection: shared subobject visited twice without throwing',
@@ -58,6 +97,36 @@ void main() {
       expect(encoded, 'nil');
     });
 
+    test('filter can null-out a map while strictNullHandling preserves the key',
+        () {
+      final encoded = QS.encode(
+        {
+          'obj': {'k': 'v'}
+        },
+        EncodeOptions(
+          strictNullHandling: true,
+          encode: false,
+          filter: (prefix, value) => prefix == 'obj' ? null : value,
+        ),
+      );
+
+      expect(encoded, 'obj');
+    });
+
+    test('filter can collapse a map into a scalar', () {
+      final encoded = QS.encode(
+        {
+          'obj': {'k': 'v'}
+        },
+        EncodeOptions(
+          encode: false,
+          filter: (prefix, value) => prefix == 'obj' ? 'x' : value,
+        ),
+      );
+
+      expect(encoded, 'obj=x');
+    });
+
     test('filter iterable branch on MapBase with throwing key access', () {
       final dyn = _Dyn();
       // Encode the MapBase directly with a filter that forces lookups for both 'ok'
@@ -65,6 +134,11 @@ void main() {
       final encoded = QS.encode(
           dyn, const EncodeOptions(filter: ['ok', 'boom'], skipNulls: true));
       expect(encoded, 'ok=42');
+    });
+
+    test('undefined map entries still clear side-channel tracking', () {
+      final encoded = QS.encode({'root': _WeirdMap()});
+      expect(encoded, isEmpty);
     });
 
     test('comma list empty emits nothing but executes Undefined sentinel path',
@@ -136,6 +210,17 @@ void main() {
       expect(encoded, matches(pattern));
     });
 
+    test('custom objects encode via toString', () {
+      final encoded = QS.encode(
+        {
+          'root': _Indexable({'root': 'ok'}),
+        },
+        const EncodeOptions(encode: false),
+      );
+
+      expect(encoded, 'root=indexable');
+    });
+
     test('cycle detection step reset path (multi-level shared object)', () {
       // Construct a deeper object graph where the same shared leaf appears in
       // branches of differing depth to exercise the while-loop step reset logic.
@@ -160,6 +245,17 @@ void main() {
           .length; // pattern like a%5Bl1%5D%5Bl2%5D%5Bleaf%5D=1
       expect(occurrences, 2);
       expect(encoded.contains('c=2'), isTrue);
+    });
+
+    test('encodes deep nesting without stack overflow', () {
+      const depth = 2048;
+      Map<String, dynamic> obj = {'leaf': 'x'};
+      for (var i = 0; i < depth; i++) {
+        obj = {'a': obj};
+      }
+
+      final encoded = QS.encode(obj);
+      expect(encoded, contains('leaf'));
     });
   });
 }

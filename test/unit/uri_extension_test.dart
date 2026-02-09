@@ -1342,11 +1342,14 @@ void main() {
     });
 
     group('charset', () {
-      test('throws an AssertionError when given an unknown charset', () {
+      test('throws when given an unknown charset', () {
         expect(
           () => Uri.parse('$testUrl?a=b')
               .queryParametersQs(DecodeOptions(charset: ShiftJIS())),
-          throwsA(isA<AssertionError>()),
+          throwsA(anyOf(
+            isA<ArgumentError>(),
+            isA<AssertionError>(),
+          )),
         );
       });
 

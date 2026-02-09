@@ -7,6 +7,7 @@ import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
+import 'package:qs_dart/src/models/encode_frame.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
@@ -45,6 +46,7 @@ final class QS {
   static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
     options ??= const DecodeOptions();
     // Default to the library's safe, Node-`qs` compatible settings.
+    options.validate();
 
     // Fail fast on unsupported input shapes to avoid ambiguous behavior.
     if (!(input is String? || input is Map<String, dynamic>?)) {
@@ -102,6 +104,7 @@ final class QS {
   static String encode(Object? object, [EncodeOptions? options]) {
     options ??= const EncodeOptions();
     // Use default encoding settings unless overridden by the caller.
+    options.validate();
 
     // Normalize supported inputs into a mutable map we can traverse.
     Map<String, dynamic> obj = switch (object) {

@@ -16,14 +16,10 @@ part of '../qs.dart';
 /// - *prefix*: current key path being built (e.g., `user[address]`), with optional `?` prefix.
 
 extension _$Encode on QS {
-  // Side-channel anchor used to thread cycle-detection state through recursion.
-  // We store nested WeakMaps under this key to walk back up the call stack.
-  static const Map _sentinel = {};
-
-  /// Core encoder (recursive).
+  /// Core encoder (iterative, stack-based).
   ///
-  /// Returns either a `String` (single key=value) or `List<String>` fragments, which the
-  /// top-level caller ultimately joins with the chosen delimiter.
+  /// Returns a `List<String>` of encoded fragments; the top-level caller joins
+  /// them with the chosen delimiter.
   ///
   /// Parameters (most mirror Node `qs`):
   /// - [object]: The current value to encode (map/iterable/scalar/byte buffer/date).
@@ -76,164 +72,240 @@ extension _$Encode on QS {
         identical(generateArrayPrefix, ListFormat.comma.generator);
     formatter ??= format.formatter;
 
-    dynamic obj = object;
+    List<String>? result;
+    final List<EncodeFrame> stack = [
+      EncodeFrame(
+        object: object,
+        undefined: undefined,
+        sideChannel: sideChannel,
+        prefix: prefix,
+        generateArrayPrefix: generateArrayPrefix,
+        commaRoundTrip: commaRoundTrip,
+        commaCompactNulls: commaCompactNulls,
+        allowEmptyLists: allowEmptyLists,
+        strictNullHandling: strictNullHandling,
+        skipNulls: skipNulls,
+        encodeDotInKeys: encodeDotInKeys,
+        encoder: encoder,
+        serializeDate: serializeDate,
+        sort: sort,
+        filter: filter,
+        allowDots: allowDots,
+        format: format,
+        formatter: formatter,
+        encodeValuesOnly: encodeValuesOnly,
+        charset: charset,
+        onResult: (List<String> value) => result = value,
+      ),
+    ];
 
-    WeakMap? tmpSc = sideChannel;
-    int step = 0;
-    bool findFlag = false;
+    while (stack.isNotEmpty) {
+      final EncodeFrame frame = stack.last;
 
-    // Walk the nested WeakMap chain to see if the current object already appeared
-    // in the traversal path. If so, either throw (direct cycle) or stop descending.
-    while ((tmpSc = tmpSc?.get(_sentinel)) != null && !findFlag) {
-      // Where object last appeared in the ref tree
-      final int? pos = tmpSc?.get(object) as int?;
-      step += 1;
-      if (pos != null) {
-        if (pos == step) {
-          throw RangeError('Cyclic object value');
-        } else {
-          findFlag = true; // Break while
+      if (!frame.prepared) {
+        dynamic obj = frame.object;
+        final bool trackObject =
+            obj is Map || (obj is Iterable && obj is! String);
+        if (trackObject) {
+          if (frame.sideChannel.contains(obj)) {
+            throw RangeError('Cyclic object value');
+          }
+          frame.sideChannel[obj] = true;
+          frame.tracked = true;
+          frame.trackedObject = obj as Object;
         }
+
+        // Apply filter hook first. For dates, serialize them before any list/comma handling.
+        if (frame.filter is Function) {
+          obj = frame.filter.call(frame.prefix, obj);
+        } else if (obj is DateTime) {
+          obj = switch (frame.serializeDate) {
+            null => obj.toIso8601String(),
+            _ => frame.serializeDate!(obj),
+          };
+        } else if (identical(
+                frame.generateArrayPrefix, ListFormat.comma.generator) &&
+            obj is Iterable) {
+          obj = Utils.apply(
+            obj,
+            (value) => value is DateTime
+                ? (frame.serializeDate?.call(value) ?? value.toIso8601String())
+                : value,
+          );
+        }
+
+        // Present-but-null handling:
+        // - If the value is *present* and null and strictNullHandling is on, emit only the key.
+        // - Otherwise, treat null as an empty string.
+        if (!frame.undefined && obj == null) {
+          if (frame.strictNullHandling) {
+            final String keyOnly =
+                frame.encoder != null && !frame.encodeValuesOnly
+                    ? frame.encoder!(frame.prefix)
+                    : frame.prefix;
+            if (frame.tracked) {
+              frame.sideChannel.remove(frame.trackedObject ?? frame.object);
+            }
+            stack.removeLast();
+            frame.onResult([keyOnly]);
+            continue;
+          }
+          obj = '';
+        }
+
+        // Fast path for primitives and byte buffers → return a single key=value fragment.
+        if (Utils.isNonNullishPrimitive(obj, frame.skipNulls) ||
+            obj is ByteBuffer) {
+          late final String fragment;
+          if (frame.encoder != null) {
+            final String keyValue = frame.encodeValuesOnly
+                ? frame.prefix
+                : frame.encoder!(frame.prefix);
+            fragment =
+                '${frame.formatter(keyValue)}=${frame.formatter(frame.encoder!(obj))}';
+          } else {
+            final String valueString = obj is ByteBuffer
+                ? (frame.charset == utf8
+                    ? utf8.decode(
+                        obj.asUint8List(),
+                        allowMalformed: true,
+                      )
+                    : latin1.decode(obj.asUint8List()))
+                : obj.toString();
+            fragment =
+                '${frame.formatter(frame.prefix)}=${frame.formatter(valueString)}';
+          }
+          if (frame.tracked) {
+            frame.sideChannel.remove(frame.trackedObject ?? frame.object);
+          }
+          stack.removeLast();
+          frame.onResult([fragment]);
+          continue;
+        }
+
+        // Collect per-branch fragments; empty list signifies "emit nothing" for this path.
+        if (frame.undefined) {
+          if (frame.tracked) {
+            frame.sideChannel.remove(frame.trackedObject ?? frame.object);
+          }
+          stack.removeLast();
+          frame.onResult(const <String>[]);
+          continue;
+        }
+
+        // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration
+        List<dynamic>? seqList;
+        int? commaEffectiveLength;
+        final bool isSeq = obj is Iterable && obj is! String && obj is! Map;
+        if (isSeq) {
+          seqList = obj is List ? obj : obj.toList(growable: false);
+        }
+
+        late final List objKeys;
+        // Determine the set of keys/indices to traverse at this depth:
+        // - For `.comma` lists we join values in-place.
+        // - If `filter` is Iterable, it constrains the key set.
+        // - Otherwise derive keys from Map/Iterable, and optionally sort them.
+        if (identical(frame.generateArrayPrefix, ListFormat.comma.generator) &&
+            obj is Iterable) {
+          final Iterable<dynamic> iterableObj = obj;
+          final List<dynamic> commaItems = iterableObj is List
+              ? iterableObj
+              : iterableObj.toList(growable: false);
+
+          final List<dynamic> filteredItems = frame.commaCompactNulls
+              ? commaItems.where((dynamic item) => item != null).toList()
+              : commaItems;
+
+          commaEffectiveLength = filteredItems.length;
+
+          final Iterable<dynamic> joinIterable = frame.encodeValuesOnly &&
+                  frame.encoder != null
+              ? (Utils.apply<String>(filteredItems, frame.encoder!) as Iterable)
+              : filteredItems;
+
+          final List<dynamic> joinList = joinIterable is List
+              ? joinIterable
+              : joinIterable.toList(growable: false);
+
+          if (joinList.isNotEmpty) {
+            final String objKeysValue =
+                joinList.map((e) => e != null ? e.toString() : '').join(',');
+
+            objKeys = [
+              {
+                'value': objKeysValue.isNotEmpty ? objKeysValue : null,
+              },
+            ];
+          } else {
+            objKeys = [
+              {'value': const Undefined()},
+            ];
+          }
+        } else if (frame.filter is Iterable) {
+          objKeys = List.of(frame.filter);
+        } else {
+          late final Iterable keys;
+          if (obj is Map) {
+            keys = obj.keys;
+          } else if (seqList != null) {
+            keys =
+                List<int>.generate(seqList.length, (i) => i, growable: false);
+          } else {
+            keys = const <int>[];
+          }
+          objKeys = frame.sort != null
+              ? (keys.toList()..sort(frame.sort))
+              : keys.toList();
+        }
+
+        // Key-path formatting:
+        // - Optionally encode literal dots.
+        // - Under `.comma` with single-element lists and round-trip enabled, append [].
+        final String encodedPrefix = frame.encodeDotInKeys
+            ? frame.prefix.replaceAll('.', '%2E')
+            : frame.prefix;
+
+        final bool shouldAppendRoundTripMarker = (frame.commaRoundTrip ==
+                true) &&
+            seqList != null &&
+            (identical(frame.generateArrayPrefix, ListFormat.comma.generator) &&
+                    commaEffectiveLength != null
+                ? commaEffectiveLength == 1
+                : seqList.length == 1);
+
+        final String adjustedPrefix =
+            shouldAppendRoundTripMarker ? '$encodedPrefix[]' : encodedPrefix;
+
+        // Emit `key[]` when an empty list is allowed, to preserve shape on round-trip.
+        if (frame.allowEmptyLists && seqList != null && seqList.isEmpty) {
+          if (frame.tracked) {
+            frame.sideChannel.remove(frame.trackedObject ?? frame.object);
+          }
+          stack.removeLast();
+          frame.onResult(['$adjustedPrefix[]']);
+          continue;
+        }
+
+        frame.object = obj;
+        frame.prepared = true;
+        frame.objKeys = objKeys;
+        frame.seqList = seqList;
+        frame.commaEffectiveLength = commaEffectiveLength;
+        frame.adjustedPrefix = adjustedPrefix;
+        continue;
       }
-      if (tmpSc?.get(_sentinel) == null) {
-        step = 0;
-      }
-    }
 
-    // Apply filter hook first. For dates, serialize them before any list/comma handling.
-    if (filter is Function) {
-      obj = filter.call(prefix, obj);
-    } else if (obj is DateTime) {
-      obj = switch (serializeDate) {
-        null => obj.toIso8601String(),
-        _ => serializeDate(obj),
-      };
-    } else if (identical(generateArrayPrefix, ListFormat.comma.generator) &&
-        obj is Iterable) {
-      obj = Utils.apply(
-        obj,
-        (value) => value is DateTime
-            ? (serializeDate?.call(value) ?? value.toIso8601String())
-            : value,
-      );
-    }
-
-    // Present-but-null handling:
-    // - If the value is *present* and null and strictNullHandling is on, emit only the key.
-    // - Otherwise, treat null as an empty string.
-    if (!undefined && obj == null) {
-      if (strictNullHandling) {
-        return encoder != null && !encodeValuesOnly ? encoder(prefix) : prefix;
+      if (frame.index >= frame.objKeys.length) {
+        if (frame.tracked) {
+          frame.sideChannel.remove(frame.trackedObject ?? frame.object);
+        }
+        stack.removeLast();
+        frame.onResult(frame.values);
+        continue;
       }
 
-      obj = '';
-    }
-
-    // Fast path for primitives and byte buffers → return a single key=value fragment.
-    if (Utils.isNonNullishPrimitive(obj, skipNulls) || obj is ByteBuffer) {
-      if (encoder != null) {
-        final String keyValue = encodeValuesOnly ? prefix : encoder(prefix);
-        return ['${formatter(keyValue)}=${formatter(encoder(obj))}'];
-      }
-      return ['${formatter(prefix)}=${formatter(obj.toString())}'];
-    }
-
-    // Collect per-branch fragments; empty list signifies "emit nothing" for this path.
-    final List values = [];
-
-    if (undefined) {
-      return values;
-    }
-
-    // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration
-    List<dynamic>? seqList_;
-    int? commaEffectiveLength;
-    final bool isSeq_ = obj is Iterable && obj is! String && obj is! Map;
-    if (isSeq_) {
-      if (obj is List) {
-        seqList_ = obj;
-      } else {
-        seqList_ = obj.toList(growable: false);
-      }
-    }
-
-    late final List objKeys;
-    // Determine the set of keys/indices to traverse at this depth:
-    // - For `.comma` lists we join values in-place.
-    // - If `filter` is Iterable, it constrains the key set.
-    // - Otherwise derive keys from Map/Iterable, and optionally sort them.
-    if (identical(generateArrayPrefix, ListFormat.comma.generator) &&
-        obj is Iterable) {
-      final Iterable<dynamic> iterableObj = obj;
-      final List<dynamic> commaItems = iterableObj is List
-          ? List<dynamic>.from(iterableObj)
-          : iterableObj.toList(growable: false);
-
-      final List<dynamic> filteredItems = commaCompactNulls
-          ? commaItems.where((dynamic item) => item != null).toList()
-          : commaItems;
-
-      commaEffectiveLength = filteredItems.length;
-
-      final Iterable<dynamic> joinIterable = encodeValuesOnly && encoder != null
-          ? (Utils.apply<String>(filteredItems, encoder) as Iterable)
-          : filteredItems;
-
-      final List<dynamic> joinList = joinIterable is List
-          ? List<dynamic>.from(joinIterable)
-          : joinIterable.toList(growable: false);
-
-      if (joinList.isNotEmpty) {
-        final String objKeysValue =
-            joinList.map((e) => e != null ? e.toString() : '').join(',');
-
-        objKeys = [
-          {
-            'value': objKeysValue.isNotEmpty ? objKeysValue : null,
-          },
-        ];
-      } else {
-        objKeys = [
-          {'value': const Undefined()},
-        ];
-      }
-    } else if (filter is Iterable) {
-      objKeys = List.of(filter);
-    } else {
-      late final Iterable keys;
-      if (obj is Map) {
-        keys = obj.keys;
-      } else if (seqList_ != null) {
-        keys = List<int>.generate(seqList_.length, (i) => i, growable: false);
-      } else {
-        keys = const <int>[];
-      }
-      objKeys = sort != null ? (keys.toList()..sort(sort)) : keys.toList();
-    }
-
-    // Key-path formatting:
-    // - Optionally encode literal dots.
-    // - Under `.comma` with single-element lists and round-trip enabled, append [].
-    final String encodedPrefix =
-        encodeDotInKeys ? prefix.replaceAll('.', '%2E') : prefix;
-
-    final bool shouldAppendRoundTripMarker = (commaRoundTrip == true) &&
-        seqList_ != null &&
-        (identical(generateArrayPrefix, ListFormat.comma.generator) &&
-                commaEffectiveLength != null
-            ? commaEffectiveLength == 1
-            : seqList_.length == 1);
-
-    final String adjustedPrefix =
-        shouldAppendRoundTripMarker ? '$encodedPrefix[]' : encodedPrefix;
-
-    // Emit `key[]` when an empty list is allowed, to preserve shape on round-trip.
-    if (allowEmptyLists && seqList_ != null && seqList_.isEmpty) {
-      return '$adjustedPrefix[]';
-    }
-
-    for (int i = 0; i < objKeys.length; i++) {
-      final key = objKeys[i];
+      final key = frame.objKeys[frame.index++];
       late final dynamic value;
       late final bool valueUndefined;
 
@@ -245,13 +317,13 @@ extension _$Encode on QS {
       } else {
         // Resolve value for the current key/index.
         try {
-          if (obj is Map) {
-            value = obj[key];
-            valueUndefined = !obj.containsKey(key);
-          } else if (seqList_ != null) {
+          if (frame.object is Map) {
+            value = frame.object[key];
+            valueUndefined = !(frame.object as Map).containsKey(key);
+          } else if (frame.seqList != null) {
             final int? idx = key is int ? key : int.tryParse(key.toString());
-            if (idx != null && idx >= 0 && idx < seqList_.length) {
-              value = seqList_[idx];
+            if (idx != null && idx >= 0 && idx < frame.seqList!.length) {
+              value = frame.seqList![idx];
               valueUndefined = false;
             } else {
               value = null;
@@ -260,7 +332,7 @@ extension _$Encode on QS {
           } else {
             // Best-effort dynamic indexer for user-defined classes that expose `operator []`.
             // If it throws (no indexer / wrong type), we fall through to the catch and mark undefined.
-            value = obj[key];
+            value = (frame.object as dynamic)[key];
             valueUndefined = false;
           }
         } catch (_) {
@@ -269,64 +341,58 @@ extension _$Encode on QS {
         }
       }
 
-      if (skipNulls && value == null) {
+      if (frame.skipNulls && value == null) {
         continue;
       }
 
       // Build the next key path segment using either bracket or dot notation.
-      final String encodedKey = allowDots && encodeDotInKeys
+      final String encodedKey = frame.allowDots && frame.encodeDotInKeys
           ? key.toString().replaceAll('.', '%2E')
           : key.toString();
 
       final bool isCommaSentinel =
           key is Map<String, dynamic> && key.containsKey('value');
       final String keyPrefix = (isCommaSentinel &&
-              identical(generateArrayPrefix, ListFormat.comma.generator))
-          ? adjustedPrefix
-          : (seqList_ != null
-              ? generateArrayPrefix(adjustedPrefix, encodedKey)
-              : '$adjustedPrefix${allowDots ? '.$encodedKey' : '[$encodedKey]'}');
+              identical(frame.generateArrayPrefix, ListFormat.comma.generator))
+          ? frame.adjustedPrefix!
+          : (frame.seqList != null
+              ? frame.generateArrayPrefix(frame.adjustedPrefix!, encodedKey)
+              : '${frame.adjustedPrefix!}${frame.allowDots ? '.$encodedKey' : '[$encodedKey]'}');
 
-      // Thread cycle-detection state into recursive calls without keeping strong references.
-      sideChannel[object] = step;
-      final WeakMap valueSideChannel = WeakMap();
-      valueSideChannel.add(key: _sentinel, value: sideChannel);
-
-      final encoded = _encode(
-        value,
-        undefined: valueUndefined,
-        prefix: keyPrefix,
-        generateArrayPrefix: generateArrayPrefix,
-        commaRoundTrip: commaRoundTrip,
-        commaCompactNulls: commaCompactNulls,
-        allowEmptyLists: allowEmptyLists,
-        strictNullHandling: strictNullHandling,
-        skipNulls: skipNulls,
-        encodeDotInKeys: encodeDotInKeys,
-        encoder: identical(generateArrayPrefix, ListFormat.comma.generator) &&
-                encodeValuesOnly &&
-                seqList_ != null
-            ? null
-            : encoder,
-        serializeDate: serializeDate,
-        filter: filter,
-        sort: sort,
-        allowDots: allowDots,
-        format: format,
-        formatter: formatter,
-        encodeValuesOnly: encodeValuesOnly,
-        charset: charset,
-        sideChannel: valueSideChannel,
+      stack.add(
+        EncodeFrame(
+          object: value,
+          undefined: valueUndefined,
+          sideChannel: frame.sideChannel,
+          prefix: keyPrefix,
+          generateArrayPrefix: frame.generateArrayPrefix,
+          commaRoundTrip: frame.commaRoundTrip,
+          commaCompactNulls: frame.commaCompactNulls,
+          allowEmptyLists: frame.allowEmptyLists,
+          strictNullHandling: frame.strictNullHandling,
+          skipNulls: frame.skipNulls,
+          encodeDotInKeys: frame.encodeDotInKeys,
+          encoder: identical(
+                      frame.generateArrayPrefix, ListFormat.comma.generator) &&
+                  frame.encodeValuesOnly &&
+                  frame.seqList != null
+              ? null
+              : frame.encoder,
+          serializeDate: frame.serializeDate,
+          sort: frame.sort,
+          filter: frame.filter,
+          allowDots: frame.allowDots,
+          format: frame.format,
+          formatter: frame.formatter,
+          encodeValuesOnly: frame.encodeValuesOnly,
+          charset: frame.charset,
+          onResult: (List<String> encoded) {
+            frame.values.addAll(encoded);
+          },
+        ),
       );
-
-      // Flatten nested results (each recursion returns a list of fragments or a single fragment).
-      if (encoded is Iterable) {
-        values.addAll(encoded);
-      } else {
-        values.add(encoded);
-      }
     }
 
-    return values;
+    return result ?? const <String>[];
   }
 }

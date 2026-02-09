@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
+import 'package:qs_dart/src/qs.dart';
 import 'package:test/test.dart';
+
+import '../../support/fake_encoding.dart';
 
 void main() {
   group('EncodeOptions', () {
@@ -142,6 +145,24 @@ void main() {
             '  serializeDate: null,\n'
             '  encoder: null,\n'
             ')'),
+      );
+    });
+  });
+
+  group('EncodeOptions runtime validation', () {
+    test('throws for invalid charset', () {
+      final opts = const EncodeOptions(charset: FakeEncoding());
+      expect(
+        () => QS.encode({'a': 'b'}, opts),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('throws for invalid filter', () {
+      final opts = const EncodeOptions(filter: 123);
+      expect(
+        () => QS.encode({'a': 'b'}, opts),
+        throwsA(isA<ArgumentError>()),
       );
     });
   });
