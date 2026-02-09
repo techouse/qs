@@ -202,7 +202,7 @@ extension _$Encode on QS {
             obj is Iterable) {
           final Iterable<dynamic> iterableObj = obj;
           final List<dynamic> commaItems = iterableObj is List
-              ? List<dynamic>.from(iterableObj)
+              ? iterableObj
               : iterableObj.toList(growable: false);
 
           final List<dynamic> filteredItems = frame.commaCompactNulls
@@ -217,7 +217,7 @@ extension _$Encode on QS {
               : filteredItems;
 
           final List<dynamic> joinList = joinIterable is List
-              ? List<dynamic>.from(joinIterable)
+              ? joinIterable
               : joinIterable.toList(growable: false);
 
           if (joinList.isNotEmpty) {
