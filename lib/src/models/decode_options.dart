@@ -317,7 +317,12 @@ final class DecodeOptions with EquatableMixin {
     }
 
     if (decodeDotInKeys && !allowDots) {
-      throw ArgumentError('decodeDotInKeys requires allowDots to be true');
+      throw ArgumentError.value(
+        decodeDotInKeys,
+        'decodeDotInKeys',
+        'Invalid combination: decodeDotInKeys=$decodeDotInKeys requires '
+            'allowDots=true (currently allowDots=$allowDots).',
+      );
     }
 
     final num limit = parameterLimit;
