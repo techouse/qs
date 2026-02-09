@@ -1,4 +1,4 @@
-## 1.7.0-wip
+## 1.7.0
 
 * [FEAT] add `DecodeOptions.throwOnLimitExceeded` for strict limit enforcement on parameter, list, and depth overflows
 * [FIX] tolerate malformed UTF-8 when encoding `ByteBuffer` values to match Node `Buffer.toString('utf8')`
