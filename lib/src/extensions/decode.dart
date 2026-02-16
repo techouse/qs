@@ -27,10 +27,12 @@ part of '../qs.dart';
 /// string → structure pipeline used by `QS.decode`.
 extension _$Decode on QS {
   /// Interprets a single scalar value as a list element when the `comma`
-  /// option is enabled and a comma is present, and enforces `listLimit`.
+  /// option is enabled and a comma is present.
   ///
-  /// If `throwOnLimitExceeded` is true, exceeding `listLimit` will throw a
-  /// `RangeError`; otherwise the caller can decide how to degrade.
+  /// For comma-splits with non-negative `listLimit`, this method returns the
+  /// full split result and lets `_parseQueryStringValues` decide whether to
+  /// throw or convert to an overflow map. For negative `listLimit`, legacy
+  /// Dart-port semantics are preserved here.
   ///
   /// The `currentListLength` is used to guard incremental growth when we are
   /// already building a list for a given key path.
@@ -50,18 +52,19 @@ extension _$Decode on QS {
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
       final List<String> splitVal = val.split(',');
       if (options.throwOnLimitExceeded &&
-          (currentListLength + splitVal.length) > options.listLimit) {
+          options.listLimit < 0 &&
+          splitVal.isNotEmpty) {
         final String msg = options.listLimit < 0
             ? 'List parsing is disabled (listLimit < 0).'
             : 'List limit exceeded. Only ${options.listLimit} '
                 'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
         throw RangeError(msg);
       }
-      final int remaining = options.listLimit - currentListLength;
-      if (remaining <= 0) return const <String>[];
-      return splitVal.length <= remaining
-          ? splitVal
-          : splitVal.sublist(0, remaining);
+      if (options.listLimit < 0) {
+        final int remaining = options.listLimit - currentListLength;
+        if (remaining <= 0) return const <String>[];
+      }
+      return splitVal;
     }
 
     // Guard incremental growth of an existing list as we parse additional items.
@@ -84,8 +87,9 @@ extension _$Decode on QS {
   /// - charset sentinel detection (`utf8=`) per `qs`
   /// - duplicate key policy (combine/first/last)
   /// - parameter and list limits with optional throwing behavior
-  /// - Comma‑split growth honors `throwOnLimitExceeded` (see `_parseListValue`);
-  ///   empty‑bracket pushes (`[]=`) are created during structure building in `_parseObject`.
+  /// - Comma‑split overflow (`listLimit >= 0`) is enforced after decoding:
+  ///   throw in strict mode, otherwise convert to an overflow map.
+  /// - Empty‑bracket pushes (`[]=`) are created during structure building in `_parseObject`.
   static Map<String, dynamic> _parseQueryStringValues(
     String str, [
     DecodeOptions options = const DecodeOptions(),
@@ -187,6 +191,22 @@ extension _$Decode on QS {
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
       if (options.parseLists && part.contains('[]=')) {
         val = [val];
+      }
+
+      // Enforce comma-split overflow behavior to match Node `qs`:
+      // - strict mode throws
+      // - non-strict mode preserves all elements by converting to overflow map
+      if (options.comma &&
+          options.listLimit >= 0 &&
+          val is Iterable &&
+          val.length > options.listLimit) {
+        if (options.throwOnLimitExceeded) {
+          throw RangeError(
+            'List limit exceeded. Only ${options.listLimit} '
+            'element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
+          );
+        }
+        val = Utils.combine([], val, listLimit: options.listLimit);
       }
 
       // Duplicate key policy: combine/first/last (default: combine).
