@@ -2913,28 +2913,76 @@ void main() {
   });
 
   group('Targeted coverage additions', () {
-    test('comma splitting truncates to remaining list capacity', () {
+    test('comma splitting at limit stays as list', () {
       final result = QS.decode(
         'a=1,2,3',
-        const DecodeOptions(comma: true, listLimit: 2),
+        const DecodeOptions(comma: true, listLimit: 3),
       );
 
       final Iterable<dynamic> iterable = result['a'] as Iterable;
-      expect(iterable.toList(), equals(['1', '2']));
+      expect(iterable.toList(), equals(['1', '2', '3']));
+    });
+
+    test('comma splitting over limit converts to overflow map', () {
+      final result = QS.decode(
+        'a=1,2,3,4',
+        const DecodeOptions(comma: true, listLimit: 3),
+      );
+
+      final aValue = result['a'];
+      expect(aValue, {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+        '3': '4',
+      });
+      expect(Utils.isOverflow(aValue), isTrue);
     });
 
     test('comma splitting throws when limit exceeded in strict mode', () {
       expect(
         () => QS.decode(
-          'a=1,2',
+          'a=1,2,3,4',
           const DecodeOptions(
             comma: true,
-            listLimit: 1,
+            listLimit: 3,
             throwOnLimitExceeded: true,
           ),
         ),
         throwsA(isA<RangeError>()),
       );
+    });
+
+    test('GHSA payload throws when limit exceeded in strict mode', () {
+      final payload = 'a=${','.padLeft(25, ',')}';
+
+      expect(
+        () => QS.decode(
+          payload,
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('GHSA payload converts to overflow map without throw', () {
+      final payload = 'a=${','.padLeft(25, ',')}';
+      final result = QS.decode(
+        payload,
+        const DecodeOptions(
+          comma: true,
+          listLimit: 5,
+        ),
+      );
+
+      final aValue = result['a'];
+      expect(aValue, isA<Map<String, dynamic>>());
+      expect((aValue as Map<String, dynamic>).length, 26);
+      expect(Utils.isOverflow(aValue), isTrue);
     });
 
     test('strict depth throws when additional bracket groups remain', () {
