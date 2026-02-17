@@ -173,6 +173,18 @@ extension _$Decode on QS {
         );
       }
 
+      // Enforce comma-split overflow behavior before any normalization that can
+      // collapse iterables into scalars (e.g. numeric entity interpretation).
+      if (options.comma &&
+          options.listLimit >= 0 &&
+          val is Iterable &&
+          val.length > options.listLimit) {
+        if (options.throwOnLimitExceeded) {
+          throw RangeError(_listLimitExceededMessage(options.listLimit));
+        }
+        val = Utils.combine([], val, listLimit: options.listLimit);
+      }
+
       // Optional HTML numeric entity interpretation (legacy Latin-1 queries).
       if (val != null &&
           !Utils.isEmpty(val) &&
@@ -180,7 +192,7 @@ extension _$Decode on QS {
           charset == latin1) {
         if (val is Iterable) {
           val = Utils.interpretNumericEntities(_joinIterableToCommaString(val));
-        } else {
+        } else if (!(val is Map && Utils.isOverflow(val))) {
           val = Utils.interpretNumericEntities(val.toString());
         }
       }
@@ -188,22 +200,6 @@ extension _$Decode on QS {
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
       if (options.parseLists && part.contains('[]=')) {
         val = [val];
-      }
-
-      // Enforce comma-split overflow behavior to match Node `qs`:
-      // - strict mode throws
-      // - non-strict mode preserves all elements by converting to overflow map
-      if (options.comma &&
-          options.listLimit >= 0 &&
-          val is Iterable &&
-          val.length > options.listLimit) {
-        if (options.throwOnLimitExceeded) {
-          throw RangeError(
-            'List limit exceeded. Only ${options.listLimit} '
-            'element${options.listLimit == 1 ? '' : 's'} allowed in a list.',
-          );
-        }
-        val = Utils.combine([], val, listLimit: options.listLimit);
       }
 
       // Duplicate key policy: combine/first/last (default: combine).
