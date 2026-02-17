@@ -3111,7 +3111,8 @@ void main() {
     });
 
     test('GHSA payload throws when limit exceeded in strict mode', () {
-      final payload = 'a=${','.padLeft(25, ',')}';
+      final payload =
+          'a=${','.padLeft(25, ',')}'; // 25 commas => 26 elements after split.
 
       expect(
         () => QS.decode(
@@ -3127,7 +3128,8 @@ void main() {
     });
 
     test('GHSA payload converts to overflow map without throw', () {
-      final payload = 'a=${','.padLeft(25, ',')}';
+      final payload =
+          'a=${','.padLeft(25, ',')}'; // 25 commas => 26 elements after split.
       final result = QS.decode(
         payload,
         const DecodeOptions(
