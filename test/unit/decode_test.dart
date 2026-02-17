@@ -3044,6 +3044,47 @@ void main() {
       );
     });
 
+    test(
+        'comma strict limit still throws with latin1 numeric-entity interpretation',
+        () {
+      expect(
+        () => QS.decode(
+          'a=1,2,3,4',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 3,
+            throwOnLimitExceeded: true,
+            charset: latin1,
+            interpretNumericEntities: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test(
+        'comma overflow still converts to map with latin1 numeric-entity interpretation',
+        () {
+      final result = QS.decode(
+        'a=1,2,3,4',
+        const DecodeOptions(
+          comma: true,
+          listLimit: 3,
+          charset: latin1,
+          interpretNumericEntities: true,
+        ),
+      );
+
+      final aValue = result['a'];
+      expect(aValue, {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+        '3': '4',
+      });
+      expect(Utils.isOverflow(aValue), isTrue);
+    });
+
     test('GHSA payload throws when limit exceeded in strict mode', () {
       final payload = 'a=${','.padLeft(25, ',')}';
 
