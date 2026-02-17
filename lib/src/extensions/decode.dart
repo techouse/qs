@@ -67,11 +67,10 @@ extension _$Decode on QS {
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
         currentListLength >= options.listLimit) {
-      final String msg = options.listLimit < 0
-          ? 'List parsing is disabled (listLimit < 0).'
-          : 'List limit exceeded. Only ${options.listLimit} '
-              'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
-      throw RangeError(msg);
+      if (options.listLimit < 0) {
+        throw RangeError('List parsing is disabled (listLimit < 0).');
+      }
+      throw RangeError(_listLimitExceededMessage(options.listLimit));
     }
 
     return val;
@@ -236,6 +235,8 @@ extension _$Decode on QS {
     if (value is Iterable) return value.length;
     if (value is Map) {
       if (Utils.isOverflow(value)) {
+        // Overflow containers append by numeric index, so strict limit checks
+        // must use maxIndex + 1 rather than entry count (sparse keys included).
         int maxIndex = -1;
         for (final dynamic key in value.keys) {
           final int? parsed = int.tryParse(key.toString());
