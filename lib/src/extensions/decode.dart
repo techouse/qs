@@ -234,18 +234,8 @@ extension _$Decode on QS {
   static int? _listLikeCount(dynamic value) {
     if (value is Iterable) return value.length;
     if (value is Map) {
-      if (Utils.isOverflow(value)) {
-        // Overflow containers append by numeric index, so strict limit checks
-        // must use maxIndex + 1 rather than entry count (sparse keys included).
-        int maxIndex = -1;
-        for (final dynamic key in value.keys) {
-          final int? parsed = int.tryParse(key.toString());
-          if (parsed != null && parsed >= 0 && parsed > maxIndex) {
-            maxIndex = parsed;
-          }
-        }
-        return maxIndex + 1;
-      }
+      final int? overflowCount = Utils.overflowCount(value);
+      if (overflowCount != null) return overflowCount;
       return null;
     }
     return 1;

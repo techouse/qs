@@ -49,6 +49,13 @@ final class Utils {
   static bool isOverflow(dynamic obj) =>
       obj is Map && _overflowIndex[obj] != null;
 
+  /// Returns tracked overflow length (`maxIndex + 1`) or `null` if not overflow.
+  @internal
+  static int? overflowCount(dynamic obj) {
+    if (!isOverflow(obj) || obj is! Map) return null;
+    return _getOverflowIndex(obj) + 1;
+  }
+
   /// Returns the tracked max numeric index for an overflow map, or -1 if absent.
   static int _getOverflowIndex(Map obj) => _overflowIndex[obj] ?? -1;
 
