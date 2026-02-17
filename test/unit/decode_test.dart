@@ -3030,6 +3030,31 @@ void main() {
       );
     });
 
+    test(
+        'strict duplicate limit check uses max overflow index for sparse overflow maps',
+        () {
+      final sparseOverflow =
+          Utils.markOverflow(<String, dynamic>{'100': 'x'}, 100);
+      expect(Utils.isOverflow(sparseOverflow), isTrue);
+
+      expect(
+        () => QS.decode(
+          'a=first&a=second',
+          DecodeOptions(
+            listLimit: 3,
+            throwOnLimitExceeded: true,
+            decoder: (value, {charset, kind}) {
+              if (kind == DecodeKind.value && value == 'first') {
+                return sparseOverflow;
+              }
+              return value;
+            },
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
     test('comma splitting throws when limit exceeded in strict mode', () {
       expect(
         () => QS.decode(
