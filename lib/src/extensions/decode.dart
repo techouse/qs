@@ -57,8 +57,9 @@ extension _$Decode on QS {
         throw RangeError('List parsing is disabled (listLimit < 0).');
       }
       if (options.listLimit < 0) {
-        final int remaining = options.listLimit - currentListLength;
-        if (remaining <= 0) return const <String>[];
+        // For negative list limits, comma growth is always capped at zero
+        // (with currentListLength always >= 0 at call sites).
+        return const <String>[];
       }
       return splitVal;
     }
