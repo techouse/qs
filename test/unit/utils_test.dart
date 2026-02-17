@@ -956,9 +956,11 @@ void main() {
           final overflow =
               Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
           expect(Utils.isOverflow(overflow), isTrue);
+          expect(Utils.overflowCount(overflow), 2);
 
           final merged = Utils.merge(overflow, 'c') as Map<String, dynamic>;
           expect(merged, {'0': 'a', '1': 'b', '2': 'c'});
+          expect(Utils.overflowCount(merged), 3);
         });
 
         test('merges overflow object into primitive', () {
@@ -999,6 +1001,15 @@ void main() {
             '1': 'b',
           });
           expect(Utils.isOverflow(merged), isFalse);
+          expect(Utils.overflowCount(merged), isNull);
+        });
+
+        test('overflowCount follows tracked max index for sparse overflow maps',
+            () {
+          final sparse = Utils.markOverflow(<String, dynamic>{'100': 'x'}, 100);
+
+          expect(Utils.isOverflow(sparse), isTrue);
+          expect(Utils.overflowCount(sparse), 101);
         });
       });
     });
