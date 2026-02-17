@@ -41,8 +41,8 @@ extension _$Decode on QS {
   /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
   /// when `throwOnLimitExceeded` is `true` and `listLimit < 0`, any non‑empty split throws
   /// immediately; when `false`, growth is effectively capped at zero (the split produces
-  /// an empty list). Empty‑bracket pushes (`a[]=`) are handled during structure building
-  /// in `_parseObject`.
+  /// an empty list). Empty‑bracket pushes (`a[]=`) are enforced in
+  /// `_parseQueryStringValues`.
   static dynamic _parseListValue(
     dynamic val,
     DecodeOptions options,
@@ -66,10 +66,8 @@ extension _$Decode on QS {
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
+        options.listLimit >= 0 &&
         currentListLength >= options.listLimit) {
-      if (options.listLimit < 0) {
-        throw RangeError('List parsing is disabled (listLimit < 0).');
-      }
       throw RangeError(_listLimitExceededMessage(options.listLimit));
     }
 
@@ -198,6 +196,9 @@ extension _$Decode on QS {
 
       // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
       if (options.parseLists && part.contains('[]=')) {
+        if (options.throwOnLimitExceeded && options.listLimit < 0) {
+          throw RangeError('List parsing is disabled (listLimit < 0).');
+        }
         val = [val];
       }
 
