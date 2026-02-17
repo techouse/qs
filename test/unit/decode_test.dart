@@ -2048,6 +2048,28 @@ void main() {
       );
     });
 
+    test(
+        'negative list limit strict mode still decodes non-list values without growth',
+        () {
+      expect(
+        QS.decode(
+          'a=b',
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        equals({'a': 'b'}),
+      );
+
+      expect(
+        QS.decode(
+          'a[0]=b',
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        equals({
+          'a': {'0': 'b'}
+        }),
+      );
+    });
+
     test('applies list limit to nested lists', () {
       expect(
         () => QS.decode(
