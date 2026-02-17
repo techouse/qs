@@ -2937,6 +2937,45 @@ void main() {
       );
     });
 
+    test('GHSA payload throws when list limit is exceeded in strict mode', () {
+      final payload =
+          'a=${','.padLeft(25, ',')}'; // 25 commas => 26 elements after split.
+
+      expect(
+        () => QS.decode(
+          payload,
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            contains('List limit exceeded'),
+          ),
+        ),
+      );
+    });
+
+    test('GHSA payload remains bounded in non-strict mode', () {
+      final payload =
+          'a=${','.padLeft(25, ',')}'; // 25 commas => 26 elements after split.
+      final result = QS.decode(
+        payload,
+        const DecodeOptions(
+          comma: true,
+          listLimit: 5,
+        ),
+      );
+
+      final aValue = result['a'];
+      expect(aValue, isA<Iterable<dynamic>>());
+      expect((aValue as Iterable<dynamic>).length, 5);
+    });
+
     test('strict depth throws when additional bracket groups remain', () {
       expect(
         () => QS.decode(
