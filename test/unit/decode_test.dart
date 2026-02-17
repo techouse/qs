@@ -223,6 +223,39 @@ void main() {
       );
     });
 
+    test('comma: true with negative listLimit returns empty list', () {
+      expect(
+        QS.decode(
+          'a=1,2',
+          const DecodeOptions(
+            comma: true,
+            listLimit: -1,
+          ),
+        ),
+        equals({'a': []}),
+      );
+    });
+
+    test('comma: true with negative listLimit throws in strict mode', () {
+      expect(
+        () => QS.decode(
+          'a=1,2',
+          const DecodeOptions(
+            comma: true,
+            listLimit: -1,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            contains('List parsing is disabled'),
+          ),
+        ),
+      );
+    });
+
     test('allows enabling dot notation', () {
       expect(QS.decode('a.b=c'), equals({'a.b': 'c'}));
       expect(
@@ -2937,6 +2970,64 @@ void main() {
         '3': '4',
       });
       expect(Utils.isOverflow(aValue), isTrue);
+    });
+
+    test('comma splitting across duplicate keys throws in strict mode', () {
+      expect(
+        () => QS.decode(
+          'a=1,2&a=3,4',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 3,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('comma splitting across duplicate keys over limit converts to map',
+        () {
+      final result = QS.decode(
+        'a=1,2&a=3,4',
+        const DecodeOptions(
+          comma: true,
+          listLimit: 3,
+        ),
+      );
+
+      final aValue = result['a'];
+      expect(aValue, {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+        '3': '4',
+      });
+      expect(Utils.isOverflow(aValue), isTrue);
+    });
+
+    test(
+        'strict duplicate limit check counts existing overflow-map values from decoder',
+        () {
+      final overflow = Utils.combine([], ['1', '2', '3', '4'], listLimit: 3);
+      expect(Utils.isOverflow(overflow), isTrue);
+
+      expect(
+        () => QS.decode(
+          'a=first&a=second',
+          DecodeOptions(
+            listLimit: 3,
+            throwOnLimitExceeded: true,
+            decoder: (value, {charset, kind}) {
+              if (kind == DecodeKind.value && value == 'first') {
+                return overflow;
+              }
+              return value;
+            },
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
     });
 
     test('comma splitting throws when limit exceeded in strict mode', () {
