@@ -54,11 +54,7 @@ extension _$Decode on QS {
       if (options.throwOnLimitExceeded &&
           options.listLimit < 0 &&
           splitVal.isNotEmpty) {
-        final String msg = options.listLimit < 0
-            ? 'List parsing is disabled (listLimit < 0).'
-            : 'List limit exceeded. Only ${options.listLimit} '
-                'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
-        throw RangeError(msg);
+        throw RangeError('List parsing is disabled (listLimit < 0).');
       }
       if (options.listLimit < 0) {
         final int remaining = options.listLimit - currentListLength;
@@ -212,6 +208,15 @@ extension _$Decode on QS {
       // Duplicate key policy: combine/first/last (default: combine).
       final bool existing = obj.containsKey(key);
       if (existing && options.duplicates == Duplicates.combine) {
+        if (options.throwOnLimitExceeded && options.listLimit >= 0) {
+          final int? existingCount = _listLikeCount(obj[key]);
+          final int? incomingCount = _listLikeCount(val);
+          if (existingCount != null &&
+              incomingCount != null &&
+              existingCount + incomingCount > options.listLimit) {
+            throw RangeError(_listLimitExceededMessage(options.listLimit));
+          }
+        }
         obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
       } else if (!existing || options.duplicates == Duplicates.last) {
         obj[key] = val;
@@ -219,6 +224,33 @@ extension _$Decode on QS {
     }
 
     return obj;
+  }
+
+  /// Standard error text used for list limit overflows.
+  static String _listLimitExceededMessage(int listLimit) =>
+      'List limit exceeded. Only $listLimit '
+      'element${listLimit == 1 ? '' : 's'} allowed in a list.';
+
+  /// Returns element count for values that participate in list growth checks.
+  ///
+  /// Maps that are not marked as overflow containers are treated as object values
+  /// and return `null` (not list-like).
+  static int? _listLikeCount(dynamic value) {
+    if (value is Iterable) return value.length;
+    if (value is Map) {
+      if (Utils.isOverflow(value)) {
+        int maxIndex = -1;
+        for (final dynamic key in value.keys) {
+          final int? parsed = int.tryParse(key.toString());
+          if (parsed != null && parsed >= 0 && parsed > maxIndex) {
+            maxIndex = parsed;
+          }
+        }
+        return maxIndex + 1;
+      }
+      return null;
+    }
+    return 1;
   }
 
   /// Reduces a list of key segments (e.g. `["a", "[b]", "[0]"]`) and a
