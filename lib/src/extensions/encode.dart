@@ -35,70 +35,14 @@ extension _$Encode on QS {
   /// - [undefined]: Marks a *missing* value (e.g., absent map key). When `true`, nothing is emitted.
   /// - [sideChannel]: Active-path set used for cycle detection across traversal frames.
   /// - [prefix]: Root path seed used to initialize the first [KeyPathNode].
-  ///   If `addQueryPrefix` is true at the root, we start with `?`.
-  /// - [generateArrayPrefix]: Strategy for array key generation (brackets/indices/repeat/comma).
-  /// - [commaRoundTrip]: When true and a single-element list is encountered under `.comma`, emit `[]` to ensure the value round-trips back to an array.
-  /// - [commaCompactNulls]: When true, nulls are omitted from `.comma` lists.
-  /// - [allowEmptyLists]: If a list is empty, emit `key[]` instead of skipping.
-  /// - [strictNullHandling]: If a present value is `null`, emit only the key (no `=`) instead of `key=`.
-  /// - [skipNulls]: Skip keys whose value is `null`.
-  /// - [encodeDotInKeys]: Replace literal `.` in keys with `%2E`.
-  /// - [encoder]: Optional percent-encoder for values (and keys when `encodeValuesOnly == false`).
-  /// - [serializeDate]: Optional serializer for `DateTime` → String *before* encoding.
-  /// - [sort]: Optional comparator for determining key order at each object depth.
-  /// - [filter]: Either a function `(key, value) → value` or an iterable that constrains emitted keys.
-  /// - [allowDots]: When true, dot notation is used between path segments instead of brackets.
-  /// - [format]: RFC3986 or RFC1738 — influences space/plus behavior via [formatter].
-  /// - [formatter]: Converts scalar strings to their final on-wire form (applies percent-encoding).
-  /// - [encodeValuesOnly]: When true, keys are left as-is and only values are encoded by [encoder].
-  /// - [charset]: Present for parity; encoding is delegated to [encoder]/[formatter].
-  /// - [addQueryPrefix]: At the root, prefix output with `?`.
+  /// - [rootConfig]: Immutable encode options shared across traversal frames.
   static dynamic _encode(
     dynamic object, {
     required bool undefined,
     required Set<Object> sideChannel,
-    String? prefix,
-    ListFormatGenerator? generateArrayPrefix,
-    bool? commaRoundTrip,
-    bool commaCompactNulls = false,
-    bool allowEmptyLists = false,
-    bool strictNullHandling = false,
-    bool skipNulls = false,
-    bool encodeDotInKeys = false,
-    Encoder? encoder,
-    DateSerializer? serializeDate,
-    Sorter? sort,
-    dynamic filter,
-    bool allowDots = false,
-    Format format = Format.rfc3986,
-    Formatter? formatter,
-    bool encodeValuesOnly = false,
-    Encoding charset = utf8,
-    bool addQueryPrefix = false,
+    required String prefix,
+    required EncodeConfig rootConfig,
   }) {
-    prefix ??= addQueryPrefix ? '?' : '';
-    generateArrayPrefix ??= _indicesGenerator;
-    commaRoundTrip ??= identical(generateArrayPrefix, _commaGenerator);
-    formatter ??= format.formatter;
-    final EncodeConfig rootConfig = EncodeConfig(
-      generateArrayPrefix: generateArrayPrefix,
-      commaRoundTrip: commaRoundTrip,
-      commaCompactNulls: commaCompactNulls,
-      allowEmptyLists: allowEmptyLists,
-      strictNullHandling: strictNullHandling,
-      skipNulls: skipNulls,
-      encodeDotInKeys: encodeDotInKeys,
-      encoder: encoder,
-      serializeDate: serializeDate,
-      sort: sort,
-      filter: filter,
-      allowDots: allowDots,
-      format: format,
-      formatter: formatter,
-      encodeValuesOnly: encodeValuesOnly,
-      charset: charset,
-    );
-
     List<String>? result;
     final List<EncodeFrame> stack = [
       EncodeFrame(

@@ -140,6 +140,30 @@ final class QS {
 
     // Active-path set used by the encoder for cycle detection across frames.
     final Set<Object> sideChannel = HashSet<Object>.identity();
+    final ListFormatGenerator gen = options.listFormat.generator;
+    final bool crt = identical(gen, ListFormat.comma.generator) &&
+        options.commaRoundTrip == true;
+    final bool ccn = identical(gen, ListFormat.comma.generator) &&
+        options.commaCompactNulls == true;
+    final EncodeConfig rootConfig = EncodeConfig(
+      generateArrayPrefix: gen,
+      commaRoundTrip: crt,
+      commaCompactNulls: ccn,
+      allowEmptyLists: options.allowEmptyLists,
+      strictNullHandling: options.strictNullHandling,
+      skipNulls: options.skipNulls,
+      encodeDotInKeys: options.encodeDotInKeys,
+      encoder: options.encode ? options.encoder : null,
+      serializeDate: options.serializeDate,
+      sort: options.sort,
+      filter: options.filter,
+      allowDots: options.allowDots,
+      format: options.format,
+      formatter: options.formatter,
+      encodeValuesOnly: options.encodeValuesOnly,
+      charset: options.charset,
+    );
+
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
 
@@ -147,34 +171,12 @@ final class QS {
         continue;
       }
 
-      final ListFormatGenerator gen = options.listFormat.generator;
-      final bool crt = identical(gen, ListFormat.comma.generator) &&
-          options.commaRoundTrip == true;
-      final bool ccn = identical(gen, ListFormat.comma.generator) &&
-          options.commaCompactNulls == true;
-
       final encoded = _$Encode._encode(
         obj[key],
         undefined: !obj.containsKey(key),
-        prefix: key,
-        generateArrayPrefix: gen,
-        commaRoundTrip: crt,
-        commaCompactNulls: ccn,
-        allowEmptyLists: options.allowEmptyLists,
-        strictNullHandling: options.strictNullHandling,
-        skipNulls: options.skipNulls,
-        encodeDotInKeys: options.encodeDotInKeys,
-        encoder: options.encode ? options.encoder : null,
-        serializeDate: options.serializeDate,
-        filter: options.filter,
-        sort: options.sort,
-        allowDots: options.allowDots,
-        format: options.format,
-        formatter: options.formatter,
-        encodeValuesOnly: options.encodeValuesOnly,
-        charset: options.charset,
-        addQueryPrefix: options.addQueryPrefix,
         sideChannel: sideChannel,
+        prefix: key,
+        rootConfig: rootConfig,
       );
 
       if (encoded is Iterable) {
