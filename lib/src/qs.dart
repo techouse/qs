@@ -1,3 +1,4 @@
+import 'dart:collection' show HashSet;
 import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
@@ -7,11 +8,12 @@ import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
+import 'package:qs_dart/src/models/encode_config.dart';
 import 'package:qs_dart/src/models/encode_frame.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
+import 'package:qs_dart/src/models/key_path_node.dart';
 import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
-import 'package:weak_map/weak_map.dart';
 
 // Re-export for public API: consumers can `import 'package:qs_dart/qs.dart'` and access DecodeKind
 export 'package:qs_dart/src/enums/decode_kind.dart';
@@ -136,8 +138,8 @@ final class QS {
       objKeys.sort(options.sort);
     }
 
-    // Internal side-channel used by the encoder to detect cycles and share state.
-    final WeakMap sideChannel = WeakMap();
+    // Active-path set used by the encoder for cycle detection across frames.
+    final Set<Object> sideChannel = HashSet<Object>.identity();
     for (int i = 0; i < objKeys.length; i++) {
       final key = objKeys[i];
 
