@@ -1,4 +1,4 @@
-## 1.7.1-wip
+## 1.7.1
 
 * [FIX] restore robust cyclic detection when `filter` callbacks wrap values in fresh containers by tracking object identity before filter/date transformations
 * [FIX] improve deep path handling in encoder key materialization/dot-encoding via iterative `KeyPathNode` caching (avoids recursive overflow risk and reuses ancestor caches)
