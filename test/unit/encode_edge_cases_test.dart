@@ -86,6 +86,37 @@ void main() {
       expect(encoded.contains('b%5Bz%5D=1'), isTrue);
     });
 
+    test(
+        'cycle detection still throws when filter wraps maps with fresh containers',
+        () {
+      final cyclic = <String, dynamic>{};
+      cyclic['self'] = cyclic;
+
+      var wraps = 0;
+      final options = EncodeOptions(
+        encode: false,
+        filter: (prefix, value) {
+          if (value is Map) {
+            wraps++;
+            if (wraps > 8) {
+              // Keep this bounded so a regression fails quickly instead of
+              // risking unbounded expansion during traversal.
+              return 'stop';
+            }
+
+            return {'wrapped': value};
+          }
+
+          return value;
+        },
+      );
+
+      expect(
+        () => QS.encode({'root': cyclic}, options),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
     test('strictNullHandling with custom encoder emits only encoded key', () {
       final encoded = QS.encode(
           {

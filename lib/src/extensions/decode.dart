@@ -191,10 +191,19 @@ extension _$Decode on QS {
 
       // Duplicate key policy: combine/first/last (default: combine).
       final bool existing = obj.containsKey(key);
-      if (existing && options.duplicates == Duplicates.combine) {
-        obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
-      } else if (!existing || options.duplicates == Duplicates.last) {
-        obj[key] = val;
+      switch ((existing, options.duplicates)) {
+        case (true, Duplicates.combine):
+          // Existing key + `combine` policy: merge old/new values.
+          obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
+          break;
+        case (false, _):
+        case (true, Duplicates.last):
+          // New key, or `last` policy: store the current value.
+          obj[key] = val;
+          break;
+        case (true, Duplicates.first):
+          // Existing key + `first` policy: keep the original value.
+          break;
       }
     }
 
@@ -285,7 +294,7 @@ extension _$Decode on QS {
         final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
         final String cleanRoot =
             wasBracketed ? root.slice(1, root.length - 1) : root;
-        String decodedRoot = options.decodeDotInKeys
+        String decodedRoot = options.decodeDotInKeys && cleanRoot.contains('%2')
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
 
@@ -301,8 +310,8 @@ extension _$Decode on QS {
           int opens = 0, closes = 0;
           for (int k = 0; k < decodedRoot.length; k++) {
             final cu = decodedRoot.codeUnitAt(k);
-            if (cu == 0x5B) opens++;
-            if (cu == 0x5D) closes++;
+            if (cu == 0x5B) opens++; // '['
+            if (cu == 0x5D) closes++; // ']'
           }
           if (opens > closes) {
             decodedRoot = decodedRoot.substring(0, decodedRoot.length - 1);
@@ -404,9 +413,9 @@ extension _$Decode on QS {
       // Balance nested '[' and ']' within this group.
       while (i < n) {
         final int cu = key.codeUnitAt(i);
-        if (cu == 0x5B) {
+        if (cu == 0x5B /* '[' */) {
           level++;
-        } else if (cu == 0x5D) {
+        } else if (cu == 0x5D /* ']' */) {
           level--;
           if (level == 0) {
             close = i;

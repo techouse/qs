@@ -1,3 +1,12 @@
+## 1.7.1-wip
+
+* [FIX] restore robust cyclic detection when `filter` callbacks wrap values in fresh containers by tracking object identity before filter/date transformations
+* [FIX] improve deep path handling in encoder key materialization/dot-encoding via iterative `KeyPathNode` caching (avoids recursive overflow risk and reuses ancestor caches)
+* [CHORE] refactor encoder internals to share immutable frame config through new `EncodeConfig` and reduce per-frame option duplication
+* [CHORE] replace `weak_map` usage in encode cycle tracking with identity-based `Set<Object>` side-channel and remove `weak_map` dependency
+* [CHORE] expand encoder regression coverage with new tests for filter-wrapped cycles, `KeyPathNode` caching/encoding edge cases, and `EncodeConfig.copyWith` sentinel behavior
+* [CHORE] refine decode internals with clearer duplicate-handling branching and a small dot-decoding fast-path guard (`cleanRoot.contains('%2')`)
+
 ## 1.7.0
 
 * [FEAT] add `DecodeOptions.throwOnLimitExceeded` for strict limit enforcement on parameter, list, and depth overflows
