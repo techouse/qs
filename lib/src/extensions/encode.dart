@@ -400,7 +400,9 @@ extension _$Encode on QS {
               frame.seqList != null
           ? null
           : config.encoder;
-      final EncodeConfig childConfig = config.withEncoder(childEncoder);
+      final EncodeConfig childConfig = identical(childEncoder, config.encoder)
+          ? config
+          : config.withEncoder(childEncoder);
 
       stack.add(
         EncodeFrame(
