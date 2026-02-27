@@ -5334,11 +5334,181 @@ void main() {
       );
     });
 
+    test(
+        'deep single-key map chain encodes deterministically with encode=false',
+        () {
+      Map<String, dynamic> payload = <String, dynamic>{'leaf': 'x'};
+      for (int i = 0; i < 12000; i++) {
+        payload = <String, dynamic>{'a': payload};
+      }
+
+      final String encoded =
+          QS.encode(payload, const EncodeOptions(encode: false));
+
+      expect(encoded.length, equals(36006));
+      expect(encoded.startsWith('a[a][a][a]'), isTrue);
+      expect(encoded.endsWith('[leaf]=x'), isTrue);
+    });
+
+    test('generic path decodes ByteBuffer with utf8 and latin1 charsets', () {
+      final ByteBuffer utf8Buffer = Uint8List.fromList([0x68, 0x69]).buffer;
+      final ByteBuffer latin1Buffer = Uint8List.fromList([0xE4]).buffer;
+
+      expect(
+        QS.encode(
+          {'a': utf8Buffer},
+          const EncodeOptions(encode: false, allowDots: true),
+        ),
+        equals('a=hi'),
+      );
+      expect(
+        QS.encode(
+          {'a': latin1Buffer},
+          const EncodeOptions(encode: false, allowDots: true, charset: latin1),
+        ),
+        equals('a=ä'),
+      );
+    });
+
+    test('generic path sorts list indices when sort callback is provided', () {
+      int reverseLex(dynamic a, dynamic b) =>
+          b.toString().compareTo(a.toString());
+
+      expect(
+        QS.encode(
+          {
+            'a': ['x', 'y']
+          },
+          EncodeOptions(encode: false, sort: reverseLex),
+        ),
+        equals('a[1]=y&a[0]=x'),
+      );
+    });
+
+    test('linear fast path emits trailing equals for null leaf', () {
+      expect(
+        QS.encode(
+          {
+            'a': {'b': null}
+          },
+          const EncodeOptions(encode: false),
+        ),
+        equals('a[b]='),
+      );
+    });
+
+    test('linear fast path decodes ByteBuffer with utf8 charset', () {
+      final ByteBuffer buffer = Uint8List.fromList([0x68, 0x69]).buffer;
+      expect(
+        QS.encode(
+          {'a': buffer},
+          const EncodeOptions(encode: false),
+        ),
+        equals('a=hi'),
+      );
+    });
+
+    test('multi-key map branch preserves output under encode=false', () {
+      expect(
+        QS.encode(
+          {
+            'a': {'x': 1, 'y': 2}
+          },
+          const EncodeOptions(encode: false),
+        ),
+        equals('a[x]=1&a[y]=2'),
+      );
+    });
+
+    test('custom filter preserves output with strictNullHandling', () {
+      expect(
+        QS.encode(
+          {
+            'a': {'b': null}
+          },
+          EncodeOptions(
+            encode: false,
+            strictNullHandling: true,
+            filter: (String _, dynamic value) => value,
+          ),
+        ),
+        equals('a[b]'),
+      );
+    });
+
+    test(
+        'strictNullHandling key-only branch keeps %20 under rfc1738 (Node qs parity)',
+        () {
+      expect(
+        QS.encode(
+          {'a b': null},
+          const EncodeOptions(
+            strictNullHandling: true,
+            format: Format.rfc1738,
+          ),
+        ),
+        equals('a%20b'),
+      );
+    });
+
+    test('allowDots mode preserves output under encode=false', () {
+      expect(
+        QS.encode(
+          {
+            'a': {
+              'b': {'c': 1}
+            }
+          },
+          const EncodeOptions(
+            encode: false,
+            allowDots: true,
+          ),
+        ),
+        equals('a.b.c=1'),
+      );
+    });
+
+    test('comma mode preserves output under encode=false', () {
+      expect(
+        QS.encode(
+          {
+            'a': ['x']
+          },
+          const EncodeOptions(
+            encode: false,
+            listFormat: ListFormat.comma,
+            commaRoundTrip: true,
+          ),
+        ),
+        equals('a[]=x'),
+      );
+    });
+
+    test('linear fast path falls back for unsupported scalar types', () {
+      expect(
+        QS.encode(
+          {'a': #sym},
+          const EncodeOptions(encode: false),
+        ),
+        isEmpty,
+      );
+    });
+
     test('cycle detection throws RangeError', () {
       final map = <String, dynamic>{};
       map['self'] = map; // self reference
       expect(
         () => QS.encode(map),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('linear fast path still throws on active-path cycles', () {
+      final map = <String, dynamic>{};
+      map['self'] = map;
+
+      expect(
+        () => QS.encode(map, const EncodeOptions(encode: false)),
         throwsA(isA<RangeError>()),
       );
     });

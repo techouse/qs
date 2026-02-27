@@ -1314,6 +1314,14 @@ void main() {
     });
 
     group('Utils.merge edge branches', () {
+      test('returns non-overflow map target unchanged for scalar source', () {
+        final target = <String, dynamic>{'a': 1};
+        final result = Utils.merge(target, 'x');
+
+        expect(result, same(target));
+        expect(result, equals({'a': 1}));
+      });
+
       test('normalizes to map when Undefined persists and parseLists is false',
           () {
         final result = Utils.merge(
