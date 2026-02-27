@@ -58,6 +58,18 @@ void main() {
       expect(identical(first, second), isTrue);
     });
 
+    test('asDotEncoded reuses cached encoded ancestor for appended child', () {
+      final root = KeyPathNode.fromMaterialized('a.b');
+      expect(root.asDotEncoded().materialize(), equals('a%2Eb'));
+
+      final child = root.append('[c.d]');
+      final encodedFirst = child.asDotEncoded();
+      final encodedSecond = child.asDotEncoded();
+
+      expect(encodedFirst.materialize(), equals('a%2Eb[c%2Ed]'));
+      expect(identical(encodedFirst, encodedSecond), isTrue);
+    });
+
     test('asDotEncoded handles deep uncached chains without recursion', () {
       KeyPathNode node = KeyPathNode.fromMaterialized('root.part');
       for (int i = 0; i < 5000; i++) {
@@ -92,6 +104,21 @@ void main() {
       expect(
           encodedFirst.materialize(), equals('a%2Eb[c%2Ed][e%2Ef][g%2Eh][i]'));
       expect(identical(encodedFirst, encodedSecond), isTrue);
+    });
+
+    test('materialize handles very deep chains with stable output', () {
+      KeyPathNode node = KeyPathNode.fromMaterialized('a');
+      for (int i = 0; i < 12000; i++) {
+        node = node.append('[a]');
+      }
+
+      final String first = node.materialize();
+      final String second = node.materialize();
+
+      expect(first.length, equals(36001));
+      expect(first.startsWith('a[a][a][a]'), isTrue);
+      expect(first.endsWith('[a][a][a]'), isTrue);
+      expect(identical(first, second), isTrue);
     });
   });
 }

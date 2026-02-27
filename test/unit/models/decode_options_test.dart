@@ -8,6 +8,31 @@ import 'package:test/test.dart';
 
 import '../../support/fake_encoding.dart';
 
+final class _AssertThenInvalidEncoding extends Encoding {
+  int _checks = 0;
+
+  @override
+  String get name => '_AssertThenInvalidEncoding';
+
+  @override
+  Converter<List<int>, String> get decoder => utf8.decoder;
+
+  @override
+  Converter<String, List<int>> get encoder => utf8.encoder;
+
+  @override
+  bool operator ==(Object other) {
+    _checks++;
+    if (_checks == 1 && identical(other, utf8)) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => 0;
+}
+
 void main() {
   group('DecodeOptions', () {
     test('copyWith no modifications', () {
@@ -204,6 +229,15 @@ void main() {
           isA<ArgumentError>(),
           isA<AssertionError>(),
         )),
+      );
+    });
+
+    test('runtime charset validation can still reject unstable encodings', () {
+      final options = DecodeOptions(charset: _AssertThenInvalidEncoding());
+
+      expect(
+        () => QS.decode('a=b', options),
+        throwsA(isA<ArgumentError>()),
       );
     });
   });

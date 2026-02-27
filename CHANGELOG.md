@@ -1,3 +1,11 @@
+## 1.7.2-wip
+
+* [PERF] optimize deep `encode=false` workloads with a guarded single-key linear map fast path, segment-string reuse, and lower-allocation top-level fragment assembly
+* [PERF] refactor iterative encoder traversal to phase-driven frames, removing per-child callback allocation and preserving existing cycle/null/comma semantics
+* [PERF] make `KeyPathNode.materialize()` linear-time by replacing per-step `toString()` materialization with one final string build
+* [CHORE] add `tool/perf_snapshot.dart` for repeatable deep encode snapshots (`2000/5000/12000`, median-of-7 with warmup)
+* [CHORE] expand encode/key-path regression coverage for deep chains and fast-path fallback scenarios
+
 ## 1.7.1
 
 * [FIX] restore robust cyclic detection when `filter` callbacks wrap values in fresh containers by tracking object identity before filter/date transformations
