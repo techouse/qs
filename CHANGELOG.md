@@ -1,4 +1,4 @@
-## 1.7.2-wip
+## 1.7.2
 
 * [PERF] optimize deep `encode=false` workloads with a guarded single-key linear map fast path, segment-string reuse, and lower-allocation top-level fragment assembly
 * [PERF] refactor iterative encoder traversal to phase-driven frames, removing per-child callback allocation and preserving existing cycle/null/comma semantics
