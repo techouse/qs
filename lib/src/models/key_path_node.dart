@@ -10,6 +10,8 @@ import 'package:meta/meta.dart' show internal;
 /// at leaf emission points.
 @internal
 final class KeyPathNode {
+  static const int _materializeCacheNodeLimit = 8;
+
   KeyPathNode._(this._parent, this._segment)
       : _depth = (_parent?._depth ?? 0) + 1;
 
@@ -83,6 +85,9 @@ final class KeyPathNode {
       return _materialized!;
     }
 
+    // Reuse the nearest cached ancestor path (if any), then cache a bounded
+    // subset of traversed suffix nodes to keep sibling-prefix reuse while
+    // avoiding O(depth^2) string rebuilding on deep uncached chains.
     final List<KeyPathNode> suffixNodes = [];
     KeyPathNode? current = this;
     String base = '';
@@ -96,15 +101,48 @@ final class KeyPathNode {
       current = current._parent;
     }
 
+    final int suffixCount = suffixNodes.length;
+    final List<int> prefixLengths =
+        List<int>.filled(suffixCount, 0, growable: false);
+
     final StringBuffer out = StringBuffer(base);
-    for (int i = suffixNodes.length - 1; i >= 0; i--) {
+    int forwardIndex = 0;
+    int prefixLength = base.length;
+    for (int i = suffixCount - 1; i >= 0; i--) {
       final KeyPathNode node = suffixNodes[i];
       out.write(node._segment);
-      node._materialized ??= out.toString();
+      prefixLength += node._segment.length;
+      prefixLengths[forwardIndex++] = prefixLength;
     }
 
-    // Safe: this node is part of suffixNodes when uncached, so the loop above
-    // always initializes `_materialized` before this return.
+    final String materialized = out.toString();
+    _materialized = materialized;
+
+    void cacheForwardIndex(int index) {
+      final KeyPathNode node = suffixNodes[suffixCount - 1 - index];
+      node._materialized ??= materialized.substring(0, prefixLengths[index]);
+    }
+
+    int cachedNodes = 0;
+    // Always cache this node (leaf of the suffix path).
+    cacheForwardIndex(suffixCount - 1);
+    cachedNodes++;
+
+    // Cache the branch-root node (closest to the already-cached ancestor) when available.
+    if (suffixCount > 1 && cachedNodes < _materializeCacheNodeLimit) {
+      cacheForwardIndex(0);
+      cachedNodes++;
+    }
+
+    // Cache additional nodes from the leaf side up to the configured limit.
+    for (int index = suffixCount - 2;
+        index > 0 && cachedNodes < _materializeCacheNodeLimit;
+        index--) {
+      cacheForwardIndex(index);
+      cachedNodes++;
+    }
+
+    // Safe: leaf cache assignment above always initializes `_materialized`.
     return _materialized!;
   }
 
