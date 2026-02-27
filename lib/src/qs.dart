@@ -3,6 +3,7 @@ import 'dart:convert' show latin1, utf8, Encoding;
 import 'dart:typed_data' show ByteBuffer;
 
 import 'package:qs_dart/src/enums/duplicates.dart';
+import 'package:qs_dart/src/enums/encode_phase.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
@@ -115,7 +116,17 @@ final class QS {
       _ => <String, dynamic>{},
     };
 
-    final List<String> keys = [];
+    final StringBuffer payload = StringBuffer();
+    bool hasPayload = false;
+    final String delimiter = options.delimiter;
+
+    void addFragment(String value) {
+      if (hasPayload) {
+        payload.write(delimiter);
+      }
+      payload.write(value);
+      hasPayload = true;
+    }
 
     // Nothing to encode.
     if (obj.isEmpty) {
@@ -181,15 +192,14 @@ final class QS {
 
       if (encoded is Iterable) {
         for (final e in encoded) {
-          if (e != null) keys.add(e as String);
+          if (e != null) {
+            addFragment(e as String);
+          }
         }
       } else if (encoded != null) {
-        keys.add(encoded as String);
+        addFragment(encoded as String);
       }
     }
-
-    // Join all encoded segments with the chosen delimiter.
-    final String joined = keys.join(options.delimiter);
     final StringBuffer out = StringBuffer();
 
     if (options.addQueryPrefix) {
@@ -210,8 +220,8 @@ final class QS {
     }
 
     // Append the payload after any optional prefix/sentinel.
-    if (joined.isNotEmpty) {
-      out.write(joined);
+    if (hasPayload) {
+      out.write(payload);
     }
 
     return out.toString();

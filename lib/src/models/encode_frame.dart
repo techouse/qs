@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart' show internal;
+import 'package:qs_dart/src/enums/encode_phase.dart';
 import 'package:qs_dart/src/models/encode_config.dart';
 import 'package:qs_dart/src/models/key_path_node.dart';
 
@@ -15,7 +16,6 @@ final class EncodeFrame {
     required this.sideChannel,
     required this.path,
     required this.config,
-    required this.onResult,
   });
 
   /// Current value being encoded at this stack level.
@@ -33,11 +33,8 @@ final class EncodeFrame {
   /// Shared immutable options for this frame and its siblings.
   final EncodeConfig config;
 
-  /// Callback invoked with this frame's encoded fragments.
-  final void Function(List<String> result) onResult;
-
-  /// Whether this frame has been initialized (keys/path computed).
-  bool prepared = false;
+  /// Current traversal phase for this frame.
+  EncodePhase phase = EncodePhase.start;
 
   /// The object identity registered in [sideChannel] for cycle tracking.
   Object? trackedObject;
