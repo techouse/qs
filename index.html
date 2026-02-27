@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="qs_dart API docs, for the Dart programming language.">
+  <title>qs_dart - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://techouse.github.io/qs/">qs_dart package</a></li>
+  </ol>
+  <div class="self-name">qs_dart</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="qs_dart">qs_dart</h1>
+<p align="center">
+    <img src="https://github.com/techouse/qs/raw/main/logo.png?raw=true?raw=true" width="256" alt="qs_dart">
+</p>
+<p>A query string encoding and decoding library for Dart.</p>
+<p>Ported from <a href="https://www.npmjs.com/package/qs">qs</a> for JavaScript.</p>
+<p><a href="https://pub.dev/packages/qs_dart"><img src="https://img.shields.io/pub/v/qs_dart" alt="Pub Version"></a>
+<a href="https://pub.dev/publishers/tusar.dev/packages"><img src="https://img.shields.io/pub/publisher/qs_dart" alt="Pub Publisher"></a>
+<a href="https://pub.dev/packages/qs_dart/score"><img src="https://img.shields.io/pub/likes/qs_dart" alt="Pub Likes"></a>
+<a href="https://pub.dev/packages/qs_dart/score"><img src="https://img.shields.io/pub/points/qs_dart" alt="Pub Points"></a>
+<a href="https://pub.dev/packages/qs_dart/score"><img src="https://img.shields.io/pub/dm/qs_dart" alt="Pub Monthly Downloads"></a>
+<a href="https://pubstats.dev/packages/qs_dart"><img src="https://pubstats.dev/badges/packages/qs_dart/popularity.svg" alt="PubStats Popularity"></a>
+<a href="https://pubstats.dev/packages/qs_dart"><img src="https://pubstats.dev/badges/packages/qs_dart/rank.svg" alt="PubStats Rank"></a>
+<a href="https://pubstats.dev/packages/qs_dart"><img src="https://pubstats.dev/badges/packages/qs_dart/dependents.svg" alt="PubStats Dependents"></a>
+<a href="https://github.com/techouse/qs/actions/workflows/test.yml"><img src="https://github.com/techouse/qs/actions/workflows/test.yml/badge.svg" alt="Test"></a>
+<a href="https://codecov.io/gh/techouse/qs"><img src="https://codecov.io/gh/techouse/qs/graph/badge.svg?token=e8KkRgZzPf" alt="codecov"></a>
+<a href="https://app.codacy.com/gh/techouse/qs/dashboard?utm_source=gh&amp;utm_medium=referral&amp;utm_content=&amp;utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/3630ce1150f840e08c94f40754d24688" alt="Codacy Badge"></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/techouse/qs" alt="GitHub"></a>
+<a href="https://github.com/sponsors/techouse"><img src="https://img.shields.io/github/sponsors/techouse" alt="GitHub Sponsors"></a>
+<a href="https://github.com/techouse/qs/stargazers"><img src="https://img.shields.io/github/stars/techouse/qs" alt="GitHub Repo stars"></a></p>
+<h2 id="highlights">Highlights</h2>
+<ul>
+<li><strong>Nested maps &amp; lists</strong>: <code>a[b][c]=d</code> ⇄ <code>{ 'a': { 'b': { 'c': 'd' } } }</code>; arrays via <code>a[]=b&amp;a[]=c</code> or <code>a[0]=b&amp;a[1]=c</code>.</li>
+<li><strong>Multiple list formats</strong>: <code>indices</code> (<code>a[0]=x</code>), <code>brackets</code> (<code>a[]=x</code>), <code>repeat</code> (<code>a=x&amp;a=y</code>), <code>comma</code> (<code>a=x,y</code>) with optional comma round‑trip.</li>
+<li><strong>Dot notation</strong>: parse/encode <code>a.b=c</code> as nested; options to encode or decode literal dots in keys (<code>encodeDotInKeys</code> / <code>decodeDotInKeys</code>).</li>
+<li><strong>Charset &amp; sentinel</strong>: UTF‑8 (default) and Latin‑1; <code>charsetSentinel</code> (<code>utf8=✓</code>) to auto‑detect encoding.</li>
+<li><strong>Hooks &amp; controls</strong>: custom <code>encoder</code>/<code>decoder</code>, encode keys‑only or values‑only, alternate delimiters (string or <code>RegExp</code>), ignore leading <code>?</code>.</li>
+<li><strong>Duplicates &amp; empties</strong>: strategies for duplicates (<code>combine</code>/<code>first</code>/<code>last</code>); allow empty list items (<code>foo[]</code>) with <code>allowEmptyLists</code>.</li>
+<li><strong>Null handling</strong>: <code>strictNullHandling</code>, <code>skipNulls</code>, and clear empty‑string behavior.</li>
+<li><strong>Safety limits</strong>: configurable <code>depth</code>, <code>strictDepth</code>, <code>parameterLimit</code>, <code>listLimit</code>, and <code>parseLists</code> toggle.</li>
+<li><strong>Dates &amp; ordering</strong>: pluggable <code>serializeDate</code>, stable key ordering with <code>sort</code>, selective output via <code>filter</code>.</li>
+<li><strong>RFC modes</strong>: spaces as <code>%20</code> (RFC 3986, default) or <code>+</code> (RFC 1738).</li>
+<li><strong>Dart‑friendly</strong>: <code>Uri.queryParametersQs()</code> and <code>Uri.toStringQs()</code> extensions for idiomatic usage in Dart/Flutter.</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p>Add the package to your project:</p>
+<h3 id="for-dart-projects">For Dart projects:</h3>
+<pre class="language-sh"><code class="language-sh">dart pub add qs_dart
+</code></pre>
+<h3 id="for-flutter-projects">For Flutter projects:</h3>
+<pre class="language-sh"><code class="language-sh">flutter pub add qs_dart
+</code></pre>
+<h2 id="usage">Usage</h2>
+<p>A simple usage example:</p>
+<pre class="language-dart"><code class="language-dart">import 'package:qs_dart/qs_dart.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('Simple example', () {
+    expect(
+      QS.decode('a=c'),
+      equals({'a': 'c'}),
+    );
+
+    expect(
+      QS.encode({'a': 'c'}),
+      equals('a=c'),
+    );
+  });
+  
+  test('Uri Extension usage', () {
+    expect(
+      Uri.parse('https://test.local/example?a[b][c]=d').queryParametersQs(),
+      equals({
+        'a': {
+          'b': {'c': 'd'}
+        }
+      }),
+    );
+    
+    expect(
+      Uri.https('test.local', '/example', {'a': '1', 'b': '2'}).toStringQs(), 
+      equals('https://test.local/example?a=1&amp;b=2'),
+    );
+  });
+}
+</code></pre>
+<h3 id="decoding-maps">Decoding Maps</h3>
+<pre class="language-dart"><code class="language-dart">Map&lt;String, dynamic&gt; decode(
+  dynamic str, [
+  DecodeOptions options = const DecodeOptions(),
+]);
+</code></pre>
+<p><a href="qs_dart/decode.html">decode</a> allows you to create nested <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s within your query strings, by surrounding the name of sub-keys with
+square brackets <code>[]</code>. For example, the string <code>'foo[bar]=baz'</code> converts to:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('foo[bar]=baz'),
+  equals({'foo': {'bar': 'baz'}}),
+);
+</code></pre>
+<p>URI encoded strings work too:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a%5Bb%5D=c'),
+  equals({'a': {'b': 'c'}}),
+);
+</code></pre>
+<p>You can also nest your <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s, like <code>'foo[bar][baz]=foobarbaz'</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('foo[bar][baz]=foobarbaz'),
+  equals({'foo': {'bar': {'baz': 'foobarbaz'}}}),
+);
+</code></pre>
+<p>By default, nested <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s are decoded up to 5 levels deep. For example, decoding
+a string like <code>'a[b][c][d][e][f][g][h][i]=j'</code> yields the following <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[b][c][d][e][f][g][h][i]=j'),
+  equals({
+    'a': {
+      'b': {
+        'c': {
+          'd': {
+            'e': {
+              'f': {
+                '[g][h][i]': 'j'
+              }
+            }
+          }
+        }
+      }
+    }
+  }),
+);
+</code></pre>
+<p>You can override this limit with <a href="qs_dart/DecodeOptions/depth.html">DecodeOptions.depth</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a[b][c][d][e][f][g][h][i]=j',
+    const DecodeOptions(depth: 1),
+  ),
+  equals({
+    'a': {
+      'b': {'[c][d][e][f][g][h][i]': 'j'},
+    },
+  }),
+);
+</code></pre>
+<p>You can configure <a href="qs_dart/decode.html">decode</a> to throw an error when parsing nested input beyond this depth using
+<a href="qs_dart/DecodeOptions/strictDepth.html">DecodeOptions.strictDepth</a> (defaults to false):</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  () =&gt; QS.decode(
+    'a[b][c][d][e][f][g][h][i]=j',
+    const DecodeOptions(
+      depth: 1,
+      strictDepth: true,
+    ),
+  ),
+  throwsA(isA&lt;RangeError&gt;()),
+);
+</code></pre>
+<p>The depth limit helps mitigate abuse when <a href="qs_dart/decode.html">decode</a> is used to parse user input, and it is recommended to keep it a
+reasonably small number. <a href="qs_dart/DecodeOptions/strictDepth.html">DecodeOptions.strictDepth</a> adds a layer of protection by throwing a <code>RangeError</code> when the
+limit is exceeded, allowing you to catch and handle such cases.</p>
+<p>For similar reasons, by default <a href="qs_dart/decode.html">decode</a> parses up to <strong>1000</strong> parameters. Override with
+<a href="qs_dart/DecodeOptions/parameterLimit.html">DecodeOptions.parameterLimit</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=b&amp;c=d',
+    const DecodeOptions(parameterLimit: 1),
+  ),
+  equals({'a': 'b'}),
+);
+</code></pre>
+<p>To bypass the leading question mark, use <a href="qs_dart/DecodeOptions/ignoreQueryPrefix.html">DecodeOptions.ignoreQueryPrefix</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    '?a=b&amp;c=d',
+    const DecodeOptions(ignoreQueryPrefix: true),
+  ),
+  equals(
+    {'a': 'b', 'c': 'd'},
+  ),
+);
+</code></pre>
+<p>You can provide a custom <a href="qs_dart/DecodeOptions/delimiter.html">DecodeOptions.delimiter</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=b;c=d',
+    const DecodeOptions(delimiter: ';'),
+  ),
+  equals({'a': 'b', 'c': 'd'}),
+);
+</code></pre>
+<p><a href="qs_dart/DecodeOptions/delimiter.html">DecodeOptions.delimiter</a> can be a <a href="https://api.dart.dev/stable/3.11.1/dart-core/RegExp-class.html">RegExp</a> too:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=b;c=d',
+    DecodeOptions(delimiter: RegExp(r'[;,]')),
+  ),
+  equals({'a': 'b', 'c': 'd'}),
+);
+</code></pre>
+<p>Enable dot notation with <a href="qs_dart/DecodeOptions/allowDots.html">DecodeOptions.allowDots</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a.b=c',
+    const DecodeOptions(allowDots: true),
+  ),
+  equals({'a': {'b': 'c'}}),
+);
+</code></pre>
+<p>Decode percent-encoded dots in keys with <a href="qs_dart/DecodeOptions/decodeDotInKeys.html">DecodeOptions.decodeDotInKeys</a>.</p>
+<p><strong>Note:</strong> it implies <a href="qs_dart/DecodeOptions/allowDots.html">DecodeOptions.allowDots</a>, so <a href="qs_dart/decode.html">decode</a> will error if you set <a href="qs_dart/DecodeOptions/decodeDotInKeys.html">DecodeOptions.decodeDotInKeys</a>
+to <code>true</code>, and <code>DecodeOptions.allowDots</code> to <code>false</code>.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'name%252Eobj.first=John&amp;name%252Eobj.last=Doe',
+    const DecodeOptions(decodeDotInKeys: true),
+  ),
+  equals({
+    'name.obj': {'first': 'John', 'last': 'Doe'}
+  }),
+);
+</code></pre>
+<p>Allow empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> values within a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a> with <a href="qs_dart/DecodeOptions/allowEmptyLists.html">DecodeOptions.allowEmptyLists</a>.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'foo[]&amp;bar=baz',
+    const DecodeOptions(allowEmptyLists: true),
+  ),
+  equals({
+    'foo': [],
+    'bar': 'baz',
+  }),
+);
+</code></pre>
+<p>Option <a href="qs_dart/DecodeOptions/duplicates.html">DecodeOptions.duplicates</a> can be used to change the behavior when duplicate keys are encountered.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('foo=bar&amp;foo=baz'),
+  equals({
+    'foo': ['bar', 'baz']
+  }),
+);
+
+expect(
+  QS.decode(
+    'foo=bar&amp;foo=baz',
+    const DecodeOptions(duplicates: Duplicates.combine),
+  ),
+  equals({
+    'foo': ['bar', 'baz']
+  }),
+);
+
+expect(
+  QS.decode(
+    'foo=bar&amp;foo=baz',
+    const DecodeOptions(duplicates: Duplicates.first),
+  ),
+  equals({'foo': 'bar'}),
+);
+
+expect(
+  QS.decode(
+    'foo=bar&amp;foo=baz',
+    const DecodeOptions(duplicates: Duplicates.last),
+  ),
+  equals({'foo': 'baz'}),
+);
+</code></pre>
+<p>If you have to deal with legacy browsers or services, there's also support for decoding percent-encoded octets as
+<a href="https://api.dart.dev/stable/3.11.1/dart-convert/latin1-constant.html">latin1</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=%A7',
+    const DecodeOptions(charset: latin1),
+  ),
+  equals({'a': '§'}),
+);
+</code></pre>
+<p>Some services add an initial <code>utf8=✓</code> value to forms so that old Internet Explorer versions are more likely to submit the
+form as utf-8. Additionally, the server can check the value against wrong encodings of the checkmark character and detect
+that a query string or <code>application/x-www-form-urlencoded</code> body was <em>not</em> sent as utf-8, eg. if the form had an
+<code>accept-charset</code> parameter or the containing page had a different character set.</p>
+<p><strong>QS</strong> supports this mechanism via the <a href="qs_dart/DecodeOptions/charsetSentinel.html">DecodeOptions.charsetSentinel</a> option.
+If specified, the <code>utf8</code> parameter will be omitted from the returned <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>.
+It will be used to switch to <a href="https://api.dart.dev/stable/3.11.1/dart-convert/latin1-constant.html">latin1</a> or <a href="https://api.dart.dev/stable/3.11.1/dart-convert/utf8-constant.html">utf8</a> mode depending on how the checkmark is encoded.</p>
+<p><strong>Important</strong>: When you specify both the <a href="qs_dart/DecodeOptions/charset.html">DecodeOptions.charset</a> option and the <a href="qs_dart/DecodeOptions/charsetSentinel.html">DecodeOptions.charsetSentinel</a> option,
+the <a href="qs_dart/DecodeOptions/charset.html">DecodeOptions.charset</a> will be overridden when the request contains a <code>utf8</code> parameter from which the actual charset
+can be deduced. In that sense the <a href="qs_dart/DecodeOptions/charset.html">DecodeOptions.charset</a> will behave as the default charset rather than the authoritative
+charset.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'utf8=%E2%9C%93&amp;a=%C3%B8',
+    const DecodeOptions(
+      charset: latin1,
+      charsetSentinel: true,
+    ),
+  ),
+  equals({'a': 'ø'}),
+);
+
+expect(
+  QS.decode(
+    'utf8=%26%2310003%3B&amp;a=%F8',
+    const DecodeOptions(
+      charset: utf8,
+      charsetSentinel: true,
+    ),
+  ),
+  equals({'a': 'ø'}),
+);
+</code></pre>
+<p>If you want to decode the <a href="https://www.w3schools.com/html/html_entities.asp"><code>&amp;#...;</code></a> syntax to the actual character,
+you can specify the <a href="qs_dart/DecodeOptions/interpretNumericEntities.html">DecodeOptions.interpretNumericEntities</a> option as well:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=%26%239786%3B',
+    const DecodeOptions(
+      charset: latin1,
+      interpretNumericEntities: true,
+    ),
+  ),
+  equals({'a': '☺'}),
+);
+</code></pre>
+<p>It also works when the charset has been detected in <a href="qs_dart/DecodeOptions/charsetSentinel.html">DecodeOptions.charsetSentinel</a> mode.</p>
+<h3 id="decoding-lists">Decoding Lists</h3>
+<p><a href="qs_dart/decode.html">decode</a> can also decode <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s using a similar <code>[]</code> notation:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[]=b&amp;a[]=c'),
+  equals({
+    'a': ['b', 'c']
+  }),
+);
+</code></pre>
+<p>You may specify an index as well:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[1]=c&amp;a[0]=b'),
+  equals({
+    'a': ['b', 'c']
+  }),
+);
+</code></pre>
+<p>Note that the only difference between an index in a <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> and a key in a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a> is that the value between the brackets
+must be a number to create a <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>. When creating <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s with specific indices, <a href="qs_dart/decode.html">decode</a> will compact a sparse
+<a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> to only the existing values preserving their order:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[1]=b&amp;a[15]=c'),
+  equals({
+    'a': ['b', 'c']
+  }),
+);
+</code></pre>
+<p>Note that an empty string is also a value, and will be preserved:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[]=&amp;a[]=b'),
+  equals({
+    'a': ['', 'b']
+  }),
+);
+expect(
+  QS.decode('a[0]=b&amp;a[1]=&amp;a[2]=c'),
+  equals({
+    'a': ['b', '', 'c']
+  }),
+);
+</code></pre>
+<p><a href="qs_dart/decode.html">decode</a> will also limit specifying indices in a <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> to a maximum index of <strong>20</strong>.
+Any <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> members with an index of greater than <strong>20</strong> will instead be converted to a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a> with the index as the key.
+This is needed to handle cases when someone sent, for example, <code>a[999999999]</code> and it will take significant time to iterate
+over this huge <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[100]=b'),
+  equals({
+    'a': {'100': 'b'}
+  }),
+);
+</code></pre>
+<p>This limit can be overridden by passing an <a href="qs_dart/DecodeOptions/listLimit.html">DecodeOptions.listLimit</a> option:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a[1]=b',
+    const DecodeOptions(listLimit: 0),
+  ),
+  equals({
+    'a': {'1': 'b'}
+  }),
+);
+</code></pre>
+<p>To disable List parsing entirely, set <a href="qs_dart/DecodeOptions/parseLists.html">DecodeOptions.parseLists</a> to <code>false</code>.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a[]=b',
+    const DecodeOptions(parseLists: false),
+  ),
+  equals({
+    'a': {'0': 'b'}
+  }),
+);
+</code></pre>
+<p>If you mix notations, <a href="qs_dart/decode.html">decode</a> will merge the two items into a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[0]=b&amp;a[b]=c'),
+  equals({
+    'a': {'0': 'b', 'b': 'c'}
+  }),
+);
+</code></pre>
+<p>You can also create <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s of <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a[][b]=c'),
+  equals({
+    'a': [
+      {'b': 'c'}
+    ]
+  }),
+);
+</code></pre>
+<p>Some systems join list items with commas; <a href="qs_dart/decode.html">decode</a> can parse this when <a href="qs_dart/DecodeOptions/comma.html">DecodeOptions.comma</a> is set to <code>true</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a=b,c',
+    const DecodeOptions(comma: true),
+  ),
+  equals({
+    'a': ['b', 'c']
+  }),
+);
+</code></pre>
+<p>(<em><a href="qs_dart/decode.html">decode</a> cannot convert nested <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s, such as <code>'a={b:1},{c:d}'</code></em>)</p>
+<h3 id="decoding-primitivescalar-values-num-bool-null-etc">Decoding primitive/scalar values (<code>num</code>, <code>bool</code>, <code>null</code>, etc.)</h3>
+<p>By default, all values are parsed as <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>s.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a=15&amp;b=true&amp;c=null'),
+  equals({
+    'a': '15',
+    'b': 'true',
+    'c': 'null',
+  }),
+);
+</code></pre>
+<h3 id="encoding">Encoding</h3>
+<pre class="language-dart"><code class="language-dart">String encode(
+  Object? object, [
+  EncodeOptions options = const EncodeOptions(),
+]);
+</code></pre>
+<p><a href="qs_dart/encode.html">encode</a> will by default URI encode the output. <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s are stringified as you would expect:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode({'a': 'b'}),
+  equals('a=b'),
+);
+expect(
+  QS.encode({'a': {'b': 'c'}}),
+  equals('a%5Bb%5D=c'),
+);
+</code></pre>
+<p>This encoding can be disabled by setting the <a href="qs_dart/EncodeOptions/encode.html">EncodeOptions.encode</a> option to <code>false</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': {'b': 'c'}
+    },
+    const EncodeOptions(encode: false),
+  ),
+  equals('a[b]=c'),
+);
+</code></pre>
+<p>Note: when a value is a <code>ByteBuffer</code>, it is still decoded using the selected
+charset even when <code>encode</code> is <code>false</code>, so the emitted value reflects the buffer
+contents.</p>
+<p>Encoding can be disabled for keys by setting the <a href="qs_dart/EncodeOptions/encodeValuesOnly.html">EncodeOptions.encodeValuesOnly</a> option to <code>true</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': ['d', 'e=f'],
+      'f': [
+        ['g'],
+        ['h']
+      ]
+    },
+    const EncodeOptions(encodeValuesOnly: true),
+  ),
+  equals('a=b&amp;c[0]=d&amp;c[1]=e%3Df&amp;f[0][0]=g&amp;f[1][0]=h'),
+);
+</code></pre>
+<p>You can supply a custom <a href="qs_dart/Encoder.html">Encoder</a> via <a href="qs_dart/EncodeOptions/encoder.html">EncodeOptions.encoder</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': {'b': 'č'}
+    },
+    EncodeOptions(
+      encoder: (
+        str, {
+        Encoding? charset,
+        Format? format,
+      }) =&gt;
+          switch (str) {
+        'č' =&gt; 'c',
+        _ =&gt; str,
+      },
+    ),
+  ),
+  equals('a[b]=c'),
+);
+</code></pre>
+<p><em>(Note: <a href="qs_dart/EncodeOptions/encoder.html">EncodeOptions.encoder</a> is ignored when <a href="qs_dart/EncodeOptions/encode.html">EncodeOptions.encode</a> is <code>false</code>.)</em></p>
+<p>Similar to <a href="qs_dart/EncodeOptions/encoder.html">EncodeOptions.encoder</a> there is a <a class="deprecated" href="qs_dart/DecodeOptions/decoder.html">DecodeOptions.decoder</a> option for <a href="qs_dart/decode.html">decode</a> to override decoding of
+properties and values:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'foo=123', 
+    DecodeOptions(
+      decoder: (String? str, {Encoding? charset}) =&gt;
+        num.tryParse(str ?? '') ?? str,
+    ),
+  ),
+  equals({'foo': 123}),
+);
+</code></pre>
+<p>Examples beyond this point will be shown as though the output is not URI encoded for clarity.
+Please note that the return values in these cases <em>will</em> be URI encoded during real usage.</p>
+<p>When <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s are encoded, they follow the <a href="qs_dart/EncodeOptions/listFormat.html">EncodeOptions.listFormat</a> option, which defaults to <a href="qs_dart/ListFormat.html">ListFormat.indices</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': ['b', 'c', 'd']
+    },
+    const EncodeOptions(encode: false),
+  ),
+  equals('a[0]=b&amp;a[1]=c&amp;a[2]=d'),
+);
+</code></pre>
+<p>You can override this by setting <code>EncodeOptions.indices</code> to <code>false</code>, or, more explicitly, the
+<a href="qs_dart/EncodeOptions/listFormat.html">EncodeOptions.listFormat</a> option to <a href="qs_dart/ListFormat.html">ListFormat.repeat</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': ['b', 'c', 'd']
+    },
+    const EncodeOptions(
+      encode: false,
+      indices: false,
+    ),
+  ),
+  equals('a=b&amp;a=c&amp;a=d'),
+);
+</code></pre>
+<p>You can choose the list encoding style with <a href="qs_dart/EncodeOptions/listFormat.html">EncodeOptions.listFormat</a>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': ['b', 'c']
+    },
+    const EncodeOptions(
+      encode: false,
+      listFormat: ListFormat.indices,
+    ),
+  ),
+  equals('a[0]=b&amp;a[1]=c'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': ['b', 'c']
+    },
+    const EncodeOptions(
+      encode: false,
+      listFormat: ListFormat.brackets,
+    ),
+  ),
+  equals('a[]=b&amp;a[]=c'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': ['b', 'c']
+    },
+    const EncodeOptions(
+      encode: false,
+      listFormat: ListFormat.repeat,
+    ),
+  ),
+  equals('a=b&amp;a=c'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': ['b', 'c']
+    },
+    const EncodeOptions(
+      encode: false,
+      listFormat: ListFormat.comma,
+    ),
+  ),
+  equals('a=b,c'),
+);
+</code></pre>
+<p><strong>Note:</strong> When using <a href="qs_dart/EncodeOptions/listFormat.html">EncodeOptions.listFormat</a> set to <a href="qs_dart/ListFormat.html">ListFormat.comma</a>, you can also pass the <a href="qs_dart/EncodeOptions/commaRoundTrip.html">EncodeOptions.commaRoundTrip</a>
+option set to <code>true</code> or <code>false</code>, to append <code>[]</code> on single-item <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s, so that they can round trip through a parse.
+Set <a href="qs_dart/EncodeOptions/commaCompactNulls.html">EncodeOptions.commaCompactNulls</a> to <code>true</code> with the same format when you'd like to drop <code>null</code> entries instead of keeping empty slots (for example, <code>[true, false, null, true]</code> becomes <code>true,false,true</code>).</p>
+<p>When <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s are encoded, by default they use bracket notation:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': {
+        'b': {'c': 'd', 'e': 'f'}
+      }
+    },
+    const EncodeOptions(encode: false),
+  ),
+  equals('a[b][c]=d&amp;a[b][e]=f'),
+);
+</code></pre>
+<p>You may override this to use dot notation by setting the <a href="qs_dart/EncodeOptions/allowDots.html">EncodeOptions.allowDots</a> option to <code>true</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': {
+        'b': {'c': 'd', 'e': 'f'}
+      }
+    },
+    const EncodeOptions(
+      encode: false,
+      allowDots: true,
+    ),
+  ),
+  equals('a.b.c=d&amp;a.b.e=f'),
+);
+</code></pre>
+<p>Encode literal dots in keys with <a href="qs_dart/EncodeOptions/encodeDotInKeys.html">EncodeOptions.encodeDotInKeys</a> (use with <a href="qs_dart/EncodeOptions/allowDots.html">EncodeOptions.allowDots</a>):</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'name.obj': {'first': 'John', 'last': 'Doe'}
+    },
+    const EncodeOptions(
+      allowDots: true,
+      encodeDotInKeys: true,
+    ),
+  ),
+  equals('name%252Eobj.first=John&amp;name%252Eobj.last=Doe'),
+);
+</code></pre>
+<p><strong>Caveat:</strong> when both <a href="qs_dart/EncodeOptions/encodeValuesOnly.html">EncodeOptions.encodeValuesOnly</a> and <a href="qs_dart/EncodeOptions/encodeDotInKeys.html">EncodeOptions.encodeDotInKeys</a> are <code>true</code>, only dots in keys are encoded; values remain unchanged.</p>
+<p>You may allow empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> values by setting the <a href="qs_dart/EncodeOptions/allowEmptyLists.html">EncodeOptions.allowEmptyLists</a> option to <code>true</code>:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'foo': [],
+      'bar': 'baz',
+    },
+    const EncodeOptions(
+      encode: false,
+      allowEmptyLists: true,
+    ),
+  ),
+  equals('foo[]&amp;bar=baz'),
+);
+</code></pre>
+<p>Empty strings and null values will omit the value, but the equals sign (<code>=</code>) remains in place:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': '',
+    },
+  ),
+  equals('a='),
+);
+</code></pre>
+<p>Keys with no values (e.g., empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a>s or <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s) produce no output:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': [],
+    },
+  ),
+  equals(''),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': {},
+    },
+  ),
+  equals(''),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': [{}],
+    },
+  ),
+  equals('')
+);
+
+expect(
+  QS.encode(
+    {
+      'a': {'b': []},
+    },
+  ),
+  equals('')
+);
+
+expect(
+  QS.encode(
+    {
+      'a': {'b': {}},
+    },
+  ),
+  equals('')
+);
+</code></pre>
+<p>Properties set to <a href="qs_dart/Undefined-class.html">Undefined</a> are omitted entirely:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': null,
+      'b': const Undefined(),
+    },
+  ),
+  equals('a='),
+);
+</code></pre>
+<p>The query string may optionally be prepended with a question mark:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': 'd',
+    },
+    const EncodeOptions(addQueryPrefix: true),
+  ),
+  equals('?a=b&amp;c=d'),
+);
+</code></pre>
+<p>The delimiter may be overridden as well:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': 'd',
+    },
+    const EncodeOptions(delimiter: ';'),
+  ),
+  equals('a=b;c=d'),
+);
+</code></pre>
+<p>If you only want to override the serialization of <a href="https://api.dart.dev/stable/3.11.1/dart-core/DateTime-class.html">DateTime</a> objects, you can provide a custom <a href="qs_dart/DateSerializer.html">DateSerializer</a> in the
+<a href="qs_dart/EncodeOptions/serializeDate.html">EncodeOptions.serializeDate</a> option:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': DateTime.fromMillisecondsSinceEpoch(7).toUtc(),
+    },
+    const EncodeOptions(encode: false),
+  ),
+  equals('a=1970-01-01T00:00:00.007Z'),
+);
+expect(
+  QS.encode(
+    {
+      'a': DateTime.fromMillisecondsSinceEpoch(7).toUtc(),
+    },
+    EncodeOptions(
+      encode: false,
+      serializeDate: (DateTime date) =&gt;
+          date.millisecondsSinceEpoch.toString(),
+    ),
+  ),
+  equals('a=7'),
+);
+</code></pre>
+<p>You may use the <a href="qs_dart/EncodeOptions/sort.html">EncodeOptions.sort</a> option to affect the order of parameter keys:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'c',
+      'z': 'y',
+      'b': 'f',
+    },
+    EncodeOptions(
+      encode: false,
+      sort: (a, b) =&gt; a.compareTo(b),
+    ),
+  ),
+  equals('a=c&amp;b=f&amp;z=y'),
+);
+</code></pre>
+<p>Finally, you can use the <a href="qs_dart/EncodeOptions/filter.html">EncodeOptions.filter</a> option to restrict which keys will be included in the encoded output.
+If you pass a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Function-class.html">Function</a>, it will be called for each key to obtain the replacement value.
+Otherwise, if you pass a <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>, it will be used to select properties and <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> indices to be encoded:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': 'd',
+      'e': {
+        'f': DateTime.fromMillisecondsSinceEpoch(123),
+        'g': [2],
+      },
+    },
+    EncodeOptions(
+      encode: false,
+      filter: (prefix, value) =&gt; switch (prefix) {
+        'b' =&gt; const Undefined(),
+        'e[f]' =&gt; (value as DateTime).millisecondsSinceEpoch,
+        'e[g][0]' =&gt; (value as num) * 2,
+        _ =&gt; value,
+      },
+    ),
+  ),
+  equals('a=b&amp;c=d&amp;e[f]=123&amp;e[g][0]=4'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': 'd',
+      'e': 'f',
+    },
+    const EncodeOptions(
+      encode: false,
+      filter: ['a', 'e'],
+    ),
+  ),
+  equals('a=b&amp;e=f'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': ['b', 'c', 'd'],
+      'e': 'f',
+    },
+    const EncodeOptions(
+      encode: false,
+      filter: ['a', 0, 2],
+    ),
+  ),
+  equals('a[0]=b&amp;a[2]=d'),
+);
+</code></pre>
+<h3 id="handling-of-null-values">Handling of <code>null</code> values</h3>
+<p>By default, <code>null</code> values are treated like empty strings:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': null,
+      'b': '',
+    },
+  ),
+  equals('a=&amp;b='),
+);
+</code></pre>
+<p>Decoding does not distinguish between parameters with and without equal signs.
+Both are converted to empty strings.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode('a&amp;b='),
+  equals({
+    'a': '',
+    'b': '',
+  }),
+);
+</code></pre>
+<p>To distinguish between <code>null</code> values and empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>s use the <a href="qs_dart/EncodeOptions/strictNullHandling.html">EncodeOptions.strictNullHandling</a> flag.
+In the result string the <code>null</code> values have no <code>=</code> sign:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': null,
+      'b': '',
+    },
+    const EncodeOptions(strictNullHandling: true),
+  ),
+  equals('a&amp;b='),
+);
+</code></pre>
+<p>To decode values without <code>=</code> back to <code>null</code> use the <a href="qs_dart/DecodeOptions/strictNullHandling.html">DecodeOptions.strictNullHandling</a> flag:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    'a&amp;b=',
+    const DecodeOptions(strictNullHandling: true),
+  ),
+  equals({
+    'a': null,
+    'b': '',
+  }),
+);
+</code></pre>
+<p>To completely skip rendering keys with <code>null</code> values, use the <a href="qs_dart/EncodeOptions/skipNulls.html">EncodeOptions.skipNulls</a> flag:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b',
+      'c': null,
+    },
+    const EncodeOptions(skipNulls: true),
+  ),
+  equals('a=b'),
+);
+</code></pre>
+<p>If you're communicating with legacy systems, you can switch to <a href="https://api.dart.dev/stable/3.11.1/dart-convert/latin1-constant.html">latin1</a> using the <a href="qs_dart/EncodeOptions/charset.html">EncodeOptions.charset</a> option:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'æ': 'æ',
+    },
+    const EncodeOptions(charset: latin1),
+  ),
+  equals('%E6=%E6'),
+);
+</code></pre>
+<p>Characters that don't exist in <a href="https://api.dart.dev/stable/3.11.1/dart-convert/latin1-constant.html">latin1</a> will be converted to numeric entities, similar to what browsers do:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': '☺',
+    },
+    const EncodeOptions(charset: latin1),
+  ),
+  equals('a=%26%239786%3B'),
+);
+</code></pre>
+<p>You can use the <a href="qs_dart/EncodeOptions/charsetSentinel.html">EncodeOptions.charsetSentinel</a> option to announce the character by including an <code>utf8=✓</code> parameter with
+the proper encoding of the checkmark, similar to what Ruby on Rails and others do when submitting forms.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': '☺',
+    },
+    const EncodeOptions(charsetSentinel: true),
+  ),
+  equals('utf8=%E2%9C%93&amp;a=%E2%98%BA'),
+);
+expect(
+  QS.encode(
+    {
+      'a': 'æ',
+    },
+    const EncodeOptions(
+      charset: latin1,
+      charsetSentinel: true,
+    ),
+  ),
+  equals('utf8=%26%2310003%3B&amp;a=%E6'),
+);
+</code></pre>
+<h3 id="dealing-with-special-character-sets">Dealing with special character sets</h3>
+<p>By default, the encoding and decoding of characters is done in <a href="https://api.dart.dev/stable/3.11.1/dart-convert/utf8-constant.html">utf8</a>, and <a href="https://api.dart.dev/stable/3.11.1/dart-convert/latin1-constant.html">latin1</a> support is also built in via
+the <a href="qs_dart/EncodeOptions/charset.html">EncodeOptions.charset</a> and <a href="qs_dart/DecodeOptions/charset.html">DecodeOptions.charset</a> parameter, respectively.</p>
+<p>If you wish to encode query strings to a different character set (i.e.
+<a href="https://en.wikipedia.org/wiki/Shift_JIS">Shift JIS</a>) you can use the <a href="https://pub.dev/packages/euc">euc</a> package</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'こんにちは！',
+    },
+    EncodeOptions(
+      encoder: (str, {Encoding? charset, Format? format}) {
+        if ((str as String?)?.isNotEmpty ?? false) {
+          final Uint8List buf = Uint8List.fromList(
+            ShiftJIS().encode(str!),
+          );
+          final List&lt;String&gt; result = [
+            for (int i = 0; i &lt; buf.length; ++i) buf[i].toRadixString(16)
+          ];
+          return '%${result.join('%')}';
+        }
+        return '';
+      },
+    ),
+  ),
+  equals('%61=%82%b1%82%f1%82%c9%82%bf%82%cd%81%49'),
+);
+</code></pre>
+<p>This also works for decoding of query strings:</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.decode(
+    '%61=%82%b1%82%f1%82%c9%82%bf%82%cd%81%49',
+    DecodeOptions(
+      decoder: (str, {Encoding? charset}) {
+        if (str == null) {
+          return null;
+        }
+
+        final RegExp reg = RegExp(r'%([0-9A-F]{2})', caseSensitive: false);
+        final List&lt;int&gt; result = [];
+        Match? parts;
+        while ((parts = reg.firstMatch(str!)) != null &amp;&amp; parts != null) {
+          result.add(int.parse(parts.group(1)!, radix: 16));
+          str = str.substring(parts.end);
+        }
+        return ShiftJIS().decode(
+          Uint8List.fromList(result),
+        );
+      },
+    ),
+  ),
+  equals({
+    'a': 'こんにちは！',
+  }),
+);
+</code></pre>
+<h3 id="rfc-3986-and-rfc-1738-space-encoding">RFC 3986 and RFC 1738 space encoding</h3>
+<p>The default <a href="qs_dart/EncodeOptions/format.html">EncodeOptions.format</a> is <a href="qs_dart/Format.html">Format.rfc3986</a> which encodes <code>' '</code> to <code>%20</code> which is backward compatible.
+You can also set the <a href="qs_dart/EncodeOptions/format.html">EncodeOptions.format</a> to <a href="qs_dart/Format.html">Format.rfc1738</a> which encodes <code>' '</code> to <code>+</code>.</p>
+<pre class="language-dart"><code class="language-dart">expect(
+  QS.encode(
+    {
+      'a': 'b c',
+    },
+  ),
+  equals('a=b%20c'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': 'b c',
+    },
+    const EncodeOptions(format: Format.rfc3986),
+  ),
+  equals('a=b%20c'),
+);
+
+expect(
+  QS.encode(
+    {
+      'a': 'b c',
+    },
+    const EncodeOptions(format: Format.rfc1738),
+  ),
+  equals('a=b+c'),
+);
+</code></pre>
+<hr>
+<h2 id="other-ports">Other ports</h2>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>Repository</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/techouse/qs_codec">techouse/qs_codec</a></td>
+<td><a href="https://pypi.org/project/qs-codec/"><img src="https://img.shields.io/pypi/v/qs-codec?logo=python&amp;label=PyPI" alt="PyPI"></a></td>
+</tr>
+<tr>
+<td>Kotlin / JVM + Android AAR</td>
+<td><a href="https://github.com/techouse/qs-kotlin">techouse/qs-kotlin</a></td>
+<td><a href="https://central.sonatype.com/artifact/io.github.techouse/qs-kotlin"><img src="https://img.shields.io/maven-central/v/io.github.techouse/qs-kotlin?logo=kotlin&amp;label=Maven%20Central" alt="Maven Central"></a></td>
+</tr>
+<tr>
+<td>Swift / Objective-C</td>
+<td><a href="https://github.com/techouse/qs-swift">techouse/qs-swift</a></td>
+<td><a href="https://swiftpackageindex.com/techouse/qs-swift"><img src="https://img.shields.io/github/v/release/techouse/qs-swift?logo=swift&amp;label=SwiftPM" alt="SPM"></a></td>
+</tr>
+<tr>
+<td>.NET / C#</td>
+<td><a href="https://github.com/techouse/qs-net">techouse/qs-net</a></td>
+<td><a href="https://www.nuget.org/packages/QsNet"><img src="https://img.shields.io/nuget/v/QsNet?logo=dotnet&amp;label=NuGet" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>Node.js (original)</td>
+<td><a href="https://github.com/ljharb/qs">ljharb/qs</a></td>
+<td><a href="https://www.npmjs.com/package/qs"><img src="https://img.shields.io/npm/v/qs?logo=javascript&amp;label=npm" alt="npm"></a></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p>Special thanks to the authors of <a href="https://www.npmjs.com/package/qs">qs</a> for JavaScript:</p>
+<ul>
+<li><a href="https://github.com/ljharb">Jordan Harband</a></li>
+<li><a href="https://github.com/visionmedia/node-querystring">TJ Holowaychuk</a></li>
+</ul>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="qs_dart">
+  <span class="name"><a href="qs_dart/">qs_dart</a></span> 
+
+</dt>
+<dd>A faithful, cross‑port implementation of Node.js <strong><code>qs</code></strong> for Dart.
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="https://techouse.github.io/qs/">qs_dart package</a></li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">qs_dart</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="qs_dart/">qs_dart</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    qs_dart
+      1.7.2
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

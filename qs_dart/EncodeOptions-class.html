@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the EncodeOptions class from the qs_dart library, for the Dart programming language.">
+  <title>EncodeOptions class - qs_dart library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">qs_dart</a></li>
+    <li><a href="../qs_dart/">qs_dart.dart</a></li>
+    <li class="self-crumb">EncodeOptions class</li>
+  </ol>
+  <div class="self-name">EncodeOptions</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="qs_dart&#47;qs_dart-library-sidebar.html"
+    data-below-sidebar="qs_dart&#47;EncodeOptions-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">EncodeOptions</span> class 
+    <a href="https://dart.dev/language/class-modifiers#final" class="feature feature-final" title="This class can neither be extended, implemented, nor mixed in.">final</a>
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Options that configure the output of <a href="../qs_dart/QS/encode.html">QS.encode</a>.</p>
+</section>
+
+
+    <section>
+      <dl class="dl-horizontal">
+        
+
+        
+        
+  <dt>Mixed-in types</dt>
+  <dd>
+    <ul class="comma-separated clazz-relationships">
+        <li><a href="https://pub.dev/documentation/equatable/2.0.8/equatable/EquatableMixin-mixin.html">EquatableMixin</a></li>
+    </ul>
+  </dd>
+
+
+        
+        
+
+
+      </dl>
+    </section>
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="EncodeOptions.new" class="callable">
+          <span class="name"><a href="../qs_dart/EncodeOptions/EncodeOptions.html">EncodeOptions</a></span><span class="signature">({<span class="parameter" id="-param-encoder"><span class="type-annotation"><a href="../qs_dart/Encoder.html">Encoder</a>?</span> <span class="parameter-name">encoder</span>, </span><span class="parameter" id="-param-serializeDate"><span class="type-annotation"><a href="../qs_dart/DateSerializer.html">DateSerializer</a>?</span> <span class="parameter-name">serializeDate</span>, </span><span class="parameter" id="-param-listFormat"><span class="type-annotation"><a href="../qs_dart/ListFormat.html">ListFormat</a>?</span> <span class="parameter-name">listFormat</span>, </span><span class="parameter" id="-param-indices"><span>@<a href="https://api.dart.dev/stable/3.11.1/dart-core/Deprecated/Deprecated.html">Deprecated</a>(&#39;Use listFormat instead&#39;)</span> <span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">indices</span>, </span><span class="parameter" id="-param-allowDots"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">allowDots</span>, </span><span class="parameter" id="-param-addQueryPrefix"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">addQueryPrefix</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-allowEmptyLists"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">allowEmptyLists</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-charset"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-convert/Encoding-class.html">Encoding</a></span> <span class="parameter-name">charset</span> = <span class="default-value">utf8</span>, </span><span class="parameter" id="-param-charsetSentinel"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">charsetSentinel</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-delimiter"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span> <span class="parameter-name">delimiter</span> = <span class="default-value">&#39;&amp;&#39;</span>, </span><span class="parameter" id="-param-encode"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">encode</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-encodeDotInKeys"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">encodeDotInKeys</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-encodeValuesOnly"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">encodeValuesOnly</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-format"><span class="type-annotation"><a href="../qs_dart/Format.html">Format</a></span> <span class="parameter-name">format</span> = <span class="default-value">Format.rfc3986</span>, </span><span class="parameter" id="-param-filter"><span class="type-annotation">dynamic</span> <span class="parameter-name">filter</span>, </span><span class="parameter" id="-param-skipNulls"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">skipNulls</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-strictNullHandling"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">strictNullHandling</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-commaRoundTrip"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">commaRoundTrip</span>, </span><span class="parameter" id="-param-commaCompactNulls"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">commaCompactNulls</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-sort"><span class="type-annotation"><a href="../qs_dart/Sorter.html">Sorter</a>?</span> <span class="parameter-name">sort</span></span>})</span>
+        </dt>
+        <dd>
+          
+            <div class="constructor-modifier features">const</div>
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="addQueryPrefix" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/addQueryPrefix.html">addQueryPrefix</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to add a question mark <code>?</code> prefix to the encoded output.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="allowDots" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/allowDots.html">allowDots</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to use dot <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a> notation in the encoded output.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="allowEmptyLists" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/allowEmptyLists.html">allowEmptyLists</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to allow empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s in the encoded output.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="charset" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/charset.html">charset</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-convert/Encoding-class.html">Encoding</a></span>
+  
+
+</dt>
+<dd>
+  The character encoding to use.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="charsetSentinel" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/charsetSentinel.html">charsetSentinel</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to announce the character by including an <code>utf8=✓</code> parameter
+with the proper encoding of the checkmark, similar to what Ruby on Rails
+and others do when submitting forms.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="commaCompactNulls" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/commaCompactNulls.html">commaCompactNulls</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  When <a href="../qs_dart/EncodeOptions/listFormat.html">listFormat</a> is <a href="../qs_dart/ListFormat.html">ListFormat.comma</a>, drop <code>null</code> items before joining.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="commaRoundTrip" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/commaRoundTrip.html">commaRoundTrip</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span>
+  
+
+</dt>
+<dd>
+  When <a href="../qs_dart/EncodeOptions/listFormat.html">listFormat</a> is set to <a href="../qs_dart/ListFormat.html">ListFormat.comma</a>, you can also set
+<a href="../qs_dart/EncodeOptions/commaRoundTrip.html">commaRoundTrip</a> option to <code>true</code> or <code>false</code>, to append <code>[]</code> on
+single-item <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>s, so that they can round trip through a parse.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="delimiter" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/delimiter.html">delimiter</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span>
+  
+
+</dt>
+<dd>
+  The delimiter to use when joining key-value pairs in the encoded output.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="encode" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/encode.html">encode</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>false</code> to disable encoding.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="encodeDotInKeys" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/encodeDotInKeys.html">encodeDotInKeys</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Encode <a href="https://api.dart.dev/stable/3.11.1/dart-core/Map-class.html">Map</a> keys using dot notation by setting <a href="../qs_dart/EncodeOptions/encodeDotInKeys.html">encodeDotInKeys</a> to <code>true</code>:
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="encodeValuesOnly" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/encodeValuesOnly.html">encodeValuesOnly</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Encoding can be disabled for keys by setting the <a href="../qs_dart/EncodeOptions/encodeValuesOnly.html">encodeValuesOnly</a> to <code>true</code>
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="filter" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/filter.html">filter</a></span>
+  <span class="signature">&#8594; dynamic</span>
+  
+
+</dt>
+<dd>
+  Use the <a href="../qs_dart/EncodeOptions/filter.html">filter</a> option to restrict which keys will be included in the encoded output.
+If you pass a <a href="https://api.dart.dev/stable/3.11.1/dart-core/Function-class.html">Function</a>, it will be called for each key to obtain the replacement value.
+If you pass a <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a>, it will be used to select properties and <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> indices to be encoded.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="format" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/format.html">format</a></span>
+  <span class="signature">&#8594; <a href="../qs_dart/Format.html">Format</a></span>
+  
+
+</dt>
+<dd>
+  The encoding format to use.
+The default <a href="../qs_dart/EncodeOptions/format.html">format</a> is <a href="../qs_dart/Format.html">Format.rfc3986</a> which encodes <code>' '</code> to <code>%20</code>
+which is backward compatible.
+You can also set <a href="../qs_dart/EncodeOptions/format.html">format</a> to <a href="../qs_dart/Format.html">Format.rfc1738</a> which encodes <code>' '</code> to <code>+</code>.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="formatter" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/formatter.html">formatter</a></span>
+  <span class="signature">&#8594; <a href="../qs_dart/Formatter.html">Formatter</a></span>
+  
+
+</dt>
+<dd>
+  Convenience getter for accessing the <a href="../qs_dart/EncodeOptions/format.html">format</a>'s <a href="../qs_dart/Format/formatter.html">Format.formatter</a>
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://pub.dev/documentation/equatable/2.0.8/equatable/EquatableMixin/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="listFormat" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/listFormat.html">listFormat</a></span>
+  <span class="signature">&#8594; <a href="../qs_dart/ListFormat.html">ListFormat</a></span>
+  
+
+</dt>
+<dd>
+  The <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a> encoding format to use.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="props" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/props.html">props</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Object-class.html">Object</a>?</span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  The list of properties that will be used to determine whether
+two instances are equal.
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="skipNulls" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/skipNulls.html">skipNulls</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to completely skip encoding keys with <code>null</code> values
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="sort" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/sort.html">sort</a></span>
+  <span class="signature">&#8594; <a href="../qs_dart/Sorter.html">Sorter</a>?</span>
+  
+
+</dt>
+<dd>
+  Set a <a href="../qs_dart/Sorter.html">Sorter</a> to affect the order of parameter keys.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="strictNullHandling" class="property">
+  <span class="name"><a href="../qs_dart/EncodeOptions/strictNullHandling.html">strictNullHandling</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Set to <code>true</code> to distinguish between <code>null</code> values and empty <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>s.
+This way the encoded string <code>null</code> values will have no <code>=</code> sign.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="stringify" class="property inherited">
+  <span class="name"><a href="https://pub.dev/documentation/equatable/2.0.8/equatable/EquatableMixin/stringify.html">stringify</a></span>
+  <span class="signature">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span>
+  
+
+</dt>
+<dd class="inherited">
+  If set to <code>true</code>, the <a href="../qs_dart/EncodeOptions/toString.html">toString</a> method will be overridden to output
+this instance's <a href="../qs_dart/EncodeOptions/props.html">props</a>.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="copyWith" class="callable">
+  <span class="name"><a href="../qs_dart/EncodeOptions/copyWith.html">copyWith</a></span><span class="signature">(<wbr>{<span class="parameter" id="copyWith-param-addQueryPrefix"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">addQueryPrefix</span>, </span><span class="parameter" id="copyWith-param-allowDots"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">allowDots</span>, </span><span class="parameter" id="copyWith-param-allowEmptyLists"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">allowEmptyLists</span>, </span><span class="parameter" id="copyWith-param-listFormat"><span class="type-annotation"><a href="../qs_dart/ListFormat.html">ListFormat</a>?</span> <span class="parameter-name">listFormat</span>, </span><span class="parameter" id="copyWith-param-charset"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-convert/Encoding-class.html">Encoding</a>?</span> <span class="parameter-name">charset</span>, </span><span class="parameter" id="copyWith-param-charsetSentinel"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">charsetSentinel</span>, </span><span class="parameter" id="copyWith-param-delimiter"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">delimiter</span>, </span><span class="parameter" id="copyWith-param-encode"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">encode</span>, </span><span class="parameter" id="copyWith-param-encodeDotInKeys"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">encodeDotInKeys</span>, </span><span class="parameter" id="copyWith-param-encodeValuesOnly"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">encodeValuesOnly</span>, </span><span class="parameter" id="copyWith-param-format"><span class="type-annotation"><a href="../qs_dart/Format.html">Format</a>?</span> <span class="parameter-name">format</span>, </span><span class="parameter" id="copyWith-param-skipNulls"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">skipNulls</span>, </span><span class="parameter" id="copyWith-param-strictNullHandling"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">strictNullHandling</span>, </span><span class="parameter" id="copyWith-param-commaRoundTrip"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">commaRoundTrip</span>, </span><span class="parameter" id="copyWith-param-commaCompactNulls"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">commaCompactNulls</span>, </span><span class="parameter" id="copyWith-param-sort"><span class="type-annotation"><a href="../qs_dart/Sorter.html">Sorter</a>?</span> <span class="parameter-name">sort</span>, </span><span class="parameter" id="copyWith-param-filter"><span class="type-annotation">dynamic</span> <span class="parameter-name">filter</span>, </span><span class="parameter" id="copyWith-param-serializeDate"><span class="type-annotation"><a href="../qs_dart/DateSerializer.html">DateSerializer</a>?</span> <span class="parameter-name">serializeDate</span>, </span><span class="parameter" id="copyWith-param-encoder"><span class="type-annotation"><a href="../qs_dart/Encoder.html">Encoder</a>?</span> <span class="parameter-name">encoder</span></span>})
+    <span class="returntype parameter">&#8594; <a href="../qs_dart/EncodeOptions-class.html">EncodeOptions</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Returns a new <a href="../qs_dart/EncodeOptions-class.html">EncodeOptions</a> instance with updated values.
+  
+
+</dd>
+
+        <dt id="encoder" class="callable">
+  <span class="name"><a href="../qs_dart/EncodeOptions/encoder.html">encoder</a></span><span class="signature">(<wbr><span class="parameter" id="encoder-param-value"><span class="type-annotation">dynamic</span> <span class="parameter-name">value</span>, {</span><span class="parameter" id="encoder-param-charset"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-convert/Encoding-class.html">Encoding</a>?</span> <span class="parameter-name">charset</span>, </span><span class="parameter" id="encoder-param-format"><span class="type-annotation"><a href="../qs_dart/Format.html">Format</a>?</span> <span class="parameter-name">format</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Encodes a <code>value</code> to a <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>.
+  
+
+</dd>
+
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="serializeDate" class="callable">
+  <span class="name"><a href="../qs_dart/EncodeOptions/serializeDate.html">serializeDate</a></span><span class="signature">(<wbr><span class="parameter" id="serializeDate-param-date"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/DateTime-class.html">DateTime</a></span> <span class="parameter-name">date</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Serializes a <a href="https://api.dart.dev/stable/3.11.1/dart-core/DateTime-class.html">DateTime</a> instance to a <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a>.
+  
+
+</dd>
+
+        <dt id="toString" class="callable">
+  <span class="name"><a href="../qs_dart/EncodeOptions/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  A string representation of this object.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="validate" class="callable">
+  <span class="name"><a href="../qs_dart/EncodeOptions/validate.html">validate</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Validates the encoding options, throwing <a href="https://api.dart.dev/stable/3.11.1/dart-core/ArgumentError-class.html">ArgumentError</a> on invalid values.
+  
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://pub.dev/documentation/equatable/2.0.8/equatable/EquatableMixin/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">qs_dart</a></li>
+    <li><a href="../qs_dart/">qs_dart</a></li>
+    <li class="self-crumb">EncodeOptions class</li>
+</ol>
+
+    <h5>qs_dart library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    qs_dart
+      1.7.2
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

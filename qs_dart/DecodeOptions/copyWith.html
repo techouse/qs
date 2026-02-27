@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the copyWith method from the DecodeOptions class, for the Dart programming language.">
+  <title>copyWith method - DecodeOptions class - qs_dart library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">qs_dart</a></li>
+    <li><a href="../../qs_dart/">qs_dart.dart</a></li>
+    <li><a href="../../qs_dart/DecodeOptions-class.html">DecodeOptions</a></li>
+    <li class="self-crumb">copyWith method</li>
+  </ol>
+  <div class="self-name">copyWith</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="qs_dart&#47;DecodeOptions-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">copyWith</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="../../qs_dart/DecodeOptions-class.html">DecodeOptions</a></span>
+<span class="name ">copyWith</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="copyWith-param-allowDots"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">allowDots</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-allowEmptyLists"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">allowEmptyLists</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-listLimit"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/int-class.html">int</a>?</span> <span class="parameter-name">listLimit</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-charset"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-convert/Encoding-class.html">Encoding</a>?</span> <span class="parameter-name">charset</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-charsetSentinel"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">charsetSentinel</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-comma"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">comma</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-decodeDotInKeys"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">decodeDotInKeys</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-delimiter"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Pattern-class.html">Pattern</a>?</span> <span class="parameter-name">delimiter</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-depth"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/int-class.html">int</a>?</span> <span class="parameter-name">depth</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-duplicates"><span class="type-annotation"><a href="../../qs_dart/Duplicates.html">Duplicates</a>?</span> <span class="parameter-name">duplicates</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-ignoreQueryPrefix"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">ignoreQueryPrefix</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-interpretNumericEntities"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">interpretNumericEntities</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-parameterLimit"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/num-class.html">num</a>?</span> <span class="parameter-name">parameterLimit</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-parseLists"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">parseLists</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-strictNullHandling"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">strictNullHandling</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-strictDepth"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">strictDepth</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-throwOnLimitExceeded"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">throwOnLimitExceeded</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-decoder"><span class="type-annotation"><a href="../../qs_dart/Decoder.html">Decoder</a>?</span> <span class="parameter-name">decoder</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-legacyDecoder"><span class="type-annotation"><a class="deprecated" href="../../qs_dart/LegacyDecoder.html">LegacyDecoder</a>?</span> <span class="parameter-name">legacyDecoder</span>, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Return a new <a href="../../qs_dart/DecodeOptions-class.html">DecodeOptions</a> with the provided overrides.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">DecodeOptions copyWith({
+  bool? allowDots,
+  bool? allowEmptyLists,
+  int? listLimit,
+  Encoding? charset,
+  bool? charsetSentinel,
+  bool? comma,
+  bool? decodeDotInKeys,
+  Pattern? delimiter,
+  int? depth,
+  Duplicates? duplicates,
+  bool? ignoreQueryPrefix,
+  bool? interpretNumericEntities,
+  num? parameterLimit,
+  bool? parseLists,
+  bool? strictNullHandling,
+  bool? strictDepth,
+  bool? throwOnLimitExceeded,
+  Decoder? decoder,
+  LegacyDecoder? legacyDecoder,
+}) =&gt;
+    DecodeOptions(
+      allowDots: allowDots ?? this.allowDots,
+      allowEmptyLists: allowEmptyLists ?? this.allowEmptyLists,
+      listLimit: listLimit ?? this.listLimit,
+      charset: charset ?? this.charset,
+      charsetSentinel: charsetSentinel ?? this.charsetSentinel,
+      comma: comma ?? this.comma,
+      decodeDotInKeys: decodeDotInKeys ?? this.decodeDotInKeys,
+      delimiter: delimiter ?? this.delimiter,
+      depth: depth ?? this.depth,
+      duplicates: duplicates ?? this.duplicates,
+      ignoreQueryPrefix: ignoreQueryPrefix ?? this.ignoreQueryPrefix,
+      interpretNumericEntities:
+          interpretNumericEntities ?? this.interpretNumericEntities,
+      parameterLimit: parameterLimit ?? this.parameterLimit,
+      parseLists: parseLists ?? this.parseLists,
+      strictNullHandling: strictNullHandling ?? this.strictNullHandling,
+      strictDepth: strictDepth ?? this.strictDepth,
+      throwOnLimitExceeded: throwOnLimitExceeded ?? this.throwOnLimitExceeded,
+      decoder: decoder ?? _decoder,
+      legacyDecoder: legacyDecoder ?? _legacyDecoder,
+    );</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">qs_dart</a></li>
+    <li><a href="../../qs_dart/">qs_dart</a></li>
+    <li><a href="../../qs_dart/DecodeOptions-class.html">DecodeOptions</a></li>
+    <li class="self-crumb">copyWith method</li>
+</ol>
+
+    <h5>DecodeOptions class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    qs_dart
+      1.7.2
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

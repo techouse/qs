@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the encode method from the QS class, for the Dart programming language.">
+  <title>encode method - QS class - qs_dart library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">qs_dart</a></li>
+    <li><a href="../../qs_dart/">qs_dart.dart</a></li>
+    <li><a href="../../qs_dart/QS-class.html">QS</a></li>
+    <li class="self-crumb">encode static method</li>
+  </ol>
+  <div class="self-name">encode</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="qs_dart&#47;QS-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">encode</span> static method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.dart.dev/stable/3.11.1/dart-core/String-class.html">String</a></span>
+<span class="name ">encode</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="encode-param-object"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.11.1/dart-core/Object-class.html">Object</a>?</span> <span class="parameter-name">object</span>, [</span></li>
+<li><span class="parameter" id="encode-param-options"><span class="type-annotation"><a href="../../qs_dart/EncodeOptions-class.html">EncodeOptions</a>?</span> <span class="parameter-name">options</span></span></li>
+</ol>])
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Encode a map/iterable into a query string.</p>
+<ul>
+<li><code>object</code> may be:
+<ul>
+<li>a <code>Map&lt;String, dynamic&gt;</code> (encoded as key/value pairs),</li>
+<li>an <code>Iterable</code> (encoded as an index‑keyed map: <code>0</code>, <code>1</code>, …), or</li>
+<li><code>null</code> (returns the empty string).</li>
+</ul>
+</li>
+<li>If <a href="../../qs_dart/EncodeOptions/filter.html">EncodeOptions.filter</a> is a function, it is invoked like the
+Node <code>qs</code> filter; if it's an iterable, it specifies the exact
+key order/selection.</li>
+<li>Keys are optionally sorted via <a href="../../qs_dart/EncodeOptions/sort.html">EncodeOptions.sort</a>.</li>
+<li><a href="../../qs_dart/EncodeOptions/addQueryPrefix.html">EncodeOptions.addQueryPrefix</a> and <a href="../../qs_dart/EncodeOptions/charsetSentinel.html">EncodeOptions.charsetSentinel</a>
+control the leading <code>?</code> and sentinel token emission.</li>
+</ul>
+<p>See <a href="../../qs_dart/EncodeOptions-class.html">EncodeOptions</a> for details about list formats, output format, and hooks.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">static String encode(Object? object, [EncodeOptions? options]) {
+  options ??= const EncodeOptions();
+  &#47;&#47; Use default encoding settings unless overridden by the caller.
+  options.validate();
+
+  &#47;&#47; Normalize supported inputs into a mutable map we can traverse.
+  Map&lt;String, dynamic&gt; obj = switch (object) {
+    Map&lt;String, dynamic&gt; map =&gt; {...map},
+    Iterable iterable =&gt; Utils.createIndexMap(iterable),
+    _ =&gt; &lt;String, dynamic&gt;{},
+  };
+
+  final StringBuffer payload = StringBuffer();
+  bool hasPayload = false;
+  final String delimiter = options.delimiter;
+
+  void addFragment(String value) {
+    if (hasPayload) {
+      payload.write(delimiter);
+    }
+    payload.write(value);
+    hasPayload = true;
+  }
+
+  &#47;&#47; Nothing to encode.
+  if (obj.isEmpty) {
+    return &#39;&#39;;
+  }
+
+  List? objKeys;
+
+  &#47;&#47; Support the two `qs` filter forms: function and whitelist iterable.
+  if (options.filter is Function) {
+    obj = options.filter?.call(&#39;&#39;, obj);
+  } else if (options.filter is Iterable) {
+    objKeys = List.of(options.filter);
+  }
+
+  objKeys ??= obj.keys.toList();
+
+  &#47;&#47; Deterministic key order if a sorter is provided.
+  if (options.sort is Function) {
+    objKeys.sort(options.sort);
+  }
+
+  &#47;&#47; Active-path set used by the encoder for cycle detection across frames.
+  final Set&lt;Object&gt; sideChannel = HashSet&lt;Object&gt;.identity();
+  final ListFormatGenerator gen = options.listFormat.generator;
+  final bool crt = identical(gen, ListFormat.comma.generator) &amp;&amp;
+      options.commaRoundTrip == true;
+  final bool ccn = identical(gen, ListFormat.comma.generator) &amp;&amp;
+      options.commaCompactNulls == true;
+  final EncodeConfig rootConfig = EncodeConfig(
+    generateArrayPrefix: gen,
+    commaRoundTrip: crt,
+    commaCompactNulls: ccn,
+    allowEmptyLists: options.allowEmptyLists,
+    strictNullHandling: options.strictNullHandling,
+    skipNulls: options.skipNulls,
+    encodeDotInKeys: options.encodeDotInKeys,
+    encoder: options.encode ? options.encoder : null,
+    serializeDate: options.serializeDate,
+    sort: options.sort,
+    filter: options.filter,
+    allowDots: options.allowDots,
+    format: options.format,
+    formatter: options.formatter,
+    encodeValuesOnly: options.encodeValuesOnly,
+    charset: options.charset,
+  );
+
+  for (int i = 0; i &lt; objKeys.length; i++) {
+    final key = objKeys[i];
+
+    if (key is! String || (obj[key] == null &amp;&amp; options.skipNulls)) {
+      continue;
+    }
+
+    final encoded = _$Encode._encode(
+      obj[key],
+      undefined: !obj.containsKey(key),
+      sideChannel: sideChannel,
+      prefix: key,
+      rootConfig: rootConfig,
+    );
+
+    if (encoded is Iterable) {
+      for (final e in encoded) {
+        if (e != null) {
+          addFragment(e as String);
+        }
+      }
+    } else if (encoded != null) {
+      addFragment(encoded as String);
+    }
+  }
+  final StringBuffer out = StringBuffer();
+
+  if (options.addQueryPrefix) {
+    out.write(&#39;?&#39;);
+  }
+
+  &#47;&#47; Optionally emit the charset sentinel (mirrors Node `qs`).
+  if (options.charsetSentinel) {
+    out.write(switch (options.charset) {
+      &#47;&#47;&#47; encodeURIComponent(&#39;&amp;#10003;&#39;)
+      &#47;&#47;&#47; the &quot;numeric entity&quot; representation of a checkmark
+      latin1 =&gt; &#39;${Sentinel.iso}&amp;&#39;,
+
+      &#47;&#47;&#47; encodeURIComponent(&#39;✓&#39;)
+      utf8 =&gt; &#39;${Sentinel.charset}&amp;&#39;,
+      _ =&gt; &#39;&#39;,
+    });
+  }
+
+  &#47;&#47; Append the payload after any optional prefix&#47;sentinel.
+  if (hasPayload) {
+    out.write(payload);
+  }
+
+  return out.toString();
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">qs_dart</a></li>
+    <li><a href="../../qs_dart/">qs_dart</a></li>
+    <li><a href="../../qs_dart/QS-class.html">QS</a></li>
+    <li class="self-crumb">encode static method</li>
+</ol>
+
+    <h5>QS class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    qs_dart
+      1.7.2
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
