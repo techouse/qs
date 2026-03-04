@@ -1,3 +1,11 @@
+## 1.7.3
+
+* [PERF] speed up decode for flat and mixed query workloads via structured-key pre-scan, flat-query early return, and parse/merge bypass when safe
+* [PERF] optimize decode tokenization/list hot paths with capped splitting for String/RegExp/Pattern delimiters, capped comma splitting, and lower-overhead substring/index usage
+* [FIX] tighten strict list-limit behavior and list-growth detection (including root `[]` map input, scalar→list transitions, and ignoring `[]=` substrings inside values)
+* [CHORE] add targeted decode regression coverage for new fast paths and delimiter/list-limit edge cases
+* [CHORE] add `tool/decode_perf_snapshot.dart` for repeatable decode perf snapshots and remove obsolete JS-style `slice` list/string extensions
+
 ## 1.7.2
 
 * [PERF] optimize deep `encode=false` workloads with a guarded single-key linear map fast path, segment-string reuse, and lower-allocation top-level fragment assembly
