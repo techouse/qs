@@ -7,17 +7,15 @@ import 'package:qs_dart/src/enums/encode_phase.dart';
 import 'package:qs_dart/src/enums/format.dart';
 import 'package:qs_dart/src/enums/list_format.dart';
 import 'package:qs_dart/src/enums/sentinel.dart';
-import 'package:qs_dart/src/extensions/extensions.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/models/encode_config.dart';
 import 'package:qs_dart/src/models/encode_frame.dart';
 import 'package:qs_dart/src/models/encode_options.dart';
 import 'package:qs_dart/src/models/key_path_node.dart';
+import 'package:qs_dart/src/models/structured_key_scan.dart';
 import 'package:qs_dart/src/models/undefined.dart';
+import 'package:qs_dart/src/models/value_sentinel.dart';
 import 'package:qs_dart/src/utils.dart';
-
-// Re-export for public API: consumers can `import 'package:qs_dart/qs.dart'` and access DecodeKind
-export 'package:qs_dart/src/enums/decode_kind.dart';
 
 part 'extensions/decode.dart';
 part 'extensions/encode.dart';
@@ -46,7 +44,10 @@ final class QS {
   ///
   /// See [DecodeOptions] for delimiter, nesting depth, numeric-entity handling,
   /// duplicates policy, and other knobs.
-  static Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) {
+  static Map<String, dynamic> decode(
+    final dynamic input, [
+    DecodeOptions? options,
+  ]) {
     options ??= const DecodeOptions();
     // Default to the library's safe, Node-`qs` compatible settings.
     options.validate();
@@ -69,14 +70,33 @@ final class QS {
         ? _$Decode._parseQueryStringValues(input, options)
         : input;
 
+    final bool decodeFromString = input is String;
+    final StructuredKeyScan structuredKeyScan =
+        decodeFromString && (tempObj?.isNotEmpty ?? false)
+            ? _$Decode._scanStructuredKeys(tempObj!, options)
+            : const StructuredKeyScan.empty();
+
+    if (decodeFromString && !structuredKeyScan.hasAnyStructuredSyntax) {
+      return Utils.compact(tempObj!);
+    }
+
     Map<String, dynamic> obj = {};
 
     // Merge each parsed key into the accumulator using the same rules as Node `qs`.
     // Iterate over the keys and setup the new object
     if (tempObj?.isNotEmpty ?? false) {
       for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
+        if (decodeFromString) {
+          final String key = entry.key;
+          if (!structuredKeyScan.structuredKeys.contains(key) &&
+              !structuredKeyScan.structuredRoots.contains(key)) {
+            obj[entry.key] = entry.value;
+            continue;
+          }
+        }
+
         final parsed = _$Decode._parseKeys(
-            entry.key, entry.value, options, input is String);
+            entry.key, entry.value, options, decodeFromString);
 
         if (obj.isEmpty && parsed is Map<String, dynamic>) {
           obj = parsed; // direct assignment – no merge needed
@@ -104,7 +124,7 @@ final class QS {
   ///   control the leading `?` and sentinel token emission.
   ///
   /// See [EncodeOptions] for details about list formats, output format, and hooks.
-  static String encode(Object? object, [EncodeOptions? options]) {
+  static String encode(final Object? object, [EncodeOptions? options]) {
     options ??= const EncodeOptions();
     // Use default encoding settings unless overridden by the caller.
     options.validate();

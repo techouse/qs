@@ -42,39 +42,152 @@ extension _$Decode on QS {
   /// an empty list). Empty‑bracket pushes (`a[]=`) are handled during structure building
   /// in `_parseObject`.
   static dynamic _parseListValue(
-    dynamic val,
-    DecodeOptions options,
-    int currentListLength,
+    final dynamic val,
+    final DecodeOptions options,
+    final int currentListLength,
+    final bool isListGrowthPath,
   ) {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
-      final List<String> splitVal = val.split(',');
-      if (options.throwOnLimitExceeded &&
-          (currentListLength + splitVal.length) > options.listLimit) {
-        final String msg = options.listLimit < 0
-            ? 'List parsing is disabled (listLimit < 0).'
-            : 'List limit exceeded. Only ${options.listLimit} '
-                'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
-        throw RangeError(msg);
-      }
       final int remaining = options.listLimit - currentListLength;
+
+      if (options.throwOnLimitExceeded) {
+        if (remaining < 0) {
+          throw RangeError(_listLimitExceededMessage(options.listLimit));
+        }
+        final List<String> splitVal = _splitCommaValue(
+          val,
+          maxParts: remaining == 0 ? 1 : remaining + 1,
+        );
+        if (splitVal.length > remaining) {
+          throw RangeError(_listLimitExceededMessage(options.listLimit));
+        }
+        return splitVal;
+      }
+
       if (remaining <= 0) return const <String>[];
-      return splitVal.length <= remaining
-          ? splitVal
-          : splitVal.sublist(0, remaining);
+      return _splitCommaValue(val, maxParts: remaining);
     }
 
     // Guard incremental growth of an existing list as we parse additional items.
     if (options.throwOnLimitExceeded &&
+        isListGrowthPath &&
         currentListLength >= options.listLimit) {
-      final String msg = options.listLimit < 0
-          ? 'List parsing is disabled (listLimit < 0).'
-          : 'List limit exceeded. Only ${options.listLimit} '
-              'element${options.listLimit == 1 ? '' : 's'} allowed in a list.';
-      throw RangeError(msg);
+      throw RangeError(_listLimitExceededMessage(options.listLimit));
     }
 
     return val;
+  }
+
+  /// Helper to generate consistent error messages for list limit violations,
+  /// based on the configured `listLimit`.
+  static String _listLimitExceededMessage(final int listLimit) => listLimit < 0
+      ? 'List parsing is disabled (listLimit < 0).'
+      : 'List limit exceeded. Only $listLimit '
+          'element${listLimit == 1 ? '' : 's'} allowed in a list.';
+
+  /// Splits a comma-separated value into parts, respecting an optional `maxParts` limit.
+  static List<String> _splitCommaValue(
+    final String value, {
+    final int? maxParts,
+  }) {
+    if (maxParts != null && maxParts <= 0) return const <String>[];
+
+    final List<String> parts = <String>[];
+    int start = 0;
+    while (true) {
+      if (maxParts != null && parts.length >= maxParts) break;
+
+      final int comma = value.indexOf(',', start);
+      final int end = comma == -1 ? value.length : comma;
+      parts.add(value.substring(start, end));
+
+      if (comma == -1) break;
+      start = comma + 1;
+    }
+
+    return parts;
+  }
+
+  /// Splits the input string by the specified delimiter (string or pattern),
+  /// collecting only non-empty parts and respecting an optional `maxParts` limit.
+  static List<String> _collectNonEmptyParts(
+    final String input,
+    final Pattern delimiter, {
+    final int? maxParts,
+  }) {
+    return switch (delimiter) {
+      String d => _collectNonEmptyStringParts(input, d, maxParts: maxParts),
+      _ => _collectNonEmptyPatternParts(input, delimiter, maxParts: maxParts),
+    };
+  }
+
+  /// Optimized splitter for string delimiters that collects only non-empty
+  /// parts and respects `maxParts`.
+  static List<String> _collectNonEmptyStringParts(
+    final String input,
+    final String delimiter, {
+    final int? maxParts,
+  }) {
+    if (delimiter.isEmpty) {
+      throw ArgumentError('Delimiter must not be empty.');
+    }
+    if (maxParts != null && maxParts <= 0) return const <String>[];
+
+    final List<String> parts = <String>[];
+    int start = 0;
+    while (true) {
+      if (maxParts != null && parts.length >= maxParts) break;
+
+      final int next = input.indexOf(delimiter, start);
+      final int end = next == -1 ? input.length : next;
+      if (end > start) {
+        parts.add(input.substring(start, end));
+      }
+
+      if (next == -1) break;
+      start = next + delimiter.length;
+    }
+
+    return parts;
+  }
+
+  /// General splitter for pattern delimiters that collects only non-empty parts
+  static List<String> _collectNonEmptyPatternParts(
+    final String input,
+    final Pattern delimiter, {
+    final int? maxParts,
+  }) {
+    if (maxParts != null && maxParts <= 0) return const <String>[];
+
+    final List<String> out = <String>[];
+    int start = 0;
+
+    for (final Match match in delimiter.allMatches(input)) {
+      final int matchStart = match.start;
+      final int matchEnd = match.end;
+
+      if (matchStart < start) continue;
+
+      if (matchStart > start) {
+        out.add(input.substring(start, matchStart));
+        if (maxParts != null && out.length >= maxParts) return out;
+      }
+
+      // Defensive handling for zero-width matches to guarantee forward progress.
+      if (matchEnd <= start) {
+        if (start >= input.length) break;
+        start++;
+      } else {
+        start = matchEnd;
+      }
+    }
+
+    if (start < input.length && (maxParts == null || out.length < maxParts)) {
+      out.add(input.substring(start));
+    }
+
+    return out;
   }
 
   /// Tokenizes the raw query-string into a flat key→value map before any
@@ -87,8 +200,8 @@ extension _$Decode on QS {
   /// - Comma‑split growth honors `throwOnLimitExceeded` (see `_parseListValue`);
   ///   empty‑bracket pushes (`[]=`) are created during structure building in `_parseObject`.
   static Map<String, dynamic> _parseQueryStringValues(
-    String str, [
-    DecodeOptions options = const DecodeOptions(),
+    final String str, [
+    final DecodeOptions options = const DecodeOptions(),
   ]) {
     // 1) Normalize the incoming string (drop `?`, normalize %5B/%5D to brackets).
     final String cleanStr =
@@ -105,17 +218,18 @@ extension _$Decode on QS {
     }
 
     // 3) Split by delimiter once; optionally truncate, optionally throw on overflow.
-    final List<String> allParts = cleanStr.split(options.delimiter);
-    late final List<String> parts;
-    if (limit != null && limit > 0) {
-      if (options.throwOnLimitExceeded && allParts.length > limit) {
-        throw RangeError(
-          'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
-        );
-      }
-      parts = allParts.take(limit).toList();
-    } else {
-      parts = allParts;
+    final int? takeCount = limit == null
+        ? null
+        : (options.throwOnLimitExceeded ? limit + 1 : limit);
+    final List<String> parts = _collectNonEmptyParts(
+      cleanStr,
+      options.delimiter,
+      maxParts: takeCount,
+    );
+    if (options.throwOnLimitExceeded && limit != null && parts.length > limit) {
+      throw RangeError(
+        'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
+      );
     }
 
     // Charset probing (utf8=✓ / utf8=X). Skip the sentinel pair later.
@@ -158,19 +272,30 @@ extension _$Decode on QS {
         val = options.strictNullHandling ? null : '';
       } else {
         // Decode the key slice as a key; values decode as values
-        key = options.decodeKey(part.slice(0, pos), charset: charset) ?? '';
+        final String rawKey = part.substring(0, pos);
+        key = options.decodeKey(rawKey, charset: charset) ?? '';
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
+        final bool existingKey = obj.containsKey(key);
+        final bool combiningDuplicates =
+            existingKey && options.duplicates == Duplicates.combine;
+        final int currentListLength = combiningDuplicates
+            ? (obj[key] is List ? (obj[key] as List).length : 1)
+            : 0;
+        final bool listGrowthFromKey = combiningDuplicates ||
+            (options.parseLists && rawKey.endsWith('[]'));
+
         val = Utils.apply<dynamic>(
           _parseListValue(
-            part.slice(pos + 1),
+            part.substring(pos + 1),
             options,
-            obj.containsKey(key) && obj[key] is List
-                ? (obj[key] as List).length
-                : 0,
+            currentListLength,
+            listGrowthFromKey,
           ),
-          (dynamic v) => options.decodeValue(v as String?, charset: charset),
+          (final dynamic v) =>
+              options.decodeValue(v as String?, charset: charset),
         );
       }
+      if (key.isEmpty) continue;
 
       // Optional HTML numeric entity interpretation (legacy Latin-1 queries).
       if (val != null &&
@@ -184,8 +309,10 @@ extension _$Decode on QS {
         }
       }
 
-      // Quirk: a literal `[]=` suffix forces an array container (qs behavior).
-      if (options.parseLists && part.contains('[]=')) {
+      // Quirk: a key ending in `[]` forces an array container (qs behavior).
+      if (options.parseLists &&
+          pos != -1 &&
+          part.substring(0, pos).endsWith('[]')) {
         val = [val];
       }
 
@@ -221,9 +348,11 @@ extension _$Decode on QS {
   /// - `listLimit` applies to explicit numeric indices and list growth via `[]`;
   ///   when exceeded, lists are converted into maps with string indices.
   /// - A negative `listLimit` disables numeric‑index parsing (bracketed numbers become map keys).
-  ///   Empty‑bracket pushes (`[]`) still create lists here; this method does not enforce
-  ///   `throwOnLimitExceeded` for that path. Comma‑split growth (if any) has already been
-  ///   handled by `_parseListValue`.
+  /// - List-growth context is forwarded to `_parseListValue` before reduction:
+  ///   `chain.last == '[]'` (with `options.parseLists`) and `options.throwOnLimitExceeded`
+  ///   can cause `_parseListValue` to throw on strict list growth checks.
+  ///   Reviewers should trace `chain`/`options` into `_parseObject` and then into
+  ///   `_parseListValue` for the exact throw paths.
   /// - Keys have been decoded per `DecodeOptions.decodeKey`; top‑level splitting applies to
   ///   literal `.` only (including those produced by percent‑decoding). Percent‑encoded dots may
   ///   still appear inside bracket segments here; we normalize `%2E`/`%2e` to `.` below when
@@ -231,15 +360,18 @@ extension _$Decode on QS {
   ///   Whether top‑level dots split was decided earlier by `_splitKeyIntoSegments` (based on
   ///   `allowDots`). Numeric list indices are only honored for *bracketed* numerics like `[3]`.
   static dynamic _parseObject(
-    List<String> chain,
-    dynamic val,
-    DecodeOptions options,
-    bool valuesParsed,
+    final List<String> chain,
+    final dynamic val,
+    final DecodeOptions options,
+    final bool valuesParsed,
   ) {
+    final bool isListGrowthPath =
+        chain.isNotEmpty && chain.last == '[]' && options.parseLists;
+
     // Determine the current list length if we are appending into `[]`.
     late final int currentListLength;
 
-    if (chain.length >= 2 && chain.last == '[]') {
+    if (isListGrowthPath && chain.length >= 2) {
       final String prev = chain[chain.length - 2];
       final bool bracketed = prev.startsWith('[') && prev.endsWith(']');
       final int? parentIndex =
@@ -264,6 +396,7 @@ extension _$Decode on QS {
             val,
             options,
             currentListLength,
+            isListGrowthPath,
           );
 
     for (int i = chain.length - 1; i >= 0; --i) {
@@ -293,7 +426,7 @@ extension _$Decode on QS {
         // happened in `_splitKeyIntoSegments`.
         final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
         final String cleanRoot =
-            wasBracketed ? root.slice(1, root.length - 1) : root;
+            wasBracketed ? root.substring(1, root.length - 1) : root;
         String decodedRoot = options.decodeDotInKeys && cleanRoot.contains('%2')
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
@@ -352,10 +485,10 @@ extension _$Decode on QS {
   /// depth constraints) and delegates to `_parseObject` to build the value.
   /// Returns `null` for empty keys.
   static dynamic _parseKeys(
-    String? givenKey,
-    dynamic val,
-    DecodeOptions options, [
-    bool valuesParsed = false,
+    final String? givenKey,
+    final dynamic val,
+    final DecodeOptions options, [
+    final bool valuesParsed = false,
   ]) {
     if (givenKey == null || givenKey.isEmpty) return null;
 
@@ -378,10 +511,10 @@ extension _$Decode on QS {
   ///     • if `strictDepth` is true, we throw;
   ///     • otherwise the remainder is wrapped as one final bracket segment (e.g., `"[rest]"`)
   static List<String> _splitKeyIntoSegments({
-    required String originalKey,
-    required bool allowDots,
-    required int maxDepth,
-    required bool strictDepth,
+    required final String originalKey,
+    required final bool allowDots,
+    required final int maxDepth,
+    required final bool strictDepth,
   }) {
     // Depth==0 → do not split at all (reference `qs` behavior).
     // Important: return the *original* key with no dot→bracket normalization.
@@ -446,21 +579,15 @@ extension _$Decode on QS {
     if (lastClose >= 0 && lastClose + 1 < n) {
       final String remainder = key.substring(lastClose + 1);
       if (remainder != '.') {
+        // Note: if there are still uncollected bracket groups (open >= 0),
+        // they are part of this same remainder path; no separate overflow
+        // branch is needed.
         if (strictDepth && open >= 0) {
           throw RangeError(
               'Input depth exceeded $maxDepth and strictDepth is true');
         }
         segments.add('[$remainder]');
       }
-    } else if (open >= 0) {
-      // There are more groups beyond the collected depth.
-      if (strictDepth) {
-        throw RangeError(
-            'Input depth exceeded $maxDepth and strictDepth is true');
-      }
-      // Wrap the remaining bracket groups as a single literal segment.
-      // Example: key="a[b][c][d]", depth=2 → segment="[[c][d]]" which becomes "[c][d]" later.
-      segments.add('[${key.substring(open)}]');
     }
 
     return segments;
@@ -477,7 +604,7 @@ extension _$Decode on QS {
   /// - Only literal `.` are considered for splitting here. In this library, keys are normally
   ///   percent‑decoded before this step; thus a top‑level `%2E` typically becomes a literal `.`
   ///   and will split when `allowDots` is true.
-  static String _dotToBracketTopLevel(String s) {
+  static String _dotToBracketTopLevel(final String s) {
     if (s.isEmpty || !s.contains('.')) return s;
     final StringBuffer sb = StringBuffer();
     int depth = 0;
@@ -509,7 +636,7 @@ extension _$Decode on QS {
             final int start = ++i;
             int j = start;
             // Accept [A-Za-z0-9_] at the start of a segment; otherwise, keep '.' literal.
-            bool isIdentStart(int cu) => switch (cu) {
+            bool isIdentStart(final int cu) => switch (cu) {
                   (>= 0x41 && <= 0x5A) || // A-Z
                   (>= 0x61 && <= 0x7A) || // a-z
                   (>= 0x30 && <= 0x39) || // 0-9
@@ -550,7 +677,7 @@ extension _$Decode on QS {
   ///   in a single pass for faster downstream bracket parsing.
   static String _cleanQueryString(
     String str, {
-    required bool ignoreQueryPrefix,
+    required final bool ignoreQueryPrefix,
   }) {
     // Drop exactly one leading '?' (qs semantics) — not all leading question marks.
     if (ignoreQueryPrefix &&
@@ -604,5 +731,105 @@ extension _$Decode on QS {
       first = false;
     }
     return sb.toString();
+  }
+
+  /// Returns the earliest index in [key] that signals structured syntax.
+  ///
+  /// Structured syntax is:
+  /// - `[` always
+  /// - `.` when [allowDots] is true
+  /// - `%2E`/`%2e` when [allowDots] is true and keys are still encoded
+  ///
+  /// Returns `-1` when no structured marker is present.
+  static int _firstStructuredSplitIndex(
+    final String key,
+    final bool allowDots,
+  ) {
+    int splitAt = key.indexOf('[');
+    if (!allowDots) return splitAt;
+
+    final int dotIndex = key.indexOf('.');
+    if (dotIndex >= 0 && (splitAt < 0 || dotIndex < splitAt)) {
+      splitAt = dotIndex;
+    }
+
+    int encodedDotIndex = -1;
+    if (key.contains('%')) {
+      final int upper = key.indexOf('%2E');
+      final int lower = key.indexOf('%2e');
+      if (upper >= 0 && lower >= 0) {
+        encodedDotIndex = upper < lower ? upper : lower;
+      } else {
+        encodedDotIndex = upper >= 0 ? upper : lower;
+      }
+    }
+
+    if (encodedDotIndex >= 0 && (splitAt < 0 || encodedDotIndex < splitAt)) {
+      splitAt = encodedDotIndex;
+    }
+
+    return splitAt;
+  }
+
+  /// Computes the collision root for a structured [key].
+  ///
+  /// This uses `_splitKeyIntoSegments` so root extraction follows the same
+  /// dot/bracket/depth rules as full decode. For leading bracket keys like
+  /// `[]` the root normalizes to `'0'` to match existing merge semantics.
+  static String _leadingStructuredRoot(
+    final String key,
+    final DecodeOptions options,
+  ) {
+    final List<String> segments = _$Decode._splitKeyIntoSegments(
+      originalKey: key,
+      allowDots: options.allowDots,
+      maxDepth: options.depth,
+      strictDepth: options.strictDepth,
+    );
+    if (segments.isEmpty) return key;
+
+    final String first = segments.first;
+    if (!first.startsWith('[')) return first;
+
+    final int last = first.lastIndexOf(']');
+    final String cleanRoot =
+        last > 0 ? first.substring(1, last) : first.substring(1);
+    return cleanRoot.isEmpty ? '0' : cleanRoot;
+  }
+
+  /// Pre-scans tokenized keys for decode fast-path decisions.
+  ///
+  /// Produces:
+  /// - [StructuredKeyScan.hasAnyStructuredSyntax] for flat-query early return
+  /// - [StructuredKeyScan.structuredKeys] for per-key bypass checks
+  /// - [StructuredKeyScan.structuredRoots] to preserve flat/structured root
+  ///   collision behavior (for example `a=1` with `a[b]=2`)
+  static StructuredKeyScan _scanStructuredKeys(
+    final Map<String, dynamic> tempObj,
+    final DecodeOptions options,
+  ) {
+    if (tempObj.isEmpty) return const StructuredKeyScan.empty();
+
+    final bool allowDots = options.allowDots;
+    final Set<String> roots = <String>{};
+    final Set<String> structuredKeys = <String>{};
+    for (final String key in tempObj.keys) {
+      final int splitAt = _firstStructuredSplitIndex(key, allowDots);
+
+      if (splitAt < 0) continue;
+      structuredKeys.add(key);
+      if (splitAt == 0) {
+        roots.add(_leadingStructuredRoot(key, options));
+      } else {
+        roots.add(key.substring(0, splitAt));
+      }
+    }
+
+    if (structuredKeys.isEmpty) return const StructuredKeyScan.empty();
+    return StructuredKeyScan(
+      hasAnyStructuredSyntax: true,
+      structuredRoots: roots,
+      structuredKeys: structuredKeys,
+    );
   }
 }

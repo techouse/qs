@@ -37,8 +37,8 @@ final class Utils {
   @internal
   @visibleForTesting
   static Map<String, dynamic> markOverflow(
-    Map<String, dynamic> obj,
-    int maxIndex,
+    final Map<String, dynamic> obj,
+    final int maxIndex,
   ) {
     _overflowIndex[obj] = maxIndex;
     return obj;
@@ -46,19 +46,19 @@ final class Utils {
 
   /// Returns `true` if the given object is marked as an overflow container.
   @internal
-  static bool isOverflow(dynamic obj) =>
+  static bool isOverflow(final dynamic obj) =>
       obj is Map && _overflowIndex[obj] != null;
 
   /// Returns the tracked max numeric index for an overflow map, or -1 if absent.
-  static int _getOverflowIndex(Map obj) => _overflowIndex[obj] ?? -1;
+  static int _getOverflowIndex(final Map obj) => _overflowIndex[obj] ?? -1;
 
   /// Updates the tracked max numeric index for an overflow map.
-  static void _setOverflowIndex(Map obj, int maxIndex) {
+  static void _setOverflowIndex(final Map obj, final int maxIndex) {
     _overflowIndex[obj] = maxIndex;
   }
 
   /// Returns the larger of the current max and the parsed numeric key (if any).
-  static int _updateOverflowMax(int current, String key) {
+  static int _updateOverflowMax(final int current, final String key) {
     final int? parsed = int.tryParse(key);
     if (parsed == null || parsed < 0) {
       return current;
@@ -90,9 +90,9 @@ final class Utils {
   /// This mirrors the behavior of the original Node.js `qs` merge routine,
   /// including treatment of `Undefined` sentinels.
   static dynamic merge(
-    dynamic target,
-    dynamic source, [
-    DecodeOptions? options = const DecodeOptions(),
+    final dynamic target,
+    final dynamic source, [
+    final DecodeOptions? options = const DecodeOptions(),
   ]) {
     late dynamic result;
     final List<MergeFrame> stack = [
@@ -100,7 +100,7 @@ final class Utils {
         target: target,
         source: source,
         options: options,
-        onResult: (dynamic value) => result = value,
+        onResult: (final dynamic value) => result = value,
       ),
     ];
 
@@ -139,7 +139,7 @@ final class Utils {
             bool sourceHasMap = false;
             if (sourceIsIterable) {
               sourceMaps = true;
-              for (final el in currentSource) {
+              for (final dynamic el in currentSource) {
                 if (el is Undefined) {
                   continue;
                 }
@@ -170,7 +170,7 @@ final class Utils {
               }
 
               if (frame.options?.parseLists == false &&
-                  target_.values.any((el) => el is Undefined)) {
+                  target_.values.any((final el) => el is Undefined)) {
                 final Map<String, dynamic> normalized = {
                   for (final MapEntry<int, dynamic> entry in target_.entries)
                     if (entry.value is! Undefined)
@@ -380,7 +380,7 @@ final class Utils {
 
       if (frame.listIndex >= frame.sourceList!.length) {
         if (frame.options?.parseLists == false &&
-            frame.indexedTarget!.values.any((el) => el is Undefined)) {
+            frame.indexedTarget!.values.any((final el) => el is Undefined)) {
           final Map<String, dynamic> normalized = {
             for (final MapEntry<int, dynamic> entry
                 in frame.indexedTarget!.entries)
@@ -432,7 +432,7 @@ final class Utils {
   }
 
   /// Converts an iterable to a zero-indexed [SplayTreeMap].
-  static SplayTreeMap<int, dynamic> _toIndexedTreeMap(Iterable iterable) {
+  static SplayTreeMap<int, dynamic> _toIndexedTreeMap(final Iterable iterable) {
     final SplayTreeMap<int, dynamic> map = SplayTreeMap<int, dynamic>();
     int i = 0;
     for (final v in iterable) {
@@ -451,7 +451,10 @@ final class Utils {
   @internal
   @visibleForTesting
   @Deprecated('Use Uri.encodeComponent instead')
-  static String escape(String str, {Format? format = Format.rfc3986}) {
+  static String escape(
+    final String str, {
+    final Format? format = Format.rfc3986,
+  }) {
     final StringBuffer buffer = StringBuffer();
 
     for (int i = 0; i < str.length; ++i) {
@@ -499,7 +502,7 @@ final class Utils {
   @internal
   @visibleForTesting
   @Deprecated('Use Uri.decodeComponent instead')
-  static String unescape(String str) {
+  static String unescape(final String str) {
     if (!str.contains('%')) return str;
     final StringBuffer buffer = StringBuffer();
     int i = 0;
@@ -581,9 +584,9 @@ final class Utils {
   ///
   /// Note: Higher-level encoders are responsible for key assembly and joining.
   static String encode(
-    dynamic value, {
-    Encoding charset = utf8,
-    Format? format = Format.rfc3986,
+    final dynamic value, {
+    final Encoding charset = utf8,
+    final Format? format = Format.rfc3986,
   }) {
     if (charset != utf8 && charset != latin1) {
       throw ArgumentError.value(
@@ -618,7 +621,7 @@ final class Utils {
     if (charset == latin1) {
       return Utils.escape(str!, format: format).replaceAllMapped(
         RegExp(r'%u[0-9a-f]{4}', caseSensitive: false),
-        (Match match) =>
+        (final Match match) =>
             '%26%23${int.parse(match.group(0)!.substring(2), radix: 16)}%3B',
       );
     }
@@ -650,7 +653,10 @@ final class Utils {
   }
 
   static void _writeEncodedSegment(
-      String segment, StringBuffer buffer, Format? format) {
+    final String segment,
+    final StringBuffer buffer,
+    final Format? format,
+  ) {
     for (int i = 0; i < segment.length; ++i) {
       int c = segment.codeUnitAt(i);
 
@@ -728,7 +734,7 @@ final class Utils {
   }
 
   /// Fast latin1 percent-decoder
-  static String _decodeLatin1Percent(String s) {
+  static String _decodeLatin1Percent(final String s) {
     final StringBuffer sb = StringBuffer();
     for (int i = 0; i < s.length; i++) {
       final int ch = s.codeUnitAt(i);
@@ -746,7 +752,8 @@ final class Utils {
     return sb.toString();
   }
 
-  static int _hexVal(int cu) {
+  /// Returns the numeric value of a hex digit character code, or -1 if invalid.
+  static int _hexVal(final int cu) {
     if (cu >= 0x30 && cu <= 0x39) return cu - 0x30; // '0'..'9'
     if (cu >= 0x41 && cu <= 0x46) return cu - 0x41 + 10; // 'A'..'F'
     if (cu >= 0x61 && cu <= 0x66) return cu - 0x61 + 10; // 'a'..'f'
@@ -762,22 +769,27 @@ final class Utils {
   ///   to returning the input unchanged (after `'+'` handling).
   ///
   /// Returns `null` if `str` is `null`.
-  static String? decode(String? str, {Encoding? charset = utf8}) {
-    final String? strWithoutPlus = str?.replaceAll('+', ' ');
+  static String? decode(final String? str, {final Encoding? charset = utf8}) {
+    if (str == null) return null;
+
+    final bool hasPlus = str.contains('+');
+    final bool hasPercent = str.contains('%');
+    if (!hasPlus && !hasPercent) return str;
+
+    final String strWithoutPlus = hasPlus ? str.replaceAll('+', ' ') : str;
     if (charset == latin1) {
-      final String? s = strWithoutPlus;
-      if (s == null) return null;
-      if (!s.contains('%')) return s; // fast path: nothing to decode
+      if (!hasPercent) return strWithoutPlus;
       try {
-        return _decodeLatin1Percent(s);
+        return _decodeLatin1Percent(strWithoutPlus);
       } catch (_) {
-        return s;
+        return strWithoutPlus;
       }
     }
+
+    if (!hasPercent) return strWithoutPlus;
+
     try {
-      return strWithoutPlus != null
-          ? Uri.decodeComponent(strWithoutPlus)
-          : null;
+      return Uri.decodeComponent(strWithoutPlus);
     } catch (_) {
       return strWithoutPlus;
     }
@@ -792,7 +804,7 @@ final class Utils {
   ///   when calling with shared objects because this mutates them.
   ///
   /// Returns the same `root` instance for chaining.
-  static Map<String, dynamic> compact(Map<String, dynamic> root) {
+  static Map<String, dynamic> compact(final Map<String, dynamic> root) {
     final List<Object> stack = [root];
 
     // Identity-based visited set: ensures each concrete object is processed once
@@ -844,11 +856,15 @@ final class Utils {
   /// combine([1,2], 3); // [1,2,3]
   /// combine('a', ['b','c']); // ['a','b','c']
   /// ```
-  static dynamic combine(dynamic a, dynamic b, {int? listLimit}) {
+  static dynamic combine(
+    final dynamic a,
+    final dynamic b, {
+    final int? listLimit,
+  }) {
     if (isOverflow(a)) {
       int newIndex = _getOverflowIndex(a);
       if (b is Iterable) {
-        for (final item in b) {
+        for (final dynamic item in b) {
           newIndex++;
           a[newIndex.toString()] = item;
         }
@@ -876,7 +892,7 @@ final class Utils {
   /// Applies `fn` to a scalar or maps it over an iterable, returning the result.
   ///
   /// Handy when a caller may pass a single value or a collection.
-  static dynamic apply<T>(dynamic val, T Function(T) fn) =>
+  static dynamic apply<T>(dynamic val, final T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
 
   /// Returns `true` if `val` is a scalar we should encode as-is.
@@ -887,7 +903,10 @@ final class Utils {
   /// `Future`, [Undefined]) return `false`.
   ///
   /// When `skipNulls == true`, empty strings and empty `Uri.toString()` return `false`.
-  static bool isNonNullishPrimitive(dynamic val, [bool skipNulls = false]) {
+  static bool isNonNullishPrimitive(
+    final dynamic val, [
+    final bool skipNulls = false,
+  ]) {
     if (val is String) {
       return skipNulls ? val.isNotEmpty : true;
     }
@@ -924,7 +943,7 @@ final class Utils {
   ///
   /// Treats `null`, [Undefined], empty strings, empty iterables and empty maps
   /// as “empty”.
-  static bool isEmpty(dynamic val) =>
+  static bool isEmpty(final dynamic val) =>
       val == null ||
       val is Undefined ||
       (val is String && val.isEmpty) ||
@@ -936,7 +955,7 @@ final class Utils {
   /// - Only decimal entities are recognized.
   /// - Gracefully leaves malformed/partial sequences untouched.
   /// - Produces surrogate pairs for code points &gt; `0xFFFF`.
-  static String interpretNumericEntities(String s) {
+  static String interpretNumericEntities(final String s) {
     if (s.length < 4) return s;
     if (!s.contains('&#')) return s;
     final StringBuffer sb = StringBuffer();
@@ -985,7 +1004,7 @@ final class Utils {
   }
 
   /// Create an index-keyed map from an iterable.
-  static Map<String, dynamic> createIndexMap(Iterable iterable) {
+  static Map<String, dynamic> createIndexMap(final Iterable iterable) {
     if (iterable is List) {
       final list = iterable;
       final map = <String, dynamic>{};
