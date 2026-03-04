@@ -3,6 +3,7 @@ import 'dart:convert' show Encoding, latin1, utf8;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:euc/jis.dart';
+import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/qs.dart';
 import 'package:qs_dart/src/uri.dart';

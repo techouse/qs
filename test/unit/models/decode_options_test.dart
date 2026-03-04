@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:convert';
 
+import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/qs.dart';
