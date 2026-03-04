@@ -29,7 +29,7 @@ import 'package:qs_dart/src/qs.dart';
 /// final m2 = decode('a[0]=x&a[1]=y');             // => {'a': ['x', 'y']}
 /// final m3 = decode(Uri.parse('https://x?x=1'));  // => {'x': '1'}
 /// ```
-Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) =>
+Map<String, dynamic> decode(final dynamic input, [DecodeOptions? options]) =>
     QS.decode(input, options);
 
 /// Encode a Dart object into a query string (convenience for [QS.encode]).
@@ -48,5 +48,5 @@ Map<String, dynamic> decode(dynamic input, [DecodeOptions? options]) =>
 /// final s2 = encode({'a': ['x', 'y']});                // 'a[0]=x&a[1]=y'
 /// final s3 = encode({'user': {'id': 1, 'name': 'A'}}); // 'user[id]=1&user[name]=A'
 /// ```
-String encode(Object? object, [EncodeOptions? options]) =>
+String encode(final Object? object, [EncodeOptions? options]) =>
     QS.encode(object, options);

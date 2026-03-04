@@ -45,8 +45,9 @@ enum Format {
 
   /// Rewrites `%20` to `+` (space) and returns the result unchanged otherwise.
   /// No decoding is performed.
-  static String _rfc1738Formatter(String value) => value.replaceAll('%20', '+');
+  static String _rfc1738Formatter(final String value) =>
+      value.replaceAll('%20', '+');
 
   /// Identity formatter: returns the input unchanged.
-  static String _rfc3986Formatter(String value) => value;
+  static String _rfc3986Formatter(final String value) => value;
 }

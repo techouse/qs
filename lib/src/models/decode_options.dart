@@ -216,9 +216,9 @@ final class DecodeOptions with EquatableMixin {
   /// does not vary decoding based on [kind]. If your decoder returns `null`, that `null`
   /// is preserved — no fallback decoding is applied.
   dynamic decode(
-    String? value, {
-    Encoding? charset,
-    DecodeKind kind = DecodeKind.value,
+    final String? value, {
+    final Encoding? charset,
+    final DecodeKind kind = DecodeKind.value,
   }) {
     // Validate here to cover direct decodeKey/decodeValue usage; cached via Expando.
     validate();
@@ -233,8 +233,8 @@ final class DecodeOptions with EquatableMixin {
 
   /// Convenience: decode a key and coerce the result to String (or null).
   String? decodeKey(
-    String? value, {
-    Encoding? charset,
+    final String? value, {
+    final Encoding? charset,
   }) =>
       decode(
         value,
@@ -244,8 +244,8 @@ final class DecodeOptions with EquatableMixin {
 
   /// Convenience: decode a value token.
   dynamic decodeValue(
-    String? value, {
-    Encoding? charset,
+    final String? value, {
+    final Encoding? charset,
   }) =>
       decode(
         value,
@@ -256,33 +256,33 @@ final class DecodeOptions with EquatableMixin {
   /// **Deprecated**: use [decode]. This wrapper will be removed in a future release.
   @Deprecated('Use decode(value, charset: ..., kind: ...) instead')
   dynamic decoder(
-    String? value, {
-    Encoding? charset,
-    DecodeKind kind = DecodeKind.value,
+    final String? value, {
+    final Encoding? charset,
+    final DecodeKind kind = DecodeKind.value,
   }) =>
       decode(value, charset: charset, kind: kind);
 
   /// Return a new [DecodeOptions] with the provided overrides.
   DecodeOptions copyWith({
-    bool? allowDots,
-    bool? allowEmptyLists,
-    int? listLimit,
-    Encoding? charset,
-    bool? charsetSentinel,
-    bool? comma,
-    bool? decodeDotInKeys,
-    Pattern? delimiter,
-    int? depth,
-    Duplicates? duplicates,
-    bool? ignoreQueryPrefix,
-    bool? interpretNumericEntities,
-    num? parameterLimit,
-    bool? parseLists,
-    bool? strictNullHandling,
-    bool? strictDepth,
-    bool? throwOnLimitExceeded,
-    Decoder? decoder,
-    LegacyDecoder? legacyDecoder,
+    final bool? allowDots,
+    final bool? allowEmptyLists,
+    final int? listLimit,
+    final Encoding? charset,
+    final bool? charsetSentinel,
+    final bool? comma,
+    final bool? decodeDotInKeys,
+    final Pattern? delimiter,
+    final int? depth,
+    final Duplicates? duplicates,
+    final bool? ignoreQueryPrefix,
+    final bool? interpretNumericEntities,
+    final num? parameterLimit,
+    final bool? parseLists,
+    final bool? strictNullHandling,
+    final bool? strictDepth,
+    final bool? throwOnLimitExceeded,
+    final Decoder? decoder,
+    final LegacyDecoder? legacyDecoder,
   }) =>
       DecodeOptions(
         allowDots: allowDots ?? this.allowDots,

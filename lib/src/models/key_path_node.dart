@@ -22,10 +22,10 @@ final class KeyPathNode {
   KeyPathNode? _dotEncoded;
   String? _materialized;
 
-  static KeyPathNode fromMaterialized(String value) =>
+  static KeyPathNode fromMaterialized(final String value) =>
       KeyPathNode._(null, value);
 
-  KeyPathNode append(String segment) =>
+  KeyPathNode append(final String segment) =>
       segment.isEmpty ? this : KeyPathNode._(this, segment);
 
   /// Returns a cached view with every literal dot replaced by `%2E`.
@@ -146,6 +146,6 @@ final class KeyPathNode {
     return _materialized!;
   }
 
-  static String _replaceDots(String value) =>
+  static String _replaceDots(final String value) =>
       value.contains('.') ? value.replaceAll('.', '%2E') : value;
 }

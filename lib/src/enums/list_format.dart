@@ -61,14 +61,16 @@ enum ListFormat {
   String toString() => name;
 
   /// `foo[]`
-  static String _brackets(String prefix, [String? key]) => '$prefix[]';
+  static String _brackets(final String prefix, [final String? key]) =>
+      '$prefix[]';
 
   /// `foo` (the encoder will join values with commas)
-  static String _comma(String prefix, [String? key]) => prefix;
+  static String _comma(final String prefix, [final String? key]) => prefix;
 
   /// `foo[<index>]`
-  static String _indices(String prefix, [String? key]) => '$prefix[$key]';
+  static String _indices(final String prefix, [final String? key]) =>
+      '$prefix[$key]';
 
   /// `foo` (the encoder will repeat the key per element)
-  static String _repeat(String prefix, [String? key]) => prefix;
+  static String _repeat(final String prefix, [final String? key]) => prefix;
 }
