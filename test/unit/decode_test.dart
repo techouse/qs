@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:euc/jis.dart';
+import 'package:qs_dart/src/enums/decode_kind.dart';
 import 'package:qs_dart/src/enums/duplicates.dart';
 import 'package:qs_dart/src/models/decode_options.dart';
 import 'package:qs_dart/src/qs.dart';
@@ -10,6 +11,20 @@ import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
 import '../fixtures/data/empty_test_cases.dart';
+
+final class _CustomDelimiter implements Pattern {
+  const _CustomDelimiter(this.value);
+
+  final String value;
+
+  @override
+  Iterable<Match> allMatches(String string, [int start = 0]) =>
+      RegExp(RegExp.escape(value)).allMatches(string, start);
+
+  @override
+  Match? matchAsPrefix(String string, [int start = 0]) =>
+      RegExp(RegExp.escape(value)).matchAsPrefix(string, start);
+}
 
 void main() {
   group('decode', () {
@@ -153,6 +168,136 @@ void main() {
         }),
       );
     });
+
+    test('preserves flat query behavior for non-structured keys', () {
+      expect(
+        QS.decode('k0=v0&k1=v1&k2=v2'),
+        equals({'k0': 'v0', 'k1': 'v1', 'k2': 'v2'}),
+      );
+    });
+
+    test('preserves flat query behavior with comma and duplicate keys', () {
+      expect(
+        QS.decode('a=1,2&a=3', const DecodeOptions(comma: true)),
+        equals({
+          'a': ['1', '2', '3']
+        }),
+      );
+    });
+
+    test('preserves flat query behavior with charset sentinel enabled', () {
+      expect(
+        QS.decode(
+          'utf8=%E2%9C%93&k0=v0&k1=v1',
+          const DecodeOptions(charsetSentinel: true, charset: latin1),
+        ),
+        equals({'k0': 'v0', 'k1': 'v1'}),
+      );
+    });
+
+    test('preserves mixed flat and structured key merge behavior', () {
+      expect(
+        QS.decode('a=1&a[b]=2'),
+        equals({
+          'a': [
+            '1',
+            {'b': '2'}
+          ]
+        }),
+      );
+      expect(
+        QS.decode('a[b]=2&a=1'),
+        equals({
+          'a': {'b': '2'}
+        }),
+      );
+    });
+
+    test('ignores empty segments and preserves empty key behavior', () {
+      expect(QS.decode('a=b&&c=d'), equals({'a': 'b', 'c': 'd'}));
+      expect(QS.decode('a=b&'), equals({'a': 'b'}));
+      expect(QS.decode('=a'), equals(<String, dynamic>{}));
+      expect(QS.decode('a=b&=c&d=e'), equals({'a': 'b', 'd': 'e'}));
+    });
+
+    test('throws when delimiter is an empty string', () {
+      expect(
+        () => QS.decode('a=b&c=d', const DecodeOptions(delimiter: '')),
+        throwsArgumentError,
+      );
+    });
+
+    test('parameter limit counts only non-empty segments', () {
+      expect(
+        QS.decode(
+          'a=1&&b=2',
+          const DecodeOptions(parameterLimit: 2, throwOnLimitExceeded: true),
+        ),
+        equals({'a': '1', 'b': '2'}),
+      );
+      expect(
+        () => QS.decode(
+          'a=1&&b=2&&c=3',
+          const DecodeOptions(parameterLimit: 2, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('comma strict mode with negative listLimit throws disabled message',
+        () {
+      expect(
+        () => QS.decode(
+          'a=1,2',
+          const DecodeOptions(
+            comma: true,
+            listLimit: -1,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            contains('List parsing is disabled'),
+          ),
+        ),
+      );
+    });
+
+    test('structured root detection handles mixed-case encoded dots in one key',
+        () {
+      expect(
+        QS.decode(
+          'a%2Eb%2ec=1',
+          const DecodeOptions(allowDots: true, decodeDotInKeys: false),
+        ),
+        equals({
+          'a': {
+            'b': {'c': '1'}
+          }
+        }),
+      );
+    });
+
+    test(
+      'structured root detection scans both %2E and %2e when keys stay encoded',
+      () {
+        final options = DecodeOptions(
+          allowDots: true,
+          decoder: (String? value, {Encoding? charset, DecodeKind? kind}) =>
+              value,
+        );
+
+        expect(
+          QS.decode('a%2Eb%2ec=1&a=2', options),
+          equals({
+            'a%2Eb%2ec': '1',
+            'a': '2',
+          }),
+        );
+      },
+    );
 
     test('comma: false', () {
       expect(
@@ -701,6 +846,26 @@ void main() {
       );
     });
 
+    test('does not treat []= inside values as list-growth syntax', () {
+      const expected = {
+        'a': {'b': 'x[]=y'}
+      };
+      expect(
+        QS.decode('a[b]=x[]=y'),
+        equals(expected),
+      );
+      expect(
+        QS.decode(
+          'a[b]=x[]=y',
+          const DecodeOptions(
+            listLimit: 0,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        equals(expected),
+      );
+    });
+
     test('allows empty values', () {
       expect(QS.decode(''), equals({}));
       expect(QS.decode(null), equals({}));
@@ -1068,6 +1233,66 @@ void main() {
       expect(
         QS.decode('a=b; c=d', DecodeOptions(delimiter: RegExp(r'[;,] *'))),
         equals({'a': 'b', 'c': 'd'}),
+      );
+    });
+
+    test('parses a string with a custom Pattern delimiter', () {
+      expect(
+        QS.decode(
+          'a=b;c=d',
+          const DecodeOptions(delimiter: _CustomDelimiter(';')),
+        ),
+        equals({'a': 'b', 'c': 'd'}),
+      );
+    });
+
+    test('enforces parameter limit with RegExp delimiter', () {
+      expect(
+        () => QS.decode(
+          'a=1;;b=2;;c=3',
+          DecodeOptions(
+            delimiter: RegExp(r';+'),
+            parameterLimit: 2,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+
+      expect(
+        QS.decode(
+          'a=1;;b=2;;c=3',
+          DecodeOptions(
+            delimiter: RegExp(r';+'),
+            parameterLimit: 2,
+          ),
+        ),
+        equals({'a': '1', 'b': '2'}),
+      );
+    });
+
+    test('enforces parameter limit with custom Pattern delimiter', () {
+      expect(
+        () => QS.decode(
+          'a=1;b=2;c=3',
+          const DecodeOptions(
+            delimiter: _CustomDelimiter(';'),
+            parameterLimit: 2,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+
+      expect(
+        QS.decode(
+          'a=1;b=2;c=3',
+          const DecodeOptions(
+            delimiter: _CustomDelimiter(';'),
+            parameterLimit: 2,
+          ),
+        ),
+        equals({'a': '1', 'b': '2'}),
       );
     });
 
@@ -1959,6 +2184,86 @@ void main() {
   });
 
   group('list limit tests', () {
+    test('map input root [] enforces strict list limit checks', () {
+      expect(
+        () => QS.decode(
+          {'[]': 'a'},
+          const DecodeOptions(listLimit: 0, throwOnLimitExceeded: true),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            contains('List limit exceeded'),
+          ),
+        ),
+      );
+    });
+
+    test('map input root [] enforces negative listLimit strict mode', () {
+      expect(
+        () => QS.decode(
+          {'[]': 'a'},
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            contains('List parsing is disabled'),
+          ),
+        ),
+      );
+    });
+
+    test('strict list limit applies when duplicate scalar grows into a list',
+        () {
+      expect(
+        () => QS.decode(
+          'a=1&a=2',
+          const DecodeOptions(listLimit: 1, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test(
+      'strict list limit applies when duplicate scalar grows into a comma list',
+      () {
+        expect(
+          () => QS.decode(
+            'a=1&a=2,3',
+            const DecodeOptions(
+              comma: true,
+              listLimit: 1,
+              throwOnLimitExceeded: true,
+            ),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      },
+    );
+
+    test('negative list limit does not throw for scalar values', () {
+      expect(
+        QS.decode(
+          'a=1',
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        equals({'a': '1'}),
+      );
+    });
+
+    test('negative list limit throws on first [] push in strict mode', () {
+      expect(
+        () => QS.decode(
+          'a[]=1',
+          const DecodeOptions(listLimit: -1, throwOnLimitExceeded: true),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
     test('does not throw error when list is within limit', () {
       expect(
         QS.decode(

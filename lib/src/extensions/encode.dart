@@ -17,6 +17,8 @@ part of '../qs.dart';
 ///   advanced via `KeyPathNode.append(...)`.
 
 extension _$Encode on QS {
+  /// Pre-instantiated generators for built-in list formats, so we can compare by
+  /// identity rather than stringly-typed name checks in hot code paths.
   static final ListFormatGenerator _indicesGenerator =
       ListFormat.indices.generator;
   static final ListFormatGenerator _bracketsGenerator =
@@ -37,11 +39,11 @@ extension _$Encode on QS {
   /// - [prefix]: Root path seed used to initialize the first [KeyPathNode].
   /// - [rootConfig]: Immutable encode options shared across traversal frames.
   static dynamic _encode(
-    dynamic object, {
-    required bool undefined,
-    required Set<Object> sideChannel,
-    required String prefix,
-    required EncodeConfig rootConfig,
+    final dynamic object, {
+    required final bool undefined,
+    required final Set<Object> sideChannel,
+    required final String prefix,
+    required final EncodeConfig rootConfig,
   }) {
     // Guarded fast path for deep single-key map chains under compatible options.
     final String? linear = _tryEncodeLinearChain(
@@ -78,7 +80,7 @@ extension _$Encode on QS {
     // Single-entry MRU cache for bracket key segments:
     // if the current key matches the previous key, reuse the last "[key]"
     // string; otherwise build a new one and update the cached pair.
-    String bracketSegment(String encodedKey) {
+    String bracketSegment(final String encodedKey) {
       if (lastBracketKey == encodedKey && lastBracketSegment != null) {
         return lastBracketSegment!;
       }
@@ -89,7 +91,7 @@ extension _$Encode on QS {
     }
 
     // Single-entry MRU cache for dot key segments, mirroring bracketSegment.
-    String dotSegment(String encodedKey) {
+    String dotSegment(final String encodedKey) {
       if (lastDotKey == encodedKey && lastDotSegment != null) {
         return lastDotSegment!;
       }
@@ -101,7 +103,7 @@ extension _$Encode on QS {
 
     // Finalize a frame: clear active-path cycle tracking for this node,
     // pop it from the stack, and publish its encoded result to the parent.
-    void finishFrame(EncodeFrame frame, dynamic result) {
+    void finishFrame(final EncodeFrame frame, final dynamic result) {
       final Object? tracked = frame.trackedObject;
       if (tracked != null) {
         frame.sideChannel.remove(tracked);
@@ -144,7 +146,7 @@ extension _$Encode on QS {
               obj is Iterable) {
             obj = Utils.apply(
               obj,
-              (value) => value is DateTime
+              (final value) => value is DateTime
                   ? (config.serializeDate?.call(value) ??
                       value.toIso8601String())
                   : value,
@@ -236,17 +238,18 @@ extension _$Encode on QS {
                 : joinIterable.toList(growable: false);
 
             if (joinList.isNotEmpty) {
-              final String objKeysValue =
-                  joinList.map((e) => e != null ? e.toString() : '').join(',');
+              final String objKeysValue = joinList
+                  .map((final e) => e != null ? e.toString() : '')
+                  .join(',');
 
               objKeys = [
-                _ValueSentinel(
+                ValueSentinel(
                   objKeysValue.isNotEmpty ? objKeysValue : null,
                 ),
               ];
             } else {
               objKeys = [
-                const _ValueSentinel(Undefined()),
+                const ValueSentinel(Undefined()),
               ];
             }
           } else if (config.filter is Iterable) {
@@ -262,14 +265,14 @@ extension _$Encode on QS {
             }
           } else if (seqList != null) {
             if (config.sort != null) {
-              objKeys =
-                  List<int>.generate(seqList.length, (i) => i, growable: false);
+              objKeys = List<int>.generate(seqList.length, (final i) => i,
+                  growable: false);
               objKeys.sort(config.sort);
             } else if (seqList.length == 1) {
               objKeys = [0];
             } else {
-              objKeys =
-                  List<int>.generate(seqList.length, (i) => i, growable: false);
+              objKeys = List<int>.generate(seqList.length, (final i) => i,
+                  growable: false);
             }
           } else {
             objKeys = const [];
@@ -317,7 +320,7 @@ extension _$Encode on QS {
           late final dynamic value;
           late final bool valueUndefined;
 
-          if (key is _ValueSentinel) {
+          if (key is ValueSentinel) {
             if (key.value is Undefined) {
               value = null;
               valueUndefined = true;
@@ -366,7 +369,7 @@ extension _$Encode on QS {
               ? keyString.replaceAll('.', '%2E')
               : keyString;
 
-          final bool isCommaSentinel = key is _ValueSentinel;
+          final bool isCommaSentinel = key is ValueSentinel;
           final KeyPathNode adjustedPath = frame.adjustedPath!;
           // Comma lists collapse to a sentinel key and reuse `frame.adjustedPath`,
           // so `_buildSequenceChildPath` is not called with `_commaGenerator`.
@@ -432,11 +435,11 @@ extension _$Encode on QS {
   // Fast path for deep single-key map chains under strict option constraints.
   // Returns `null` when unsupported so the caller can use the generic encoder.
   static String? _tryEncodeLinearChain(
-    dynamic object, {
-    required bool undefined,
-    required Set<Object> sideChannel,
-    required String prefix,
-    required EncodeConfig config,
+    final dynamic object, {
+    required final bool undefined,
+    required final Set<Object> sideChannel,
+    required final String prefix,
+    required final EncodeConfig config,
   }) {
     if (undefined ||
         config.encoder != null ||
@@ -530,10 +533,10 @@ extension _$Encode on QS {
   /// uses [KeyPathNode.fromMaterialized], which creates a fresh depth-1 root
   /// without sharing ancestor nodes, so incremental path caching is not reused.
   static KeyPathNode _buildSequenceChildPath(
-    KeyPathNode adjustedPath,
-    String encodedKey,
-    ListFormatGenerator generator, {
-    required String Function(String encodedKey) bracketSegment,
+    final KeyPathNode adjustedPath,
+    final String encodedKey,
+    final ListFormatGenerator generator, {
+    required final String Function(String encodedKey) bracketSegment,
   }) =>
       switch (generator) {
         ListFormatGenerator gen when identical(gen, _indicesGenerator) =>
@@ -546,12 +549,4 @@ extension _$Encode on QS {
             generator(adjustedPath.materialize(), encodedKey),
           ),
       };
-}
-
-// Internal marker used for synthetic "value" entries (for example comma-list
-// joins) so traversal can distinguish sentinel payloads from normal keys.
-final class _ValueSentinel {
-  const _ValueSentinel(this.value);
-
-  final dynamic value;
 }

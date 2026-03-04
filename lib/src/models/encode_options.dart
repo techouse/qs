@@ -135,7 +135,11 @@ final class EncodeOptions with EquatableMixin {
   /// Encodes a [value] to a [String].
   ///
   /// Uses the provided [encoder] if available, otherwise uses [Utils.encode].
-  String encoder(dynamic value, {Encoding? charset, Format? format}) =>
+  String encoder(
+    final dynamic value, {
+    final Encoding? charset,
+    final Format? format,
+  }) =>
       _encoder?.call(
         value,
         charset: charset ?? this.charset,
@@ -151,7 +155,7 @@ final class EncodeOptions with EquatableMixin {
   ///
   /// Uses the provided [serializeDate] function if available, otherwise uses
   /// [DateTime.toIso8601String].
-  String serializeDate(DateTime date) => _serializeDate != null
+  String serializeDate(final DateTime date) => _serializeDate != null
       ? _serializeDate!.call(date)
       : date.toIso8601String();
 
@@ -178,25 +182,25 @@ final class EncodeOptions with EquatableMixin {
 
   /// Returns a new [EncodeOptions] instance with updated values.
   EncodeOptions copyWith({
-    bool? addQueryPrefix,
-    bool? allowDots,
-    bool? allowEmptyLists,
-    ListFormat? listFormat,
-    Encoding? charset,
-    bool? charsetSentinel,
-    String? delimiter,
-    bool? encode,
-    bool? encodeDotInKeys,
-    bool? encodeValuesOnly,
-    Format? format,
-    bool? skipNulls,
-    bool? strictNullHandling,
-    bool? commaRoundTrip,
-    bool? commaCompactNulls,
-    Sorter? sort,
-    dynamic filter,
-    DateSerializer? serializeDate,
-    Encoder? encoder,
+    final bool? addQueryPrefix,
+    final bool? allowDots,
+    final bool? allowEmptyLists,
+    final ListFormat? listFormat,
+    final Encoding? charset,
+    final bool? charsetSentinel,
+    final String? delimiter,
+    final bool? encode,
+    final bool? encodeDotInKeys,
+    final bool? encodeValuesOnly,
+    final Format? format,
+    final bool? skipNulls,
+    final bool? strictNullHandling,
+    final bool? commaRoundTrip,
+    final bool? commaCompactNulls,
+    final Sorter? sort,
+    final dynamic filter,
+    final DateSerializer? serializeDate,
+    final Encoder? encoder,
   }) =>
       EncodeOptions(
         addQueryPrefix: addQueryPrefix ?? this.addQueryPrefix,

@@ -48,22 +48,22 @@ final class EncodeConfig with EquatableMixin {
   final Encoding charset;
 
   EncodeConfig copyWith({
-    ListFormatGenerator? generateArrayPrefix,
-    bool? commaRoundTrip,
-    bool? commaCompactNulls,
-    bool? allowEmptyLists,
-    bool? strictNullHandling,
-    bool? skipNulls,
-    bool? encodeDotInKeys,
-    Object? encoder = _notSet,
-    Object? serializeDate = _notSet,
-    Object? sort = _notSet,
-    Object? filter = _notSet,
-    bool? allowDots,
-    Format? format,
-    Formatter? formatter,
-    bool? encodeValuesOnly,
-    Encoding? charset,
+    final ListFormatGenerator? generateArrayPrefix,
+    final bool? commaRoundTrip,
+    final bool? commaCompactNulls,
+    final bool? allowEmptyLists,
+    final bool? strictNullHandling,
+    final bool? skipNulls,
+    final bool? encodeDotInKeys,
+    final Object? encoder = _notSet,
+    final Object? serializeDate = _notSet,
+    final Object? sort = _notSet,
+    final Object? filter = _notSet,
+    final bool? allowDots,
+    final Format? format,
+    final Formatter? formatter,
+    final bool? encodeValuesOnly,
+    final Encoding? charset,
   }) {
     final nextGenerateArrayPrefix =
         generateArrayPrefix ?? this.generateArrayPrefix;
@@ -127,7 +127,7 @@ final class EncodeConfig with EquatableMixin {
     );
   }
 
-  EncodeConfig withEncoder(Encoder? value) => copyWith(encoder: value);
+  EncodeConfig withEncoder(final Encoder? value) => copyWith(encoder: value);
 
   @override
   List<Object?> get props => [
