@@ -103,6 +103,9 @@ jobs:
       - id: install
         name: Install dependencies
         run: dart pub get
+      - name: Analyze the project's Dart code
+        if: ${{ matrix.platform == 'vm' }}
+        run: dart analyze lib test
       - name: Run the project's tests in Chrome
         if: ${{ matrix.platform == 'chrome' }}
         run: dart test --platform chrome
