@@ -26,6 +26,9 @@ final class _CustomDelimiter implements Pattern {
       RegExp(RegExp.escape(value)).matchAsPrefix(string, start);
 }
 
+// Ensure Dart 3.0.0 compatibility
+ByteBuffer _byteBufferFrom(List<int> bytes) => Uint8List.fromList(bytes).buffer;
+
 void main() {
   group('decode', () {
     test('throws ArgumentError when parameter limit is not positive', () {
@@ -1184,7 +1187,7 @@ void main() {
     });
 
     test('parses buffers correctly', () {
-      final ByteBuffer b = utf8.encode('test').buffer;
+      final ByteBuffer b = _byteBufferFrom(utf8.encode('test'));
       expect(QS.decode({'a': b}), equals({'a': b}));
     });
 

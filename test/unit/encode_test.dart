@@ -23,6 +23,9 @@ class CustomObject {
   }
 }
 
+// Ensure Dart 3.0.0 compatibility
+ByteBuffer _byteBufferFrom(List<int> bytes) => Uint8List.fromList(bytes).buffer;
+
 void main() {
   group('encode', () {
     test('Default parameter initializations in _encode method', () {
@@ -2017,12 +2020,12 @@ void main() {
       'encodes buffer values',
       () {
         expect(
-          QS.encode({'a': utf8.encode('test').buffer}),
+          QS.encode({'a': _byteBufferFrom(utf8.encode('test'))}),
           equals('a=test'),
         );
         expect(
           QS.encode({
-            'a': {'b': utf8.encode('test').buffer}
+            'a': {'b': _byteBufferFrom(utf8.encode('test'))}
           }),
           equals('a%5Bb%5D=test'),
         );
@@ -2383,7 +2386,7 @@ void main() {
       expect(
         QS.encode(
           {
-            'a': utf8.encode('a b').buffer,
+            'a': _byteBufferFrom(utf8.encode('a b')),
           },
           EncodeOptions(
             encoder: (buffer, {Encoding? charset, Format? format}) =>
@@ -2462,7 +2465,7 @@ void main() {
       );
       expect(
         QS.encode(
-          {'a b': utf8.encode('a b').buffer},
+          {'a b': _byteBufferFrom(utf8.encode('a b'))},
           const EncodeOptions(format: Format.rfc1738),
         ),
         equals('a+b=a+b'),
@@ -2488,7 +2491,7 @@ void main() {
       );
       expect(
         QS.encode(
-          {'a b': utf8.encode('a b').buffer},
+          {'a b': _byteBufferFrom(utf8.encode('a b'))},
           const EncodeOptions(format: Format.rfc3986),
         ),
         equals('a%20b=a%20b'),
@@ -2499,7 +2502,7 @@ void main() {
       expect(QS.encode({'a': 'b c'}), equals('a=b%20c'));
       expect(
         QS.encode(
-          {'a b': utf8.encode('a b').buffer},
+          {'a b': _byteBufferFrom(utf8.encode('a b'))},
         ),
         equals('a%20b=a%20b'),
       );
@@ -3189,13 +3192,16 @@ void main() {
     });
 
     test('encodes a buffer value', () {
-      expect(QS.encode({'a': utf8.encode('test').buffer}), equals('a=test'));
+      expect(
+        QS.encode({'a': _byteBufferFrom(utf8.encode('test'))}),
+        equals('a=test'),
+      );
     });
 
     test('encodes a buffer value without encoding', () {
       expect(
         QS.encode(
-          {'a': latin1.encode('ä').buffer},
+          {'a': _byteBufferFrom(latin1.encode('ä'))},
           const EncodeOptions(encode: false, charset: latin1),
         ),
         equals('a=ä'),
