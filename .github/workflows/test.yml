@@ -24,25 +24,6 @@ env:
   PUB_ENVIRONMENT: bot.github
 
 jobs:
-  minimum_dart_meta:
-    name: "Read minimum Dart SDK"
-    runs-on: ubuntu-latest
-    outputs:
-      min_dart: ${{ steps.read_min_dart.outputs.min_dart }}
-    steps:
-      - id: checkout
-        name: Checkout repository
-        uses: actions/checkout@v6
-      - id: read_min_dart
-        name: Read minimum Dart SDK from pubspec.yaml
-        run: |
-          set -euo pipefail
-          min_dart="$(yq -r '.environment.sdk | capture("(?<min>[0-9]+\.[0-9]+\.[0-9]+)").min' pubspec.yaml)"
-          if [[ -z "${min_dart}" ]]; then
-            echo 'failed to read minimum Dart SDK from pubspec.yaml' >&2
-            exit 1
-          fi
-          echo "min_dart=${min_dart}" >> "$GITHUB_OUTPUT"
   analyze:
     name: "Analyze"
     runs-on: ubuntu-latest
@@ -71,6 +52,26 @@ jobs:
         run: dart format lib test --output=none --set-exit-if-changed .
       - name: Analyze the project's Dart code
         run: dart analyze lib test --fatal-infos
+  minimum_dart_meta:
+    name: "Read minimum Dart SDK"
+    needs: analyze
+    runs-on: ubuntu-latest
+    outputs:
+      min_dart: ${{ steps.read_min_dart.outputs.min_dart }}
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v6
+      - id: read_min_dart
+        name: Read minimum Dart SDK from pubspec.yaml
+        run: |
+          set -euo pipefail
+          min_dart="$(yq -r '.environment.sdk | capture("(?<min>[0-9]+\.[0-9]+\.[0-9]+)").min' pubspec.yaml)"
+          if [[ -z "${min_dart}" ]]; then
+            echo 'failed to read minimum Dart SDK from pubspec.yaml' >&2
+            exit 1
+          fi
+          echo "min_dart=${min_dart}" >> "$GITHUB_OUTPUT"
   minimum_dart:
     name: "Minimum Dart (${{ needs.minimum_dart_meta.outputs.min_dart }}, ${{ matrix.platform }})"
     needs: minimum_dart_meta
