@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  MIN_COVERAGE: 90
   PUB_ENVIRONMENT: bot.github
 
 jobs:
@@ -167,10 +168,26 @@ jobs:
           verbose: true
       - name: Check Code Coverage
         if: ${{ matrix.platform == 'vm' }}
-        uses: VeryGoodOpenSource/very_good_coverage@v3.0.0
-        with:
-          path: coverage/lcov.info
-          min_coverage: 90
+        run: |
+          set -euo pipefail
+          awk -F: -v min="$MIN_COVERAGE" '
+            /^LF:/ { total += $2 }
+            /^LH:/ { hit += $2 }
+            END {
+              if (total == 0) {
+                print "::error::No executable lines found in coverage/lcov.info"
+                exit 1
+              }
+
+              coverage = (hit / total) * 100
+              printf("Line coverage: %.2f%% (%d/%d)\n", coverage, hit, total)
+
+              if (coverage < min) {
+                printf("::error::Coverage %.2f%% is below %.2f%%\n", coverage, min)
+                exit 1
+              }
+            }
+          ' coverage/lcov.info
       - name: Upload coverage to Codacy
         if: ${{ matrix.platform == 'vm' }}
         continue-on-error: true
