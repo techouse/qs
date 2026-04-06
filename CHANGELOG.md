@@ -1,3 +1,8 @@
+## 1.7.4
+
+* [FIX] restore Dart 3.0.0 test compatibility by materializing `ByteBuffer` fixtures via `_byteBufferFrom` instead of relying on `List<int>.buffer`
+* [CHORE] widen the `lints` dev dependency range to support versions from 3.0.0 up to 7.0.0
+
 ## 1.7.3
 
 * [PERF] speed up decode for flat and mixed query workloads via structured-key pre-scan, flat-query early return, and parse/merge bypass when safe
