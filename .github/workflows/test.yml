@@ -24,6 +24,25 @@ env:
   PUB_ENVIRONMENT: bot.github
 
 jobs:
+  minimum_dart_meta:
+    name: "Read minimum Dart SDK"
+    runs-on: ubuntu-latest
+    outputs:
+      min_dart: ${{ steps.read_min_dart.outputs.min_dart }}
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v6
+      - id: read_min_dart
+        name: Read minimum Dart SDK from pubspec.yaml
+        run: |
+          set -euo pipefail
+          min_dart="$(yq -r '.environment.sdk | capture("(?<min>[0-9]+\.[0-9]+\.[0-9]+)").min' pubspec.yaml)"
+          if [[ -z "${min_dart}" ]]; then
+            echo 'failed to read minimum Dart SDK from pubspec.yaml' >&2
+            exit 1
+          fi
+          echo "min_dart=${min_dart}" >> "$GITHUB_OUTPUT"
   analyze:
     name: "Analyze"
     runs-on: ubuntu-latest
@@ -52,6 +71,46 @@ jobs:
         run: dart format lib test --output=none --set-exit-if-changed .
       - name: Analyze the project's Dart code
         run: dart analyze lib test --fatal-infos
+  minimum_dart:
+    name: "Minimum Dart (${{ needs.minimum_dart_meta.outputs.min_dart }}, ${{ matrix.platform }})"
+    needs: minimum_dart_meta
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: chrome
+          - platform: vm
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v5
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:${{ needs.minimum_dart_meta.outputs.min_dart }};packages:qs_dart;commands:codegen-test"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:${{ needs.minimum_dart_meta.outputs.min_dart }};packages:qs_dart
+            os:ubuntu-latest;pub-cache-hosted;sdk:${{ needs.minimum_dart_meta.outputs.min_dart }}
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ needs.minimum_dart_meta.outputs.min_dart }}
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v6
+      - id: install
+        name: Install dependencies
+        run: dart pub get
+      - name: Analyze the project's Dart code
+        if: ${{ matrix.platform == 'vm' }}
+        run: dart analyze lib test
+      - name: Run the project's tests in Chrome
+        if: ${{ matrix.platform == 'chrome' }}
+        run: dart test --platform chrome
+      - name: Run the project's tests on the VM
+        if: ${{ matrix.platform == 'vm' }}
+        run: dart test --platform vm
   test:
     name: "Test"
     needs: analyze
@@ -168,11 +227,13 @@ jobs:
     if: ${{ always() }}
     needs:
       - analyze
+      - minimum_dart
       - test
       - ensure_compatibility
     runs-on: ubuntu-latest
     env:
       ANALYZE_RESULT: ${{ needs.analyze.result }}
+      MINIMUM_DART_RESULT: ${{ needs.minimum_dart.result }}
       TEST_RESULT: ${{ needs.test.result }}
       ENSURE_COMPATIBILITY_RESULT: ${{ needs.ensure_compatibility.result }}
     steps:
@@ -182,6 +243,7 @@ jobs:
 
           results=(
             "analyze:${ANALYZE_RESULT}"
+            "minimum_dart:${MINIMUM_DART_RESULT}"
             "test:${TEST_RESULT}"
             "ensure_compatibility:${ENSURE_COMPATIBILITY_RESULT}"
           )
