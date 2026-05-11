@@ -51,6 +51,13 @@ dart pub add qs_dart
 flutter pub add qs_dart
 ```
 
+## Agent skill
+
+This repo includes an optional agent skill at
+[`skills/qs-dart/`](https://github.com/techouse/qs/tree/main/skills/qs-dart) for users who want Codex or another
+compatible agent to help prepare `qs_dart` encoding and decoding snippets. The skill is user-facing: it focuses on Dart
+and Flutter usage, option selection, query-string interoperability, and edge-case caveats.
+
 ## Usage
 
 A simple usage example:
