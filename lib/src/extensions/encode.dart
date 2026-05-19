@@ -162,7 +162,7 @@ extension _$Encode on QS {
                   config.encoder != null && !config.encodeValuesOnly
                       ? config.encoder!(materializedPath())
                       : materializedPath();
-              finishFrame(frame, keyOnly);
+              finishFrame(frame, config.formatter(keyOnly));
               continue;
             }
             obj = '';
@@ -229,8 +229,8 @@ extension _$Encode on QS {
 
             final Iterable<dynamic> joinIterable =
                 config.encodeValuesOnly && config.encoder != null
-                    ? (Utils.apply<String>(filteredItems, config.encoder!)
-                        as Iterable)
+                    ? filteredItems.map((final dynamic value) =>
+                        value == null ? value : config.encoder!.call(value))
                     : filteredItems;
 
             final List<dynamic> joinList = joinIterable is List

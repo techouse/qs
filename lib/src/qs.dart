@@ -231,10 +231,10 @@ final class QS {
       out.write(switch (options.charset) {
         /// encodeURIComponent('&#10003;')
         /// the "numeric entity" representation of a checkmark
-        latin1 => '${Sentinel.iso}&',
+        latin1 => '${Sentinel.iso}$delimiter',
 
         /// encodeURIComponent('✓')
-        utf8 => '${Sentinel.charset}&',
+        utf8 => '${Sentinel.charset}$delimiter',
         _ => '',
       });
     }

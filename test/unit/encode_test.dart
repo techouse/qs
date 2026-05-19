@@ -2688,6 +2688,14 @@ void main() {
         ),
         equals('utf8=%26%2310003%3B&a=%E6'),
       );
+
+      expect(
+        QS.encode(
+          {'a': 1, 'b': 2},
+          const EncodeOptions(charsetSentinel: true, delimiter: ';'),
+        ),
+        equals('utf8=%E2%9C%93;a=1;b=2'),
+      );
     });
 
     test(
@@ -3171,6 +3179,18 @@ void main() {
           ),
         ),
         equals('a=b'),
+      );
+
+      expect(
+        QS.encode(
+          {
+            'a': 'b',
+            'null': 'x',
+            'c': 'd',
+          },
+          const EncodeOptions(filter: ['a', null, 'c']),
+        ),
+        equals('a=b&c=d'),
       );
     });
   });
@@ -5154,6 +5174,16 @@ void main() {
       );
     });
 
+    test('uses the configured delimiter after the charset sentinel', () {
+      expect(
+        QS.encode(
+          {'a': 1, 'b': 2},
+          const EncodeOptions(charsetSentinel: true, delimiter: ';'),
+        ),
+        equals('utf8=%E2%9C%93;a=1;b=2'),
+      );
+    });
+
     test('objects inside arrays', () {
       final obj = {
         'a': {
@@ -5442,19 +5472,106 @@ void main() {
       );
     });
 
-    test(
-        'strictNullHandling key-only branch keeps %20 under rfc1738 (Node qs parity)',
-        () {
+    test('strictNullHandling key-only branch applies rfc1738 formatter', () {
       expect(
         QS.encode(
-          {'a b': null},
+          {'a b': null, 'c d': 'e f'},
           const EncodeOptions(
             strictNullHandling: true,
             format: Format.rfc1738,
           ),
         ),
-        equals('a%20b'),
+        equals('a+b&c+d=e+f'),
       );
+    });
+
+    test('comma encodeValuesOnly preserves null slots without encoding them',
+        () {
+      String rejectingNullEncoder(
+        dynamic value, {
+        Encoding? charset,
+        Format? format,
+      }) {
+        if (value == null) {
+          throw StateError('null should not be passed to encoder');
+        }
+        return value.toString();
+      }
+
+      expect(
+        QS.encode(
+          {
+            'a': [null, 'b']
+          },
+          EncodeOptions(
+            listFormat: ListFormat.comma,
+            encodeValuesOnly: true,
+            encoder: rejectingNullEncoder,
+          ),
+        ),
+        equals('a=,b'),
+      );
+
+      expect(
+        QS.encode(
+          {
+            'a': [null]
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            encodeValuesOnly: true,
+          ),
+        ),
+        equals('a='),
+      );
+
+      expect(
+        QS.encode(
+          {
+            'a': [null]
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            encodeValuesOnly: true,
+            strictNullHandling: true,
+          ),
+        ),
+        equals('a'),
+      );
+
+      expect(
+        QS.encode(
+          {
+            'a': [null]
+          },
+          const EncodeOptions(
+            listFormat: ListFormat.comma,
+            encodeValuesOnly: true,
+            skipNulls: true,
+          ),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('round-trips keys containing percent-encoded bracket text', () {
+      final cases = <Map<String, dynamic>>[
+        {'a%5Bb': 'c'},
+        {'a%5Db': 'c'},
+        {'a%255Bb': 'c'},
+        {'a%255Db': 'c'},
+        {
+          'a': {'b%5Bc': 'd'}
+        },
+        {
+          'a': {'b%255Bc': 'd'}
+        },
+        {'a%5B%255Bb': 'c'},
+      ];
+
+      for (final testCase in cases) {
+        expect(QS.decode(QS.encode(testCase)), equals(testCase));
+      }
     });
 
     test('allowDots mode preserves output under encode=false', () {
