@@ -2805,6 +2805,71 @@ void main() {
       );
     });
 
+    test('parses literal empty brackets inside bracket groups', () {
+      expect(
+        QS.decode('search[withbracket[]]=foobar'),
+        equals({
+          'search': {'withbracket[]': 'foobar'}
+        }),
+      );
+
+      expect(
+        QS.decode('a[b[]]=c'),
+        equals({
+          'a': {'b[]': 'c'}
+        }),
+      );
+
+      expect(
+        QS.decode('list[][x[]]=y'),
+        equals({
+          'list': [
+            {'x[]': 'y'}
+          ]
+        }),
+      );
+
+      expect(
+        QS.decode('a[b[c[]]]=d'),
+        equals({
+          'a': {'b[c[]]': 'd'}
+        }),
+      );
+
+      expect(
+        QS.decode('a[b[c[]]][d]=e', const DecodeOptions(depth: 1)),
+        equals({
+          'a': {
+            'b[c[]]': {'[d]': 'e'}
+          }
+        }),
+      );
+
+      expect(
+        QS.decode('a[[]b=c'),
+        equals({
+          'a': {'[[]b': 'c'}
+        }),
+      );
+    });
+
+    test('parses percent-encoded bracket text without mangling', () {
+      expect(
+        QS.decode('a%25255Bb=c'),
+        equals({'a%255Bb': 'c'}),
+      );
+      expect(
+        QS.decode('a%25255Db=c'),
+        equals({'a%255Db': 'c'}),
+      );
+      expect(
+        QS.decode('a%5Bb%25255Bc%5D=d'),
+        equals({
+          'a': {'b%255Bc': 'd'}
+        }),
+      );
+    });
+
     test(
       'mixed-case encoded brackets + encoded dot with allowDots=false & decodeDotInKeys=true throws',
       () {
@@ -3001,7 +3066,7 @@ void main() {
     test('depth=0 with encoded dot: do not split key', () {
       expect(
         QS.decode('a%2Eb=c', const DecodeOptions(allowDots: true, depth: 0)),
-        equals({'a.b': 'c'}),
+        equals({'a[b]': 'c'}),
       );
     });
 
@@ -3140,7 +3205,7 @@ void main() {
     test('depth=0 with allowDots=true: do not split key', () {
       expect(
         QS.decode('a.b=c', const DecodeOptions(allowDots: true, depth: 0)),
-        equals({'a.b': 'c'}),
+        equals({'a[b]': 'c'}),
       );
     });
 
@@ -3214,7 +3279,7 @@ void main() {
       expect(
         QS.decode('a[b[c]=x', const DecodeOptions(depth: 5, strictDepth: true)),
         equals({
-          'a': {'[b[c': 'x'}
+          'a': {'[b[c]': 'x'}
         }),
       );
     });
@@ -3371,16 +3436,11 @@ void main() {
       expect(dContainer, '1');
     });
 
-    test(
-        'trailing text after last group captured as nested remainder structure',
-        () {
+    test('trailing text after last group is ignored like node qs', () {
       final result = QS.decode(
           'a[b]tail=1', const DecodeOptions(depth: 1, strictDepth: false));
-      // depth=1 gives segments: 'a' plus wrapped remainder starting at '[b]'.
       final a = result['a'] as Map;
-      // Remainder yields 'b' -> {'tail': '1'}
-      final bMap = a['b'] as Map;
-      expect((bMap['tail']), '1');
+      expect(a['b'], '1');
     });
   });
 }

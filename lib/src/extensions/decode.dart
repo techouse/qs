@@ -431,26 +431,6 @@ extension _$Decode on QS {
             ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
             : cleanRoot;
 
-        // Synthetic remainder normalization:
-        // If this segment originated from an unterminated bracket group, it will look like
-        // "[[...]]" after wrapping. After stripping the outermost brackets above, `decodedRoot`
-        // can end with a trailing ']' that does not have a matching opening bracket in the
-        // same string (e.g., "[b[c]"). In that case, drop the trailing ']' so the literal key
-        // becomes "[b[c" (matches Kotlin/Python ports).
-        if (wasBracketed &&
-            root.startsWith('[[') &&
-            decodedRoot.endsWith(']')) {
-          int opens = 0, closes = 0;
-          for (int k = 0; k < decodedRoot.length; k++) {
-            final cu = decodedRoot.codeUnitAt(k);
-            if (cu == 0x5B) opens++; // '['
-            if (cu == 0x5D) closes++; // ']'
-          }
-          if (opens > closes) {
-            decodedRoot = decodedRoot.substring(0, decodedRoot.length - 1);
-          }
-        }
-
         final int? index = (wasBracketed && options.parseLists)
             ? int.tryParse(decodedRoot)
             : null;
@@ -503,11 +483,12 @@ extension _$Decode on QS {
   }
 
   /// Splits a key like `a[b][0][c]` into `['a', '[b]', '[0]', '[c]']` with:
-  /// - dot‑notation normalization (`a.b` → `a[b]`) when `allowDots` is true (runs before splitting)
-  /// - depth limiting (depth=0 returns the whole key as a single segment)
-  /// - balanced bracket grouping; an unterminated `[` causes the *entire key* to be treated as a
-  ///   single literal segment (matching `qs`)
-  /// - when there are additional groups/text beyond `maxDepth`:
+  /// - dot‑notation normalization (`a.b` → `a[b]`) when `allowDots` is true,
+  ///   before depth limiting
+  /// - depth limiting (depth=0 returns the normalized key as a single segment)
+  /// - balanced bracket grouping; an unterminated `[` causes the raw remainder
+  ///   to be wrapped as one literal segment (matching `qs`)
+  /// - when there are additional bracket groups beyond `maxDepth`:
   ///     • if `strictDepth` is true, we throw;
   ///     • otherwise the remainder is wrapped as one final bracket segment (e.g., `"[rest]"`)
   static List<String> _splitKeyIntoSegments({
@@ -516,15 +497,14 @@ extension _$Decode on QS {
     required final int maxDepth,
     required final bool strictDepth,
   }) {
-    // Depth==0 → do not split at all (reference `qs` behavior).
-    // Important: return the *original* key with no dot→bracket normalization.
-    if (maxDepth <= 0) {
-      return <String>[originalKey];
-    }
-
-    // Optionally normalize `a.b` to `a[b]` before splitting (only when depth > 0).
+    // Optionally normalize `a.b` to `a[b]` before splitting or depth limiting.
     final String key =
         allowDots ? _dotToBracketTopLevel(originalKey) : originalKey;
+
+    // Depth==0 → do not split, but preserve the dot-normalized key.
+    if (maxDepth <= 0) {
+      return <String>[key];
+    }
 
     final List<String> segments = [];
 
@@ -536,7 +516,6 @@ extension _$Decode on QS {
     final int n = key.length;
     int open = first;
     int collected = 0;
-    int lastClose = -1;
 
     while (open >= 0 && collected < maxDepth) {
       int level = 1;
@@ -568,26 +547,18 @@ extension _$Decode on QS {
 
       segments
           .add(key.substring(open, close + 1)); // balanced group, includes [ ]
-      lastClose = close;
       collected++;
 
       // Find the next '[' after this balanced group.
       open = key.indexOf('[', close + 1);
     }
 
-    // Trailing text after the last balanced group → one final bracket segment (unless it's just '.').
-    if (lastClose >= 0 && lastClose + 1 < n) {
-      final String remainder = key.substring(lastClose + 1);
-      if (remainder != '.') {
-        // Note: if there are still uncollected bracket groups (open >= 0),
-        // they are part of this same remainder path; no separate overflow
-        // branch is needed.
-        if (strictDepth && open >= 0) {
-          throw RangeError(
-              'Input depth exceeded $maxDepth and strictDepth is true');
-        }
-        segments.add('[$remainder]');
+    if (open >= 0) {
+      if (strictDepth) {
+        throw RangeError(
+            'Input depth exceeded $maxDepth and strictDepth is true');
       }
+      segments.add('[${key.substring(open)}]');
     }
 
     return segments;
