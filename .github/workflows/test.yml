@@ -214,14 +214,16 @@ jobs:
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           run_install: false
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v6
