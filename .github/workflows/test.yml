@@ -218,6 +218,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v6
@@ -227,7 +231,7 @@ jobs:
       - id: install_node_dependencies
         name: Install Node dependencies
         working-directory: test/comparison
-        run: npm install
+        run: pnpm install --frozen-lockfile
       - name: Run a comparison test between qs_dart and qs for JavaScript
         working-directory: test/comparison
         run: |
