@@ -1,3 +1,8 @@
+## 1.7.5-dev
+
+* [FIX] match Node `qs` 6.15.2 bracket parsing behavior for nested/literal bracket groups, encoded bracket text, and `allowDots` with `depth: 0`
+* [FIX] match Node `qs` 6.15.2 stringify edge cases for charset sentinel delimiters, strict-null RFC1738 formatting, comma-list null slots, and null filter entries
+
 ## 1.7.4
 
 * [FIX] restore Dart 3.0.0 test compatibility by materializing `ByteBuffer` fixtures via `_byteBufferFrom` instead of relying on `List<int>.buffer`
