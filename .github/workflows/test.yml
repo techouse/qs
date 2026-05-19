@@ -223,7 +223,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: test/comparison/pnpm-lock.yaml
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v6
