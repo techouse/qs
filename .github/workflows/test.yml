@@ -217,6 +217,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
+          version: 11.1.3
           package_json_file: test/comparison/package.json
           run_install: false
       - name: Setup Node
