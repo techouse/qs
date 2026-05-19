@@ -214,21 +214,20 @@ jobs:
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 11.1.3
-          package_json_file: test/comparison/package.json
-          run_install: false
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v6
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: pnpm
-          cache-dependency-path: test/comparison/pnpm-lock.yaml
-      - id: checkout
-        name: Checkout repository
-        uses: actions/checkout@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: test/comparison/package.json
+          run_install: false
+          cache: true
+          cache_dependency_path: test/comparison/pnpm-lock.yaml
       - id: install_dart_dependencies
         name: Install Dart dependencies
         run: dart pub get
