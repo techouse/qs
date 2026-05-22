@@ -1,4 +1,4 @@
-## 1.7.5-dev
+## 1.7.5
 
 * [FEAT] add `DecodeOptions.strictMerge` for Node `qs` `strictMerge` parity, defaulting to object/scalar array wrapping while supporting legacy scalar-key merge mode
 * [FIX] match Node `qs` 6.14.2 list-limit semantics for indexed notation, comma-list overflow, and mixed overflow maps
