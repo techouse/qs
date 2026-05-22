@@ -538,7 +538,7 @@ void main() {
         Uri.parse('$testUrl?a[20]=a')
             .queryParametersQs(const DecodeOptions(listLimit: 20)),
         equals({
-          'a': ['a']
+          'a': {'20': 'a'}
         }),
       );
       expect(
@@ -552,7 +552,7 @@ void main() {
       expect(
         Uri.parse('$testUrl?a[20]=a').queryParametersQs(),
         equals({
-          'a': ['a']
+          'a': {'20': 'a'}
         }),
       );
       expect(
@@ -1011,7 +1011,7 @@ void main() {
         Uri.parse('$testUrl?a[0]=b')
             .queryParametersQs(const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b']
+          'a': {'0': 'b'}
         }),
       );
 

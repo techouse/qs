@@ -998,7 +998,7 @@ void main() {
             '0': ['x', 'a'],
             '1': 'b',
           });
-          expect(Utils.isOverflow(merged), isFalse);
+          expect(Utils.isOverflow(merged), isTrue);
         });
       });
     });
@@ -1314,12 +1314,37 @@ void main() {
     });
 
     group('Utils.merge edge branches', () {
-      test('returns non-overflow map target unchanged for scalar source', () {
+      test('wraps non-overflow map target with scalar source by default', () {
         final target = <String, dynamic>{'a': 1};
         final result = Utils.merge(target, 'x');
 
-        expect(result, same(target));
-        expect(result, equals({'a': 1}));
+        expect(result, [
+          {'a': 1},
+          'x',
+        ]);
+      });
+
+      test('legacy strictMerge=false adds scalar source as a key', () {
+        final target = <String, dynamic>{'a': 1};
+        final result = Utils.merge(
+          target,
+          'x',
+          const DecodeOptions(strictMerge: false),
+        );
+
+        expect(result, {'a': 1, 'x': true});
+        expect(target, {'a': 1});
+      });
+
+      test('legacy strictMerge=false ignores protected scalar keys', () {
+        final target = <String, dynamic>{'a': 1};
+        final result = Utils.merge(
+          target,
+          'toString',
+          const DecodeOptions(strictMerge: false),
+        );
+
+        expect(result, {'a': 1});
       });
 
       test('normalizes to map when Undefined persists and parseLists is false',

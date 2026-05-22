@@ -326,6 +326,21 @@ expect(
 );
 ```
 
+Bracket notation combines regardless of [DecodeOptions.duplicates]:
+
+```dart
+expect(
+  QS.decode(
+    'a=1&a=2&b[]=1&b[]=2',
+    const DecodeOptions(duplicates: Duplicates.last),
+  ),
+  equals({
+    'a': '2',
+    'b': ['1', '2'],
+  }),
+);
+```
+
 If you have to deal with legacy browsers or services, there's also support for decoding percent-encoded octets as
 [latin1]:
 
@@ -468,14 +483,17 @@ This limit can be overridden by passing an [DecodeOptions.listLimit] option:
 ```dart
 expect(
   QS.decode(
-    'a[1]=b',
+    'a[0]=b',
     const DecodeOptions(listLimit: 0),
   ),
   equals({
-    'a': {'1': 'b'}
+    'a': {'0': 'b'}
   }),
 );
 ```
+
+[DecodeOptions.listLimit] is a maximum element count. With the default limit of
+20, `a[19]=b` can still become a [List], while `a[20]=b` falls back to a [Map].
 
 To disable List parsing entirely, set [DecodeOptions.parseLists] to `false`.
 
@@ -498,6 +516,35 @@ expect(
   QS.decode('a[0]=b&a[b]=c'),
   equals({
     'a': {'0': 'b', 'b': 'c'}
+  }),
+);
+```
+
+When a key appears as both an object and a scalar, [DecodeOptions.strictMerge]
+wraps the conflict in a [List] by default:
+
+```dart
+expect(
+  QS.decode('a[b]=c&a=d'),
+  equals({
+    'a': [
+      {'b': 'c'},
+      'd',
+    ]
+  }),
+);
+```
+
+Set `strictMerge: false` to restore legacy scalar-key merge behavior:
+
+```dart
+expect(
+  QS.decode(
+    'a[b]=c&a=d',
+    const DecodeOptions(strictMerge: false),
+  ),
+  equals({
+    'a': {'b': 'c', 'd': true}
   }),
 );
 ```

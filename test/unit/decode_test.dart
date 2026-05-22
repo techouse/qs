@@ -211,7 +211,10 @@ void main() {
       expect(
         QS.decode('a[b]=2&a=1'),
         equals({
-          'a': {'b': '2'}
+          'a': [
+            {'b': '2'},
+            '1',
+          ]
         }),
       );
     });
@@ -781,28 +784,28 @@ void main() {
 
     test('limits specific list indices to listLimit', () {
       expect(
-        QS.decode('a[20]=a', const DecodeOptions(listLimit: 20)),
+        QS.decode('a[19]=a', const DecodeOptions(listLimit: 20)),
         equals({
           'a': ['a']
         }),
       );
       expect(
-        QS.decode('a[21]=a', const DecodeOptions(listLimit: 20)),
+        QS.decode('a[20]=a', const DecodeOptions(listLimit: 20)),
         equals({
-          'a': {'21': 'a'}
+          'a': {'20': 'a'}
         }),
       );
 
       expect(
-        QS.decode('a[20]=a'),
+        QS.decode('a[19]=a'),
         equals({
           'a': ['a']
         }),
       );
       expect(
-        QS.decode('a[21]=a'),
+        QS.decode('a[20]=a'),
         equals({
-          'a': {'21': 'a'}
+          'a': {'20': 'a'}
         }),
       );
     });
@@ -1326,7 +1329,7 @@ void main() {
       expect(
         QS.decode('a[0]=b', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': ['b']
+          'a': {'0': 'b'}
         }),
       );
 
@@ -2009,6 +2012,103 @@ void main() {
         );
       },
     );
+
+    test('bracket notation always combines with duplicates: first', () {
+      expect(
+        QS.decode(
+          'a=1&a=2&b[]=1&b[]=2',
+          const DecodeOptions(duplicates: Duplicates.first),
+        ),
+        equals({
+          'a': '1',
+          'b': ['1', '2'],
+        }),
+      );
+    });
+
+    test('encoded bracket notation always combines with duplicates: last', () {
+      expect(
+        QS.decode(
+          'a=1&a=2&b%5B%5D=1&b%5B%5D=2',
+          const DecodeOptions(duplicates: Duplicates.last),
+        ),
+        equals({
+          'a': '2',
+          'b': ['1', '2'],
+        }),
+      );
+    });
+  });
+
+  group('strictMerge option', () {
+    test('wraps object then scalar conflicts by default', () {
+      expect(
+        QS.decode('a[b]=c&a=d'),
+        equals({
+          'a': [
+            {'b': 'c'},
+            'd',
+          ]
+        }),
+      );
+    });
+
+    test('wraps scalar then object conflicts by default', () {
+      expect(
+        QS.decode('a=d&a[b]=c'),
+        equals({
+          'a': [
+            'd',
+            {'b': 'c'},
+          ]
+        }),
+      );
+    });
+
+    test('legacy mode adds scalar string keys', () {
+      expect(
+        QS.decode(
+          'a[b]=c&a=d',
+          const DecodeOptions(strictMerge: false),
+        ),
+        equals({
+          'a': {'b': 'c', 'd': true}
+        }),
+      );
+    });
+
+    test('legacy mode ignores empty assigned and missing-value scalars', () {
+      expect(
+        QS.decode(
+          'a[b]=c&a=',
+          const DecodeOptions(strictMerge: false),
+        ),
+        equals({
+          'a': {'b': 'c'}
+        }),
+      );
+      expect(
+        QS.decode(
+          'a[b]=c&a',
+          const DecodeOptions(strictMerge: false),
+        ),
+        equals({
+          'a': {'b': 'c'}
+        }),
+      );
+    });
+
+    test('legacy mode keeps prototype keys protected', () {
+      expect(
+        QS.decode(
+          'a[b]=c&a=toString',
+          const DecodeOptions(strictMerge: false),
+        ),
+        equals({
+          'a': {'b': 'c'}
+        }),
+      );
+    });
   });
 
   group('strictDepth option - throw cases', () {
@@ -2184,6 +2284,19 @@ void main() {
         equals({'a': '1', 'b': '2', 'c': '3', 'd': '4', 'e': '5', 'f': '6'}),
       );
     });
+
+    test('allows unlimited parameters with strict limit handling', () {
+      expect(
+        QS.decode(
+          'a=1&b=2&c=3&d=4&e=5&f=6',
+          const DecodeOptions(
+            parameterLimit: double.infinity,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        equals({'a': '1', 'b': '2', 'c': '3', 'd': '4', 'e': '5', 'f': '6'}),
+      );
+    });
   });
 
   group('list limit tests', () {
@@ -2219,14 +2332,15 @@ void main() {
       );
     });
 
-    test('strict list limit applies when duplicate scalar grows into a list',
-        () {
+    test('duplicate scalar overflow promotes to a map in strict mode', () {
       expect(
-        () => QS.decode(
+        QS.decode(
           'a=1&a=2',
           const DecodeOptions(listLimit: 1, throwOnLimitExceeded: true),
         ),
-        throwsA(isA<RangeError>()),
+        equals({
+          'a': {'0': '1', '1': '2'}
+        }),
       );
     });
 
@@ -2370,6 +2484,113 @@ void main() {
       expect(Utils.isOverflow(resultLimitOne['a']), isTrue);
     });
 
+    test('indexed listLimit boundary conditions', () {
+      expect(
+        QS.decode('a[19]=a', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': ['a']
+        }),
+      );
+      expect(
+        QS.decode('a[20]=a', const DecodeOptions(listLimit: 20)),
+        equals({
+          'a': {'20': 'a'}
+        }),
+      );
+      expect(
+        QS.decode('a[0]=b', const DecodeOptions(listLimit: 0)),
+        equals({
+          'a': {'0': 'b'}
+        }),
+      );
+      expect(
+        QS.decode('a[0]=b', const DecodeOptions(listLimit: -1)),
+        equals({
+          'a': {'0': 'b'}
+        }),
+      );
+    });
+
+    test('indexed listLimit strict overflow throws', () {
+      expect(
+        () => QS.decode(
+          'a[20]=a',
+          const DecodeOptions(
+            listLimit: 20,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+      expect(
+        () => QS.decode(
+          'a[0]=b',
+          const DecodeOptions(
+            listLimit: 0,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
+    test('comma listLimit boundary conditions', () {
+      expect(
+        QS.decode(
+          'a=1,2,3',
+          const DecodeOptions(comma: true, listLimit: 5),
+        ),
+        equals({
+          'a': ['1', '2', '3']
+        }),
+      );
+      expect(
+        QS.decode(
+          'a=1,2,3',
+          const DecodeOptions(comma: true, listLimit: 3),
+        ),
+        equals({
+          'a': ['1', '2', '3']
+        }),
+      );
+
+      final result = QS.decode(
+        'a=1,2,3,4',
+        const DecodeOptions(comma: true, listLimit: 3),
+      );
+      expect(result['a'], {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+        '3': '4',
+      });
+      expect(Utils.isOverflow(result['a']), isTrue);
+
+      expect(
+        () => QS.decode(
+          'a=1,2,3,4',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 3,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+
+      expect(
+        () => QS.decode(
+          'a=1,2&a=3',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 2,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
+
     test('mixed array and object notation', () {
       expect(
         QS.decode('a[]=b&a[c]=d'),
@@ -2438,19 +2659,37 @@ void main() {
     });
 
     test('mixed [0] and [] under tight listLimit', () {
-      // Same structure as above but overflow is not tagged when order flips.
       final resultZero =
           QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 0));
       expect(resultZero['a'], isA<Map<String, dynamic>>());
       expect(resultZero['a'], {
         '0': ['b', 'c']
       });
-      expect(Utils.isOverflow(resultZero['a']), isFalse);
+      expect(Utils.isOverflow(resultZero['a']), isTrue);
 
       final resultOne =
           QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 1));
       expect(resultOne['a'], ['b', 'c']);
       expect(Utils.isOverflow(resultOne['a']), isFalse);
+    });
+
+    test('mixed notation produces consistent overflow results', () {
+      const expected = {
+        'a': {'0': 'b', '1': 'c', '2': 'd'}
+      };
+
+      expect(
+        QS.decode('a[]=b&a[1]=c&a=d', const DecodeOptions(listLimit: -1)),
+        equals(expected),
+      );
+      expect(
+        QS.decode('a[]=b&a[1]=c&a=d', const DecodeOptions(listLimit: 0)),
+        equals(expected),
+      );
+      expect(
+        QS.decode('a[]=b&a[1]=c&a=d', const DecodeOptions(listLimit: 1)),
+        equals(expected),
+      );
     });
   });
 
@@ -3286,14 +3525,18 @@ void main() {
   });
 
   group('Targeted coverage additions', () {
-    test('comma splitting truncates to remaining list capacity', () {
+    test('comma overflow promotes to an indexed map in non-strict mode', () {
       final result = QS.decode(
         'a=1,2,3',
         const DecodeOptions(comma: true, listLimit: 2),
       );
 
-      final Iterable<dynamic> iterable = result['a'] as Iterable;
-      expect(iterable.toList(), equals(['1', '2']));
+      expect(result['a'], {
+        '0': '1',
+        '1': '2',
+        '2': '3',
+      });
+      expect(Utils.isOverflow(result['a']), isTrue);
     });
 
     test('comma splitting throws when limit exceeded in strict mode', () {
@@ -3344,9 +3587,9 @@ void main() {
         ),
       );
 
-      final aValue = result['a'];
-      expect(aValue, isA<Iterable<dynamic>>());
-      expect((aValue as Iterable<dynamic>).length, 5);
+      final aValue = result['a'] as Map<String, dynamic>;
+      expect(aValue.length, 26);
+      expect(Utils.isOverflow(aValue), isTrue);
     });
 
     test('strict depth throws when additional bracket groups remain', () {

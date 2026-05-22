@@ -51,6 +51,7 @@ void main() {
         interpretNumericEntities: true,
         parameterLimit: 200,
         parseLists: true,
+        strictMerge: false,
         strictNullHandling: true,
       );
 
@@ -69,6 +70,7 @@ void main() {
       expect(newOptions.interpretNumericEntities, isTrue);
       expect(newOptions.parameterLimit, 200);
       expect(newOptions.parseLists, isTrue);
+      expect(newOptions.strictMerge, isFalse);
       expect(newOptions.strictNullHandling, isTrue);
       expect(newOptions, equals(options));
     });
@@ -88,6 +90,7 @@ void main() {
         interpretNumericEntities: true,
         parameterLimit: 100,
         parseLists: false,
+        strictMerge: false,
         strictNullHandling: true,
       );
 
@@ -105,6 +108,7 @@ void main() {
         interpretNumericEntities: false,
         parameterLimit: 200,
         parseLists: true,
+        strictMerge: true,
         strictNullHandling: false,
       );
 
@@ -121,6 +125,7 @@ void main() {
       expect(newOptions.interpretNumericEntities, isFalse);
       expect(newOptions.parameterLimit, 200);
       expect(newOptions.parseLists, isTrue);
+      expect(newOptions.strictMerge, isTrue);
       expect(newOptions.strictNullHandling, isFalse);
     });
 
@@ -155,6 +160,7 @@ void main() {
         parameterLimit: 100,
         parseLists: false,
         strictDepth: false,
+        strictMerge: false,
         strictNullHandling: true,
       );
 
@@ -177,6 +183,7 @@ void main() {
           '  parameterLimit: 100,\n'
           '  parseLists: false,\n'
           '  strictDepth: false,\n'
+          '  strictMerge: false,\n'
           '  throwOnLimitExceeded: false,\n'
           '  strictNullHandling: true\n'
           ')',
