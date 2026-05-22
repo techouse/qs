@@ -1379,6 +1379,19 @@ void main() {
           'a': {'0': 'b'}
         }),
       );
+      expect(
+        QS.decode(
+          'a[]=',
+          const DecodeOptions(
+            parseLists: false,
+            listLimit: 0,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        equals({
+          'a': {'0': ''}
+        }),
+      );
     });
 
     test('allows for query string prefix', () {
