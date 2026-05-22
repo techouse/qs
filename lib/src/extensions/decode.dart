@@ -37,10 +37,8 @@ extension _$Decode on QS {
   ///
   /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
   /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
-  /// when `throwOnLimitExceeded` is `true` and `listLimit < 0`, any non‑empty split throws
-  /// immediately; when `false`, growth is effectively capped at zero (the split produces
-  /// an empty list). Empty‑bracket pushes (`a[]=`) are handled during structure building
-  /// in `_parseObject`.
+  /// over-limit values are promoted after value decoding, so all split values are
+  /// preserved unless `throwOnLimitExceeded` is `true`.
   static dynamic _parseListValue(
     final dynamic val,
     final DecodeOptions options,
@@ -49,24 +47,7 @@ extension _$Decode on QS {
   ) {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
-      final int remaining = options.listLimit - currentListLength;
-
-      if (options.throwOnLimitExceeded) {
-        if (remaining < 0) {
-          throw RangeError(_listLimitExceededMessage(options.listLimit));
-        }
-        final List<String> splitVal = _splitCommaValue(
-          val,
-          maxParts: remaining == 0 ? 1 : remaining + 1,
-        );
-        if (splitVal.length > remaining) {
-          throw RangeError(_listLimitExceededMessage(options.listLimit));
-        }
-        return splitVal;
-      }
-
-      if (remaining <= 0) return const <String>[];
-      return _splitCommaValue(val, maxParts: remaining);
+      return _splitCommaValue(val);
     }
 
     // Guard incremental growth of an existing list as we parse additional items.
@@ -85,6 +66,21 @@ extension _$Decode on QS {
       ? 'List parsing is disabled (listLimit < 0).'
       : 'List limit exceeded. Only $listLimit '
           'element${listLimit == 1 ? '' : 's'} allowed in a list.';
+
+  /// Applies comma-list limit handling after values have been decoded and
+  /// after `[]` suffix wrapping, matching Node `qs` ordering.
+  static dynamic _promoteCommaListIfNeeded(
+    final dynamic val,
+    final DecodeOptions options,
+  ) {
+    if (!options.comma || val is! Iterable || val.length <= options.listLimit) {
+      return val;
+    }
+    if (options.throwOnLimitExceeded) {
+      throw RangeError(_listLimitExceededMessage(options.listLimit));
+    }
+    return Utils.combine([], val, listLimit: options.listLimit);
+  }
 
   /// Splits a comma-separated value into parts, respecting an optional `maxParts` limit.
   static List<String> _splitCommaValue(
@@ -276,13 +272,15 @@ extension _$Decode on QS {
         key = options.decodeKey(rawKey, charset: charset) ?? '';
         // Decode the substring *after* '=', applying list parsing and the configured decoder.
         final bool existingKey = obj.containsKey(key);
+        final bool bracketSuffix = options.parseLists && rawKey.endsWith('[]');
         final bool combiningDuplicates =
             existingKey && options.duplicates == Duplicates.combine;
-        final int currentListLength = combiningDuplicates
-            ? (obj[key] is List ? (obj[key] as List).length : 1)
-            : 0;
-        final bool listGrowthFromKey = combiningDuplicates ||
-            (options.parseLists && rawKey.endsWith('[]'));
+        final dynamic existingValue = obj[key];
+        final int currentListLength =
+            combiningDuplicates && existingValue is Iterable
+                ? existingValue.length
+                : 0;
+        final bool listGrowthFromKey = combiningDuplicates || bracketSuffix;
 
         val = Utils.apply<dynamic>(
           _parseListValue(
@@ -310,17 +308,25 @@ extension _$Decode on QS {
       }
 
       // Quirk: a key ending in `[]` forces an array container (qs behavior).
-      if (options.parseLists &&
+      final bool bracketSuffix = options.parseLists &&
           pos != -1 &&
-          part.substring(0, pos).endsWith('[]')) {
+          part.substring(0, pos).endsWith('[]');
+      if (bracketSuffix && val is Iterable) {
         val = [val];
       }
+
+      val = _promoteCommaListIfNeeded(val, options);
 
       // Duplicate key policy: combine/first/last (default: combine).
       final bool existing = obj.containsKey(key);
       switch ((existing, options.duplicates)) {
         case (true, Duplicates.combine):
           // Existing key + `combine` policy: merge old/new values.
+          obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
+          break;
+        case (true, _) when bracketSuffix:
+          // `qs` always combines duplicate bracket-notation keys, even when
+          // the duplicates option is `first` or `last`.
           obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
           break;
         case (false, _):
@@ -434,13 +440,13 @@ extension _$Decode on QS {
         final int? index = (wasBracketed && options.parseLists)
             ? int.tryParse(decodedRoot)
             : null;
-        if (!options.parseLists && decodedRoot == '') {
-          obj = <String, dynamic>{'0': leaf};
-        } else if (index != null &&
+        final bool isValidListIndex = index != null &&
             index >= 0 &&
             index.toString() == decodedRoot &&
-            options.parseLists &&
-            index <= options.listLimit) {
+            options.parseLists;
+        if (!options.parseLists && decodedRoot == '') {
+          obj = <String, dynamic>{'0': leaf};
+        } else if (isValidListIndex && index < options.listLimit) {
           // Numeric segment treated as list index when lists are enabled and the
           // token was actually bracketed (to disambiguate bare numeric keys).
           obj = List<dynamic>.filled(
@@ -449,6 +455,11 @@ extension _$Decode on QS {
             growable: true,
           );
           obj[index] = leaf;
+        } else if (isValidListIndex && options.throwOnLimitExceeded) {
+          throw RangeError(_listLimitExceededMessage(options.listLimit));
+        } else if (isValidListIndex) {
+          obj[index.toString()] = leaf;
+          Utils.markOverflow(obj, index);
         } else {
           // Normalise numeric-looking keys back to their canonical string form when not a list index
           obj[index?.toString() ?? decodedRoot] = leaf;

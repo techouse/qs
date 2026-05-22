@@ -27,6 +27,7 @@ import 'package:qs_dart/src/utils.dart';
 ///   [throwOnLimitExceeded] and/or [strictDepth].
 /// - **Duplicates**: use [duplicates] to pick a strategy when the same key is
 ///   present multiple times in the input.
+/// - **Merge conflicts**: [strictMerge] controls object/scalar conflicts.
 ///
 /// See also: the options types in other ports for parity, and the individual
 /// doc comments below for precise semantics.
@@ -72,6 +73,7 @@ final class DecodeOptions with EquatableMixin {
     this.parameterLimit = 1000,
     this.parseLists = true,
     this.strictDepth = false,
+    this.strictMerge = true,
     this.strictNullHandling = false,
     this.throwOnLimitExceeded = false,
   })  : allowDots = allowDots ?? (decodeDotInKeys ?? false),
@@ -103,7 +105,7 @@ final class DecodeOptions with EquatableMixin {
   /// `a[]=` without coercing or discarding them.
   final bool allowEmptyLists;
 
-  /// Maximum list size/index that will be honored when decoding bracket lists.
+  /// Maximum list size that will be honored when decoding bracket lists.
   ///
   /// Keys like `a[9999999]` can cause excessively large sparse lists; above
   /// this limit, indices are treated as string map keys instead. The same
@@ -182,6 +184,14 @@ final class DecodeOptions with EquatableMixin {
   /// When `true`, exceeding [depth] results in a thrown error instead of a
   /// soft limit.
   final bool strictDepth;
+
+  /// When `true`, object/scalar merge conflicts are wrapped in a list.
+  ///
+  /// This matches modern Node `qs` behavior for inputs such as
+  /// `a[b]=c&a=d`, which decodes as `{'a': [{'b': 'c'}, 'd']}`.
+  /// Set to `false` to restore the legacy behavior where non-empty scalar
+  /// values are used as object keys with value `true`.
+  final bool strictMerge;
 
   /// When `true`, tokens without an `=` (e.g., `?flag`) decode to `null`
   /// rather than `""`.
@@ -280,6 +290,7 @@ final class DecodeOptions with EquatableMixin {
     final bool? parseLists,
     final bool? strictNullHandling,
     final bool? strictDepth,
+    final bool? strictMerge,
     final bool? throwOnLimitExceeded,
     final Decoder? decoder,
     final LegacyDecoder? legacyDecoder,
@@ -302,6 +313,7 @@ final class DecodeOptions with EquatableMixin {
         parseLists: parseLists ?? this.parseLists,
         strictNullHandling: strictNullHandling ?? this.strictNullHandling,
         strictDepth: strictDepth ?? this.strictDepth,
+        strictMerge: strictMerge ?? this.strictMerge,
         throwOnLimitExceeded: throwOnLimitExceeded ?? this.throwOnLimitExceeded,
         decoder: decoder ?? _decoder,
         legacyDecoder: legacyDecoder ?? _legacyDecoder,
@@ -354,6 +366,7 @@ final class DecodeOptions with EquatableMixin {
       '  parameterLimit: $parameterLimit,\n'
       '  parseLists: $parseLists,\n'
       '  strictDepth: $strictDepth,\n'
+      '  strictMerge: $strictMerge,\n'
       '  throwOnLimitExceeded: $throwOnLimitExceeded,\n'
       '  strictNullHandling: $strictNullHandling\n'
       ')';
@@ -375,6 +388,7 @@ final class DecodeOptions with EquatableMixin {
         parameterLimit,
         parseLists,
         strictDepth,
+        strictMerge,
         strictNullHandling,
         throwOnLimitExceeded,
         _decoder,

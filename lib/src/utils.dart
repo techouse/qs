@@ -35,7 +35,6 @@ final class Utils {
 
   /// Marks a map as an overflow container with the given max index.
   @internal
-  @visibleForTesting
   static Map<String, dynamic> markOverflow(
     final Map<String, dynamic> obj,
     final int maxIndex,
@@ -111,7 +110,7 @@ final class Utils {
         final dynamic currentTarget = frame.target;
         final dynamic currentSource = frame.source;
 
-        if (currentSource == null) {
+        if (_isFalsyMergeSource(currentSource)) {
           stack.removeLast();
           frame.onResult(currentTarget);
           continue;
@@ -248,6 +247,25 @@ final class Utils {
               frame.onResult(currentTarget);
               continue;
             }
+            if (frame.options?.strictMerge ?? true) {
+              stack.removeLast();
+              frame.onResult([currentTarget, currentSource]);
+              continue;
+            }
+            final String? key = _legacyScalarMergeKey(currentSource);
+            if (key == null || _isProtectedObjectKey(key)) {
+              stack.removeLast();
+              frame.onResult(currentTarget);
+              continue;
+            }
+            final Map<String, dynamic> mergeTarget = {
+              for (final MapEntry entry in currentTarget.entries)
+                entry.key.toString(): entry.value,
+            };
+            mergeTarget[key] = true;
+            stack.removeLast();
+            frame.onResult(mergeTarget);
+            continue;
           } else {
             if (currentTarget is! Iterable && currentSource is Iterable) {
               stack.removeLast();
@@ -260,10 +278,6 @@ final class Utils {
             frame.onResult([currentTarget, currentSource]);
             continue;
           }
-
-          stack.removeLast();
-          frame.onResult(currentTarget);
-          continue;
         }
 
         if (currentTarget == null || currentTarget is! Map) {
@@ -274,7 +288,9 @@ final class Utils {
             };
             frame.mergeTarget = mergeTarget;
             frame.mapIterator = currentSource.entries.iterator;
-            frame.overflowMax = null;
+            frame.overflowMax = isOverflow(currentSource)
+                ? _getOverflowIndex(currentSource)
+                : null;
             frame.phase = MergePhase.mapIter;
             continue;
           }
@@ -315,8 +331,12 @@ final class Utils {
         }
 
         final bool targetOverflow = isOverflow(currentTarget);
-        final int? overflowMax =
-            targetOverflow ? _getOverflowIndex(currentTarget) : null;
+        final bool sourceOverflow = isOverflow(currentSource);
+        final int? overflowMax = targetOverflow
+            ? _getOverflowIndex(currentTarget)
+            : sourceOverflow
+                ? _getOverflowIndex(currentSource)
+                : null;
 
         final Map<String, dynamic> mergeTarget =
             currentTarget is Iterable && currentSource is! Iterable
@@ -881,7 +901,7 @@ final class Utils {
       if (b is Iterable) ...b else b,
     ];
 
-    if (listLimit != null && listLimit >= 0 && result.length > listLimit) {
+    if (listLimit != null && result.length > listLimit) {
       final Map<String, dynamic> overflow = createIndexMap(result);
       return markOverflow(overflow, result.length - 1);
     }
@@ -894,6 +914,42 @@ final class Utils {
   /// Handy when a caller may pass a single value or a collection.
   static dynamic apply<T>(dynamic val, final T Function(T) fn) =>
       val is Iterable ? val.map((item) => fn(item)) : fn(val);
+
+  static bool _isFalsyMergeSource(final dynamic source) =>
+      source == null ||
+      source is Undefined ||
+      source == false ||
+      source == '' ||
+      source == 0 ||
+      source == BigInt.zero ||
+      source is double && source.isNaN;
+
+  static String? _legacyScalarMergeKey(final dynamic source) {
+    if (_isFalsyMergeSource(source)) return null;
+    return switch (source) {
+      String value => value,
+      num value => value.toString(),
+      BigInt value => value.toString(),
+      bool value => value.toString(),
+      Enum value => value.name,
+      _ => null,
+    };
+  }
+
+  static bool _isProtectedObjectKey(final String key) => const {
+        '__defineGetter__',
+        '__defineSetter__',
+        '__lookupGetter__',
+        '__lookupSetter__',
+        '__proto__',
+        'constructor',
+        'hasOwnProperty',
+        'isPrototypeOf',
+        'propertyIsEnumerable',
+        'toLocaleString',
+        'toString',
+        'valueOf',
+      }.contains(key);
 
   /// Returns `true` if `val` is a scalar we should encode as-is.
   ///
