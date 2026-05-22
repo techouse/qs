@@ -1,5 +1,9 @@
 ## 1.7.5-dev
 
+* [FEAT] add `DecodeOptions.strictMerge` for Node `qs` `strictMerge` parity, defaulting to object/scalar array wrapping while supporting legacy scalar-key merge mode
+* [FIX] match Node `qs` 6.14.2 list-limit semantics for indexed notation, comma-list overflow, and mixed overflow maps
+* [FIX] match Node `qs` 6.15.0 duplicate handling so bracket notation combines regardless of the selected duplicate strategy
+* [FIX] preserve unlimited parsing with `parameterLimit: double.infinity` and `throwOnLimitExceeded: true`
 * [FIX] match Node `qs` 6.15.2 bracket parsing behavior for nested/literal bracket groups, encoded bracket text, and `allowDots` with `depth: 0`
 * [FIX] match Node `qs` 6.15.2 stringify edge cases for charset sentinel delimiters, strict-null RFC1738 formatting, comma-list null slots, and null filter entries
 
