@@ -1336,6 +1336,25 @@ void main() {
         expect(target, {'a': 1});
       });
 
+      test('legacy strictMerge=false stringifies non-string scalar keys', () {
+        final cases = <(dynamic, String)>[
+          (42, '42'),
+          (BigInt.from(42), '42'),
+          (true, 'true'),
+          (DummyEnum.lorem, 'lorem'),
+        ];
+
+        for (final (source, key) in cases) {
+          final result = Utils.merge(
+            <String, dynamic>{'a': 1},
+            source,
+            const DecodeOptions(strictMerge: false),
+          );
+
+          expect(result, {'a': 1, key: true});
+        }
+      });
+
       test('legacy strictMerge=false ignores protected scalar keys', () {
         final target = <String, dynamic>{'a': 1};
         final result = Utils.merge(
