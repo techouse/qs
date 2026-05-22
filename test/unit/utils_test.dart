@@ -1388,6 +1388,19 @@ void main() {
         expect(map['1'], equals('x'));
       });
 
+      test('preserves source overflow marker when merging into map target', () {
+        final overflow = Utils.markOverflow(<String, dynamic>{'1': 'b'}, 1);
+        final result = Utils.merge(<String, dynamic>{'0': 'a'}, overflow);
+
+        expect(result, isA<Map<String, dynamic>>());
+        final map = result as Map<String, dynamic>;
+        expect(map, {'0': 'a', '1': 'b'});
+        expect(Utils.isOverflow(map), isTrue);
+
+        final appended = Utils.merge(map, 'c') as Map<String, dynamic>;
+        expect(appended, {'0': 'a', '1': 'b', '2': 'c'});
+      });
+
       test('wraps scalar targets into list with map element when merging maps',
           () {
         final result = Utils.merge('seed', {'a': 'b'});
