@@ -111,12 +111,11 @@ extension _$Decode on QS {
     final String input,
     final Pattern delimiter, {
     final int? maxParts,
-  }) {
-    return switch (delimiter) {
-      String d => _collectNonEmptyStringParts(input, d, maxParts: maxParts),
-      _ => _collectNonEmptyPatternParts(input, delimiter, maxParts: maxParts),
-    };
-  }
+  }) =>
+      switch (delimiter) {
+        String d => _collectNonEmptyStringParts(input, d, maxParts: maxParts),
+        _ => _collectNonEmptyPatternParts(input, delimiter, maxParts: maxParts),
+      };
 
   /// Optimized splitter for string delimiters that collects only non-empty
   /// parts and respects `maxParts`.
@@ -128,10 +127,14 @@ extension _$Decode on QS {
     if (delimiter.isEmpty) {
       throw ArgumentError('Delimiter must not be empty.');
     }
-    if (maxParts != null && maxParts <= 0) return const <String>[];
+
+    if (maxParts != null && maxParts <= 0) {
+      return const <String>[];
+    }
 
     final List<String> parts = <String>[];
     int start = 0;
+
     while (true) {
       if (maxParts != null && parts.length >= maxParts) break;
 
@@ -154,7 +157,9 @@ extension _$Decode on QS {
     final Pattern delimiter, {
     final int? maxParts,
   }) {
-    if (maxParts != null && maxParts <= 0) return const <String>[];
+    if (maxParts != null && maxParts <= 0) {
+      return const <String>[];
+    }
 
     final List<String> out = <String>[];
     int start = 0;
@@ -217,11 +222,10 @@ extension _$Decode on QS {
     final int? takeCount = limit == null
         ? null
         : (options.throwOnLimitExceeded ? limit + 1 : limit);
-    final List<String> parts = _collectNonEmptyParts(
-      cleanStr,
-      options.delimiter,
-      maxParts: takeCount,
-    );
+
+    final List<String> parts =
+        _collectNonEmptyParts(cleanStr, options.delimiter, maxParts: takeCount);
+
     if (options.throwOnLimitExceeded && limit != null && parts.length > limit) {
       throw RangeError(
         'Parameter limit exceeded. Only $limit parameter${limit == 1 ? '' : 's'} allowed.',
@@ -238,6 +242,7 @@ extension _$Decode on QS {
     if (options.charsetSentinel) {
       for (i = 0; i < parts.length; ++i) {
         final String p = parts[i];
+
         if (p.startsWith('utf8=')) {
           if (p == Sentinel.charset.toString()) {
             charset = utf8;
@@ -252,8 +257,10 @@ extension _$Decode on QS {
 
     // 5) Parse each `key=value` pair, honoring bracket-`]=` short-circuit for speed.
     final Map<String, dynamic> obj = {};
+
     for (i = 0; i < parts.length; ++i) {
       if (i == skipIndex) continue;
+
       final String part = parts[i];
       final int bracketEqualsPos = part.indexOf(']=');
       final int pos =
@@ -382,6 +389,7 @@ extension _$Decode on QS {
       final bool bracketed = prev.startsWith('[') && prev.endsWith(']');
       final int? parentIndex =
           bracketed ? int.tryParse(prev.substring(1, prev.length - 1)) : null;
+
       if (parentIndex != null &&
           parentIndex >= 0 &&
           val is List &&
@@ -433,10 +441,10 @@ extension _$Decode on QS {
         final bool wasBracketed = root.startsWith('[') && root.endsWith(']');
         final String cleanRoot =
             wasBracketed ? root.substring(1, root.length - 1) : root;
-        String decodedRoot = options.decodeDotInKeys && cleanRoot.contains('%2')
-            ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
-            : cleanRoot;
-
+        final String decodedRoot =
+            options.decodeDotInKeys && cleanRoot.contains('%2')
+                ? cleanRoot.replaceAll('%2E', '.').replaceAll('%2e', '.')
+                : cleanRoot;
         final int? index = (wasBracketed && options.parseLists)
             ? int.tryParse(decodedRoot)
             : null;
@@ -444,6 +452,7 @@ extension _$Decode on QS {
             index >= 0 &&
             index.toString() == decodedRoot &&
             options.parseLists;
+
         if (!options.parseLists && decodedRoot == '') {
           obj = <String, dynamic>{'0': leaf};
         } else if (isValidListIndex && index < options.listLimit) {
@@ -536,6 +545,7 @@ extension _$Decode on QS {
       // Balance nested '[' and ']' within this group.
       while (i < n) {
         final int cu = key.codeUnitAt(i);
+
         if (cu == 0x5B /* '[' */) {
           level++;
         } else if (cu == 0x5D /* ']' */) {
@@ -567,13 +577,25 @@ extension _$Decode on QS {
     if (open >= 0) {
       if (strictDepth) {
         throw RangeError(
-            'Input depth exceeded $maxDepth and strictDepth is true');
+          'Input depth exceeded $maxDepth and strictDepth is true',
+        );
       }
       segments.add('[${key.substring(open)}]');
     }
 
     return segments;
   }
+
+  /// Returns whether [cu] can start an allowDots segment after `.`.
+  static bool _isDotSegmentStart(final int cu) => switch (cu) {
+        (>= 0x41 && <= 0x5A) || // A-Z
+        (>= 0x61 && <= 0x7A) || // a-z
+        (>= 0x30 && <= 0x39) || // 0-9
+        0x5F || // _
+        0x2D => // -
+          true,
+        _ => false,
+      };
 
   /// Convert top‑level dots to bracket segments (depth‑aware).
   /// - Only dots at depth == 0 split.
@@ -588,11 +610,14 @@ extension _$Decode on QS {
   ///   and will split when `allowDots` is true.
   static String _dotToBracketTopLevel(final String s) {
     if (s.isEmpty || !s.contains('.')) return s;
+
     final StringBuffer sb = StringBuffer();
     int depth = 0;
     int i = 0;
+
     while (i < s.length) {
-      final ch = s[i];
+      final String ch = s[i];
+
       if (ch == '[') {
         depth++;
         sb.write(ch);
@@ -617,17 +642,7 @@ extension _$Decode on QS {
             // Normal split: convert top-level ".a" or "a.b" into a bracket segment.
             final int start = ++i;
             int j = start;
-            // Accept [A-Za-z0-9_] at the start of a segment; otherwise, keep '.' literal.
-            bool isIdentStart(final int cu) => switch (cu) {
-                  (>= 0x41 && <= 0x5A) || // A-Z
-                  (>= 0x61 && <= 0x7A) || // a-z
-                  (>= 0x30 && <= 0x39) || // 0-9
-                  0x5F || // _
-                  0x2D => // -
-                    true,
-                  _ => false,
-                };
-            if (start >= s.length || !isIdentStart(s.codeUnitAt(start))) {
+            if (start >= s.length || !_isDotSegmentStart(s.codeUnitAt(start))) {
               // keep as literal if next char isn't an ident start
               sb.write('.');
               continue;
@@ -668,6 +683,7 @@ extension _$Decode on QS {
       // Remove leading '?' only once (qs semantics)
       str = str.substring(1);
     }
+
     if (str.length < 3) return str;
 
     // Single-pass scan; we avoid full percent-decoding and only normalize
@@ -681,7 +697,8 @@ extension _$Decode on QS {
 
       // Match "%5B" / "%5b" -> '['  and  "%5D" / "%5d" -> ']'
       if (c == 0x25 /* '%' */ && i + 2 < n) {
-        final c1 = str.codeUnitAt(i + 1);
+        final int c1 = str.codeUnitAt(i + 1);
+
         if (c1 == 0x35 /* '5' */) {
           final c2 = str.codeUnitAt(i + 2);
           if (c2 == 0x42 /* 'B' */ || c2 == 0x62 /* 'b' */) {
@@ -707,6 +724,7 @@ extension _$Decode on QS {
   static String _joinIterableToCommaString(Iterable it) {
     final StringBuffer sb = StringBuffer();
     bool first = true;
+
     for (final e in it) {
       if (!first) sb.write(',');
       sb.write(e == null ? '' : e.toString());
@@ -800,6 +818,7 @@ extension _$Decode on QS {
 
       if (splitAt < 0) continue;
       structuredKeys.add(key);
+
       if (splitAt == 0) {
         roots.add(_leadingStructuredRoot(key, options));
       } else {
