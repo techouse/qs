@@ -27,6 +27,15 @@ extension _$Encode on QS {
       ListFormat.repeat.generator;
   static final ListFormatGenerator _commaGenerator = ListFormat.comma.generator;
 
+  /// Decodes a byte buffer using the configured charset.
+  static String _byteBufferToString(
+    final ByteBuffer buffer,
+    final Encoding charset,
+  ) =>
+      charset == utf8
+          ? utf8.decode(buffer.asUint8List(), allowMalformed: true)
+          : latin1.decode(buffer.asUint8List());
+
   /// Core encoder (iterative, stack-based).
   ///
   /// Returns encoded fragments as either a single `String` or a `List<String>`;
@@ -180,12 +189,7 @@ extension _$Encode on QS {
                   '${config.formatter(keyValue)}=${config.formatter(config.encoder!(obj))}';
             } else {
               final String valueString = obj is ByteBuffer
-                  ? (config.charset == utf8
-                      ? utf8.decode(
-                          obj.asUint8List(),
-                          allowMalformed: true,
-                        )
-                      : latin1.decode(obj.asUint8List()))
+                  ? _byteBufferToString(obj, config.charset)
                   : obj.toString();
               fragment =
                   '${config.formatter(materializedPath())}=${config.formatter(valueString)}';
@@ -200,7 +204,7 @@ extension _$Encode on QS {
             continue;
           }
 
-          // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration
+          // Cache list form once for non-Map, non-String iterables to avoid repeated enumeration.
           List<dynamic>? seqList;
           int? commaEffectiveLength;
           final bool isSeq = obj is Iterable && obj is! String && obj is! Map;
@@ -484,12 +488,7 @@ extension _$Encode on QS {
         if (Utils.isNonNullishPrimitive(current, false) ||
             current is ByteBuffer) {
           final String valueString = current is ByteBuffer
-              ? (config.charset == utf8
-                  ? utf8.decode(
-                      current.asUint8List(),
-                      allowMalformed: true,
-                    )
-                  : latin1.decode(current.asUint8List()))
+              ? _byteBufferToString(current, config.charset)
               : current.toString();
           final String out =
               '${config.formatter(path.toString())}=${config.formatter(valueString)}';
