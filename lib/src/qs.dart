@@ -83,7 +83,6 @@ final class QS {
     Map<String, dynamic> obj = {};
 
     // Merge each parsed key into the accumulator using the same rules as Node `qs`.
-    // Iterate over the keys and setup the new object
     if (tempObj?.isNotEmpty ?? false) {
       for (final MapEntry<String, dynamic> entry in tempObj!.entries) {
         if (decodeFromString) {
@@ -95,11 +94,11 @@ final class QS {
           }
         }
 
-        final parsed = _$Decode._parseKeys(
+        final dynamic parsed = _$Decode._parseKeys(
             entry.key, entry.value, options, decodeFromString);
 
         if (obj.isEmpty && parsed is Map<String, dynamic>) {
-          obj = parsed; // direct assignment – no merge needed
+          obj = parsed;
         } else {
           obj = Utils.merge(obj, parsed, options) as Map<String, dynamic>;
         }
@@ -172,14 +171,14 @@ final class QS {
     // Active-path set used by the encoder for cycle detection across frames.
     final Set<Object> sideChannel = HashSet<Object>.identity();
     final ListFormatGenerator gen = options.listFormat.generator;
-    final bool crt = identical(gen, ListFormat.comma.generator) &&
+    final bool commaRoundTrip = identical(gen, ListFormat.comma.generator) &&
         options.commaRoundTrip == true;
-    final bool ccn = identical(gen, ListFormat.comma.generator) &&
+    final bool commaCompactNulls = identical(gen, ListFormat.comma.generator) &&
         options.commaCompactNulls == true;
     final EncodeConfig rootConfig = EncodeConfig(
       generateArrayPrefix: gen,
-      commaRoundTrip: crt,
-      commaCompactNulls: ccn,
+      commaRoundTrip: commaRoundTrip,
+      commaCompactNulls: commaCompactNulls,
       allowEmptyLists: options.allowEmptyLists,
       strictNullHandling: options.strictNullHandling,
       skipNulls: options.skipNulls,
@@ -229,11 +228,11 @@ final class QS {
     // Optionally emit the charset sentinel (mirrors Node `qs`).
     if (options.charsetSentinel) {
       out.write(switch (options.charset) {
-        /// encodeURIComponent('&#10003;')
-        /// the "numeric entity" representation of a checkmark
+        // encodeURIComponent('&#10003;')
+        // the "numeric entity" representation of a checkmark
         latin1 => '${Sentinel.iso}$delimiter',
 
-        /// encodeURIComponent('✓')
+        // encodeURIComponent('✓')
         utf8 => '${Sentinel.charset}$delimiter',
         _ => '',
       });
