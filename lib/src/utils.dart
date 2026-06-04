@@ -155,23 +155,24 @@ final class Utils {
             final bool hasAnyMap = targetHasMap || sourceHasMap;
 
             if (hasHoles && !(canMergeMapLists && hasAnyMap)) {
-              final SplayTreeMap<int, dynamic> target_ =
+              final SplayTreeMap<int, dynamic> indexedTarget =
                   _toIndexedTreeMap(currentTarget);
 
               if (sourceIsIterable) {
                 for (final (int i, dynamic item) in currentSource.indexed) {
                   if (item is! Undefined) {
-                    target_[i] = item;
+                    indexedTarget[i] = item;
                   }
                 }
               } else {
-                target_[target_.length] = currentSource;
+                indexedTarget[indexedTarget.length] = currentSource;
               }
 
               if (frame.options?.parseLists == false &&
-                  target_.values.any((final el) => el is Undefined)) {
+                  indexedTarget.values.any((final el) => el is Undefined)) {
                 final Map<String, dynamic> normalized = {
-                  for (final MapEntry<int, dynamic> entry in target_.entries)
+                  for (final MapEntry<int, dynamic> entry
+                      in indexedTarget.entries)
                     if (entry.value is! Undefined)
                       entry.key.toString(): entry.value,
                 };
@@ -183,8 +184,8 @@ final class Utils {
               stack.removeLast();
               frame.onResult(
                 currentTarget is Set
-                    ? target_.values.toSet()
-                    : target_.values.toList(),
+                    ? indexedTarget.values.toSet()
+                    : indexedTarget.values.toList(),
               );
               continue;
             }
@@ -480,8 +481,8 @@ final class Utils {
     for (int i = 0; i < str.length; ++i) {
       final int c = str.codeUnitAt(i);
 
-      /// These 69 characters are safe for escaping
-      /// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
+      // These 69 characters are safe for escaping.
+      // ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@*_+-./
       if ((c >= 0x30 && c <= 0x39) || // 0-9
           (c >= 0x41 && c <= 0x5A) || // A-Z
           (c >= 0x61 && c <= 0x7A) || // a-z
@@ -616,7 +617,7 @@ final class Utils {
       );
     }
 
-    // these can not be encoded
+    // These values cannot be encoded.
     if (value is Iterable ||
         value is Map ||
         value is Symbol ||
@@ -660,12 +661,13 @@ final class Utils {
         if (end < len) {
           final int last = s.codeUnitAt(end - 1);
           if (last >= 0xD800 && last <= 0xDBFF) {
-            // keep the high surrogate with its low surrogate in next segment
+            // Keep the high surrogate with its low surrogate in the next segment.
             end--;
           }
         }
         _writeEncodedSegment(s.substring(j, end), buffer, format);
-        j = end; // advance to the adjusted end
+        // Advance to the adjusted end.
+        j = end;
       }
     }
 
@@ -1060,22 +1062,11 @@ final class Utils {
   }
 
   /// Create an index-keyed map from an iterable.
-  static Map<String, dynamic> createIndexMap(final Iterable iterable) {
-    if (iterable is List) {
-      final list = iterable;
-      final map = <String, dynamic>{};
-      for (var i = 0; i < list.length; i++) {
-        map[i.toString()] = list[i];
-      }
-      return map;
-    } else {
-      final map = <String, dynamic>{};
-      var i = 0;
-      for (final v in iterable) {
-        map[i.toString()] = v;
-        i++;
-      }
-      return map;
-    }
-  }
+  static Map<String, dynamic> createIndexMap(final Iterable it) => it is List
+      ? <String, dynamic>{
+          for (int i = 0; i < it.length; i++) i.toString(): it[i],
+        }
+      : <String, dynamic>{
+          for (final (int i, dynamic value) in it.indexed) i.toString(): value,
+        };
 }
