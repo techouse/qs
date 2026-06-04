@@ -566,8 +566,8 @@ extension _$Decode on QS {
         return segments;
       }
 
-      segments
-          .add(key.substring(open, close + 1)); // balanced group, includes [ ]
+      // balanced group, includes [ ]
+      segments.add(key.substring(open, close + 1));
       collected++;
 
       // Find the next '[' after this balanced group.
@@ -680,7 +680,6 @@ extension _$Decode on QS {
     if (ignoreQueryPrefix &&
         str.isNotEmpty &&
         str.codeUnitAt(0) == 0x3F /* '?' */) {
-      // Remove leading '?' only once (qs semantics)
       str = str.substring(1);
     }
 
@@ -700,7 +699,7 @@ extension _$Decode on QS {
         final int c1 = str.codeUnitAt(i + 1);
 
         if (c1 == 0x35 /* '5' */) {
-          final c2 = str.codeUnitAt(i + 2);
+          final int c2 = str.codeUnitAt(i + 2);
           if (c2 == 0x42 /* 'B' */ || c2 == 0x62 /* 'b' */) {
             sb.writeCharCode(0x5B); // '['
             i += 3;
