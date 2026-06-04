@@ -1,3 +1,10 @@
+## 1.7.6
+
+* [CHORE] improve decode internals readability with clearer helper extraction, comments, formatting, and local type annotations
+* [CHORE] improve `QS` entry-point internals readability with clearer naming, comments, and local type annotations
+* [CHORE] extract shared `ByteBuffer` decoding logic in the encoder internals and tighten nearby comments
+* [CHORE] improve utility internals readability with clearer local naming, comments, and index-map construction
+
 ## 1.7.5
 
 * [FEAT] add `DecodeOptions.strictMerge` for Node `qs` `strictMerge` parity, defaulting to object/scalar array wrapping while supporting legacy scalar-key merge mode
