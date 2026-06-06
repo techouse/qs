@@ -36,7 +36,7 @@ Purpose: Provide just enough project context so an AI assistant can make correct
 ### 4. Testing Strategy
 * Unit tests in `test/unit/` mirror README examples & edge cases (list formats, depth, duplicates, charsets, null handling, custom hooks).
 * E2E tests in `test/e2e/` exercise higher‑level URI extensions.
-* Comparison tests (`test/comparison/`) ensure parity with the JS implementation via fixture JSON & a Node script; run `test/comparison/compare_outputs.sh` after semantic changes to core encode/decode logic.
+* Comparison tests (`test/comparison/`) ensure Dart VM and dart2js parity with the JS implementation via fixture JSON & a Node script; run `test/comparison/compare_outputs.sh` after semantic changes to core encode/decode logic.
 * When adding behavior, first add/modify a unit test replicating the JS `qs` behavior (consult upstream if uncertain), then adjust implementation.
 
 ### 5. Dev Workflow / Commands
