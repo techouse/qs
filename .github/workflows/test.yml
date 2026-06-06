@@ -237,16 +237,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run a comparison test between qs_dart and qs for JavaScript
         working-directory: test/comparison
-        run: |
-          set -e
-          node_output=$(node qs.js)
-          dart_output=$(dart run qs.dart)
-          if [ "$node_output" == "$dart_output" ]; then
-              echo "The outputs are identical."
-          else
-              echo "The outputs are different."
-              exit 1
-          fi
+        run: bash compare_outputs.sh
   ci_required:
     name: "CI Required"
     if: ${{ always() }}
