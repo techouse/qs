@@ -160,7 +160,7 @@ jobs:
       - name: Upload coverage to Codecov
         if: ${{ matrix.platform == 'vm' }}
         continue-on-error: true
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: techouse/qs
