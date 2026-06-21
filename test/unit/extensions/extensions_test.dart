@@ -1,5 +1,5 @@
-import 'package:qs_dart/qs_dart.dart';
 import 'package:qs_dart/src/extensions/extensions.dart';
+import 'package:qs_dart/src/models/undefined.dart';
 import 'package:test/test.dart';
 
 void main() {

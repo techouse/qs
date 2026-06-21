@@ -477,9 +477,6 @@ void main() {
       equals(''),
     );
 
-    /// Properties that are `Undefined` will be omitted entirely:
-    expect(QS.encode({'a': null, 'b': const Undefined()}), equals('a='));
-
     /// The query string may optionally be prepended with a question mark:
     expect(
       QS.encode({
@@ -541,7 +538,6 @@ void main() {
         EncodeOptions(
           encode: false,
           filter: (prefix, value) => switch (prefix) {
-            'b' => const Undefined(),
             'e[f]' => (value as DateTime).millisecondsSinceEpoch,
             'e[g][0]' => (value as num) * 2,
             _ => value,

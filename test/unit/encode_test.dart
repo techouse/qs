@@ -5,6 +5,7 @@ import 'dart:typed_data' show ByteBuffer, Uint8List;
 
 import 'package:euc/jis.dart';
 import 'package:qs_dart/qs_dart.dart';
+import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 

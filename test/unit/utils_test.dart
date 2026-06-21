@@ -4,6 +4,7 @@ import 'dart:convert' show latin1, utf8;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:qs_dart/qs_dart.dart';
+import 'package:qs_dart/src/models/undefined.dart';
 import 'package:qs_dart/src/utils.dart';
 import 'package:test/test.dart';
 
