@@ -1,4 +1,4 @@
-## 1.8.0-dev
+## 1.8.0
 
 * [BREAKING] stop exporting the internal `Undefined` sentinel from the public API
 
