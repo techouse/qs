@@ -923,20 +923,6 @@ expect(
 );
 ```
 
-Properties set to [Undefined] are omitted entirely:
-
-```dart
-expect(
-  QS.encode(
-    {
-      'a': null,
-      'b': const Undefined(),
-    },
-  ),
-  equals('a='),
-);
-```
-
 The query string may optionally be prepended with a question mark:
 
 ```dart
@@ -1032,7 +1018,6 @@ expect(
     EncodeOptions(
       encode: false,
       filter: (prefix, value) => switch (prefix) {
-        'b' => const Undefined(),
         'e[f]' => (value as DateTime).millisecondsSinceEpoch,
         'e[g][0]' => (value as num) * 2,
         _ => value,

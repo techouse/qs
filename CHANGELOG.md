@@ -1,3 +1,7 @@
+## 1.8.0-dev
+
+* [BREAKING] stop exporting the internal `Undefined` sentinel from the public API
+
 ## 1.7.6
 
 * [CHORE] improve decode internals readability with clearer helper extraction, comments, formatting, and local type annotations
