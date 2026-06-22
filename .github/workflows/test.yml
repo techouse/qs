@@ -45,7 +45,7 @@ jobs:
           sdk: stable
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - id: install
         name: Install dependencies
         run: dart pub get
@@ -62,7 +62,7 @@ jobs:
     steps:
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - id: read_min_dart
         name: Read minimum Dart SDK from pubspec.yaml
         run: |
@@ -100,7 +100,7 @@ jobs:
           sdk: ${{ needs.minimum_dart_meta.outputs.min_dart }}
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - id: install
         name: Install dependencies
         run: dart pub get
@@ -140,7 +140,7 @@ jobs:
           sdk: stable
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - id: install
         name: Install dependencies
         run: dart pub get
@@ -216,7 +216,7 @@ jobs:
           sdk: stable
       - id: checkout
         name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
