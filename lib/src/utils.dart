@@ -973,7 +973,7 @@ final class Utils {
     };
   }
 
-  static bool _isProtectedObjectKey(final String key) => const {
+  static bool _isProtectedObjectKey(final String key) => const <String>{
         '__defineGetter__',
         '__defineSetter__',
         '__lookupGetter__',
