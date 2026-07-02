@@ -65,7 +65,8 @@ final class Utils {
     return parsed > current ? parsed : current;
   }
 
-  static Never _throwListLimitExceeded(final int listLimit) {
+  @internal
+  static Never throwListLimitExceeded(final int listLimit) {
     throw RangeError(
       listLimit < 0
           ? 'List parsing is disabled (listLimit < 0).'
@@ -82,7 +83,7 @@ final class Utils {
       return result;
     }
     if (options.throwOnLimitExceeded) {
-      _throwListLimitExceeded(options.listLimit);
+      throwListLimitExceeded(options.listLimit);
     }
     return markOverflow(createIndexMap(result), result.length - 1);
   }
@@ -916,7 +917,7 @@ final class Utils {
   }) {
     if (isOverflow(a)) {
       if (throwOnLimitExceeded && listLimit != null) {
-        _throwListLimitExceeded(listLimit);
+        throwListLimitExceeded(listLimit);
       }
       int newIndex = _getOverflowIndex(a);
       if (b is Iterable) {
@@ -939,7 +940,7 @@ final class Utils {
 
     if (listLimit != null && result.length > listLimit) {
       if (throwOnLimitExceeded) {
-        _throwListLimitExceeded(listLimit);
+        throwListLimitExceeded(listLimit);
       }
       final Map<String, dynamic> overflow = createIndexMap(result);
       return markOverflow(overflow, result.length - 1);
