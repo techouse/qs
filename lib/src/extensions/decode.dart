@@ -34,6 +34,8 @@ extension _$Decode on QS {
   ///
   /// The `currentListLength` is used to guard incremental growth when we are
   /// already building a list for a given key path.
+  /// `isFlatListValue` distinguishes flat comma lists (`a=1,2`, `a[b]=1,2`)
+  /// from nested `[]=` comma groups, which count as one outer list element.
   ///
   /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
   /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
@@ -44,9 +46,21 @@ extension _$Decode on QS {
     final DecodeOptions options,
     final int currentListLength,
     final bool isListGrowthPath,
+    final bool isFlatListValue,
   ) {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
+      if (isFlatListValue && options.throwOnLimitExceeded) {
+        int commaCount = 0;
+        int commaIndex = val.indexOf(',');
+        while (commaIndex >= 0) {
+          commaCount++;
+          if (commaCount >= options.listLimit) {
+            Utils.throwListLimitExceeded(options.listLimit);
+          }
+          commaIndex = val.indexOf(',', commaIndex + 1);
+        }
+      }
       return _splitCommaValue(val);
     }
 
@@ -54,18 +68,11 @@ extension _$Decode on QS {
     if (options.throwOnLimitExceeded &&
         isListGrowthPath &&
         currentListLength >= options.listLimit) {
-      throw RangeError(_listLimitExceededMessage(options.listLimit));
+      Utils.throwListLimitExceeded(options.listLimit);
     }
 
     return val;
   }
-
-  /// Helper to generate consistent error messages for list limit violations,
-  /// based on the configured `listLimit`.
-  static String _listLimitExceededMessage(final int listLimit) => listLimit < 0
-      ? 'List parsing is disabled (listLimit < 0).'
-      : 'List limit exceeded. Only $listLimit '
-          'element${listLimit == 1 ? '' : 's'} allowed in a list.';
 
   /// Applies comma-list limit handling after values have been decoded and
   /// after `[]` suffix wrapping, matching Node `qs` ordering.
@@ -77,9 +84,14 @@ extension _$Decode on QS {
       return val;
     }
     if (options.throwOnLimitExceeded) {
-      throw RangeError(_listLimitExceededMessage(options.listLimit));
+      Utils.throwListLimitExceeded(options.listLimit);
     }
-    return Utils.combine([], val, listLimit: options.listLimit);
+    return Utils.combine(
+      [],
+      val,
+      listLimit: options.listLimit,
+      throwOnLimitExceeded: options.throwOnLimitExceeded,
+    );
   }
 
   /// Splits a comma-separated value into parts, respecting an optional `maxParts` limit.
@@ -295,6 +307,7 @@ extension _$Decode on QS {
             options,
             currentListLength,
             listGrowthFromKey,
+            !bracketSuffix,
           ),
           (final dynamic v) =>
               options.decodeValue(v as String?, charset: charset),
@@ -328,13 +341,14 @@ extension _$Decode on QS {
       final bool existing = obj.containsKey(key);
       switch ((existing, options.duplicates)) {
         case (true, Duplicates.combine):
-          // Existing key + `combine` policy: merge old/new values.
-          obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
-          break;
         case (true, _) when bracketSuffix:
-          // `qs` always combines duplicate bracket-notation keys, even when
-          // the duplicates option is `first` or `last`.
-          obj[key] = Utils.combine(obj[key], val, listLimit: options.listLimit);
+          // Combine by policy, and always combine bracket-notation duplicates.
+          obj[key] = Utils.combine(
+            obj[key],
+            val,
+            listLimit: options.listLimit,
+            throwOnLimitExceeded: options.throwOnLimitExceeded,
+          );
           break;
         case (false, _):
         case (true, Duplicates.last):
@@ -411,6 +425,7 @@ extension _$Decode on QS {
             options,
             currentListLength,
             isListGrowthPath,
+            false,
           );
 
     for (int i = chain.length - 1; i >= 0; --i) {
@@ -428,7 +443,12 @@ extension _$Decode on QS {
           obj = options.allowEmptyLists &&
                   (leaf == '' || (options.strictNullHandling && leaf == null))
               ? List<dynamic>.empty(growable: true)
-              : Utils.combine([], leaf, listLimit: options.listLimit);
+              : Utils.combine(
+                  [],
+                  leaf,
+                  listLimit: options.listLimit,
+                  throwOnLimitExceeded: options.throwOnLimitExceeded,
+                );
         }
       } else {
         obj = <String, dynamic>{};
@@ -465,7 +485,7 @@ extension _$Decode on QS {
           );
           obj[index] = leaf;
         } else if (isValidListIndex && options.throwOnLimitExceeded) {
-          throw RangeError(_listLimitExceededMessage(options.listLimit));
+          Utils.throwListLimitExceeded(options.listLimit);
         } else if (isValidListIndex) {
           obj[index.toString()] = leaf;
           Utils.markOverflow(obj, index);

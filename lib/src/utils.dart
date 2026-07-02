@@ -52,9 +52,8 @@ final class Utils {
   static int _getOverflowIndex(final Map obj) => _overflowIndex[obj] ?? -1;
 
   /// Updates the tracked max numeric index for an overflow map.
-  static void _setOverflowIndex(final Map obj, final int maxIndex) {
-    _overflowIndex[obj] = maxIndex;
-  }
+  static void _setOverflowIndex(final Map obj, final int maxIndex) =>
+      _overflowIndex[obj] = maxIndex;
 
   /// Returns the larger of the current max and the parsed numeric key (if any).
   static int _updateOverflowMax(final int current, final String key) {
@@ -63,6 +62,27 @@ final class Utils {
       return current;
     }
     return parsed > current ? parsed : current;
+  }
+
+  @internal
+  static Never throwListLimitExceeded(final int listLimit) => throw RangeError(
+        listLimit < 0
+            ? 'List parsing is disabled (listLimit < 0).'
+            : 'List limit exceeded. Only $listLimit '
+                'element${listLimit == 1 ? '' : 's'} allowed in a list.',
+      );
+
+  static dynamic _enforceListLimit(
+    final List<dynamic> result,
+    final DecodeOptions? options,
+  ) {
+    if (options == null || result.length <= options.listLimit) {
+      return result;
+    }
+    if (options.throwOnLimitExceeded) {
+      throwListLimitExceeded(options.listLimit);
+    }
+    return markOverflow(createIndexMap(result), result.length - 1);
   }
 
   /// Deeply merges `source` into `target` while preserving insertion order
@@ -182,11 +202,12 @@ final class Utils {
               }
 
               stack.removeLast();
-              frame.onResult(
-                currentTarget is Set
-                    ? indexedTarget.values.toSet()
-                    : indexedTarget.values.toList(),
-              );
+              frame.onResult(currentTarget is Set
+                  ? indexedTarget.values.toSet()
+                  : _enforceListLimit(
+                      indexedTarget.values.toList(),
+                      frame.options,
+                    ));
               continue;
             }
 
@@ -203,13 +224,14 @@ final class Utils {
               }
 
               stack.removeLast();
-              frame.onResult(
-                currentTarget is Set
-                    ? (Set.of(currentTarget)
-                      ..addAll(currentSource.whereNotType<Undefined>()))
-                    : (List.of(currentTarget)
-                      ..addAll(currentSource.whereNotType<Undefined>())),
-              );
+              frame.onResult(currentTarget is Set
+                  ? (Set.of(currentTarget)
+                    ..addAll(currentSource.whereNotType<Undefined>()))
+                  : _enforceListLimit(
+                      List.of(currentTarget)
+                        ..addAll(currentSource.whereNotType<Undefined>()),
+                      frame.options,
+                    ));
               continue;
             }
 
@@ -217,7 +239,7 @@ final class Utils {
               final List<dynamic> merged = List<dynamic>.of(currentTarget)
                 ..add(currentSource);
               stack.removeLast();
-              frame.onResult(merged);
+              frame.onResult(_enforceListLimit(merged, frame.options));
               continue;
             }
             if (currentTarget is Set) {
@@ -269,10 +291,12 @@ final class Utils {
             continue;
           } else {
             if (currentTarget is! Iterable && currentSource is Iterable) {
+              final List<dynamic> merged = [
+                currentTarget,
+                ...currentSource.whereNotType<Undefined>(),
+              ];
               stack.removeLast();
-              frame.onResult(
-                [currentTarget, ...currentSource.whereNotType<Undefined>()],
-              );
+              frame.onResult(_enforceListLimit(merged, frame.options));
               continue;
             }
             stack.removeLast();
@@ -316,18 +340,17 @@ final class Utils {
           }
 
           stack.removeLast();
-          frame.onResult(
-            [
-              if (currentTarget is Iterable)
-                ...currentTarget.whereNotType<Undefined>()
-              else if (currentTarget != null)
-                currentTarget,
-              if (currentSource is Iterable)
-                ...(currentSource as Iterable).whereNotType<Undefined>()
-              else
-                currentSource,
-            ],
-          );
+          final List<dynamic> combined = [
+            if (currentTarget is Iterable)
+              ...currentTarget.whereNotType<Undefined>()
+            else if (currentTarget != null)
+              currentTarget,
+            if (currentSource is Iterable)
+              ...(currentSource as Iterable).whereNotType<Undefined>()
+            else
+              currentSource,
+          ];
+          frame.onResult(_enforceListLimit(combined, frame.options));
           continue;
         }
 
@@ -413,7 +436,10 @@ final class Utils {
         }
         final resultList = frame.targetIsSet
             ? frame.indexedTarget!.values.toSet()
-            : frame.indexedTarget!.values.toList();
+            : _enforceListLimit(
+                frame.indexedTarget!.values.toList(),
+                frame.options,
+              );
         stack.removeLast();
         frame.onResult(resultList);
         continue;
@@ -868,10 +894,12 @@ final class Utils {
   /// Concatenates two values, spreading iterables.
   ///
   /// When [listLimit] is provided and exceeded, returns a map with string keys.
-  /// Any throwing behavior is enforced earlier during parsing, matching Node `qs`.
+  /// When [throwOnLimitExceeded] is true, throws instead of returning an
+  /// overflow map.
   ///
   /// **Note:** If [a] is already an overflow object, this method mutates [a]
-  /// in place by appending entries from [b].
+  /// in place by appending entries from [b], unless strict limit enforcement
+  /// throws first.
   ///
   /// Examples:
   /// ```dart
@@ -882,8 +910,12 @@ final class Utils {
     final dynamic a,
     final dynamic b, {
     final int? listLimit,
+    final bool throwOnLimitExceeded = false,
   }) {
     if (isOverflow(a)) {
+      if (throwOnLimitExceeded && listLimit != null) {
+        throwListLimitExceeded(listLimit);
+      }
       int newIndex = _getOverflowIndex(a);
       if (b is Iterable) {
         for (final dynamic item in b) {
@@ -904,6 +936,9 @@ final class Utils {
     ];
 
     if (listLimit != null && result.length > listLimit) {
+      if (throwOnLimitExceeded) {
+        throwListLimitExceeded(listLimit);
+      }
       final Map<String, dynamic> overflow = createIndexMap(result);
       return markOverflow(overflow, result.length - 1);
     }
@@ -938,7 +973,7 @@ final class Utils {
     };
   }
 
-  static bool _isProtectedObjectKey(final String key) => const {
+  static bool _isProtectedObjectKey(final String key) => const <String>{
         '__defineGetter__',
         '__defineSetter__',
         '__lookupGetter__',

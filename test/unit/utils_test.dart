@@ -952,6 +952,61 @@ void main() {
         );
       });
 
+      group('with listLimit', () {
+        const strictOne = DecodeOptions(
+          listLimit: 1,
+          throwOnLimitExceeded: true,
+        );
+        const softOne = DecodeOptions(listLimit: 1);
+
+        test('converts primitive growth past the boundary to an overflow map',
+            () {
+          final merged = Utils.merge(['a'], 'b', softOne);
+
+          expect(merged, {'0': 'a', '1': 'b'});
+          expect(Utils.isOverflow(merged), isTrue);
+        });
+
+        test('converts scalar-list growth past the boundary to an overflow map',
+            () {
+          final merged = Utils.merge('a', ['b', 'c'], softOne);
+
+          expect(merged, {'0': 'a', '1': 'b', '2': 'c'});
+          expect(Utils.isOverflow(merged), isTrue);
+        });
+
+        test('converts list-list growth past the boundary to an overflow map',
+            () {
+          final merged = Utils.merge(['a'], ['b'], softOne);
+
+          expect(merged, {'0': 'a', '1': 'b'});
+          expect(Utils.isOverflow(merged), isTrue);
+        });
+
+        test('throws for every list growth path past the boundary', () {
+          expect(() => Utils.merge(['a'], 'b', strictOne), throwsRangeError);
+          expect(
+            () => Utils.merge('a', ['b', 'c'], strictOne),
+            throwsRangeError,
+          );
+          expect(
+            () => Utils.merge(['a'], ['b'], strictOne),
+            throwsRangeError,
+          );
+        });
+
+        test('keeps values at the boundary as a list', () {
+          expect(Utils.merge(<String>[], 'a', strictOne), ['a']);
+        });
+
+        test('preserves Set-specific behavior', () {
+          expect(
+            Utils.merge({'a'}, {'b'}, strictOne),
+            {'a', 'b'},
+          );
+        });
+      });
+
       group('with overflow objects (from listLimit)', () {
         test('merges primitive into overflow object at next index', () {
           final overflow =
@@ -1107,6 +1162,57 @@ void main() {
             {'0': 'a', '1': 'b'},
             'c'
           ]);
+        });
+
+        test('throws before mutating an existing overflow object', () {
+          final overflow =
+              Utils.combine(['a'], 'b', listLimit: 1) as Map<String, dynamic>;
+
+          expect(
+            () => Utils.combine(
+              overflow,
+              'c',
+              listLimit: 1,
+              throwOnLimitExceeded: true,
+            ),
+            throwsRangeError,
+          );
+          expect(overflow, {'0': 'a', '1': 'b'});
+        });
+      });
+
+      group('with throwOnLimitExceeded', () {
+        test('throws when concatenation exceeds the limit', () {
+          expect(
+            () => Utils.combine(
+              ['a', 'b', 'c'],
+              'd',
+              listLimit: 3,
+              throwOnLimitExceeded: true,
+            ),
+            throwsRangeError,
+          );
+          expect(
+            () => Utils.combine(
+              [],
+              'a',
+              listLimit: 0,
+              throwOnLimitExceeded: true,
+            ),
+            throwsRangeError,
+          );
+        });
+
+        test('returns a list while within the limit', () {
+          expect(
+            Utils.combine(
+              ['a'],
+              'b',
+              listLimit: 5,
+              throwOnLimitExceeded: true,
+            ),
+            ['a', 'b'],
+          );
         });
       });
     });
@@ -1265,6 +1371,21 @@ void main() {
         expect((out['parent'] as Map).containsKey('u'), isFalse);
       });
 
+      test('handles multi-step cycles without infinite loop', () {
+        final a = <String, dynamic>{};
+        final b = <String, dynamic>{};
+        final c = <String, dynamic>{};
+        a['b'] = b;
+        b['c'] = c;
+        c['d'] = a;
+        c['u'] = const Undefined();
+
+        final out = Utils.compact(a);
+
+        expect(((out['b'] as Map)['c'] as Map)['d'], same(out));
+        expect(((out['b'] as Map)['c'] as Map).containsKey('u'), isFalse);
+      });
+
       test('preserves order', () {
         final m = <String, dynamic>{
           'first': 1,
@@ -1293,6 +1414,44 @@ void main() {
     });
 
     group('utils surrogate and charset edge cases (coverage)', () {
+      test('encodes a surrogate pair split across the first chunk boundary',
+          () {
+        final input = '${'a' * 1023}😀';
+
+        expect(Utils.encode(input), '${'a' * 1023}%F0%9F%98%80');
+      });
+
+      test('encodes a surrogate pair split across a later chunk boundary', () {
+        final input = '${'a' * 2047}😀';
+
+        expect(Utils.encode(input), '${'a' * 2047}%F0%9F%98%80');
+      });
+
+      test('encodes multiple boundary-split surrogate pairs', () {
+        final input = '${'a' * 1023}😀${'b' * 1022}😀';
+
+        expect(
+          RegExp('%F0%9F%98%80').allMatches(Utils.encode(input)).length,
+          2,
+        );
+      });
+
+      test('round-trips a boundary-split surrogate pair', () {
+        final input = '${'a' * 1023}😀';
+
+        expect(Uri.decodeComponent(Utils.encode(input)), input);
+      });
+
+      test('keeps lone high-surrogate behavior stable at a chunk boundary', () {
+        final input = '${'a' * 1023}\uD83DX';
+
+        expect(
+          Utils.encode(input).substring(1023),
+          Utils.encode('\uD83DX'),
+        );
+        expect(Utils.encode(input), endsWith('%ED%A0%BDX'));
+      });
+
       test('lone high surrogate encoded as three UTF-8 bytes', () {
         const loneHigh = '\uD800';
         final encoded = QS.encode({'s': loneHigh});
