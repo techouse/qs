@@ -1,4 +1,4 @@
-## 1.8.1-dev
+## 1.8.1
 
 * [FIX] match Node `qs` 6.15.3 cumulative list-limit enforcement across duplicate-key combinations and mixed list merges
 * [FIX] reject oversized flat comma values before allocating their split lists when `throwOnLimitExceeded` is enabled
