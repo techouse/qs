@@ -602,6 +602,134 @@ void main() {
       );
     });
 
+    group('unbalanced bracket keys', () {
+      final cases = <(String, DecodeOptions, Map<String, dynamic>)>[
+        (
+          'a[bc=v',
+          const DecodeOptions(),
+          {
+            'a': {'[bc': 'v'}
+          }
+        ),
+        (
+          'a[=v',
+          const DecodeOptions(),
+          {
+            'a': {'[': 'v'}
+          }
+        ),
+        (
+          'a[b][c=v',
+          const DecodeOptions(),
+          {
+            'a': {
+              'b': {'[c': 'v'}
+            }
+          },
+        ),
+        (
+          'a[b]c[d=v',
+          const DecodeOptions(),
+          {
+            'a': {
+              'b': {'[d': 'v'}
+            }
+          },
+        ),
+        (
+          'filters[customtags:Env: Prod=v',
+          const DecodeOptions(),
+          {
+            'filters': {'[customtags:Env: Prod': 'v'}
+          },
+        ),
+        (
+          '][a=v',
+          const DecodeOptions(),
+          {
+            ']': {'[a': 'v'}
+          }
+        ),
+        (
+          'a][b=v',
+          const DecodeOptions(),
+          {
+            'a]': {'[b': 'v'}
+          }
+        ),
+        (
+          'a[b[c=v',
+          const DecodeOptions(),
+          {
+            'a': {'[b[c': 'v'}
+          }
+        ),
+        (
+          'a[b[c]=v',
+          const DecodeOptions(),
+          {
+            'a': {'[b[c]': 'v'}
+          }
+        ),
+        (
+          'a[b][c[d=v',
+          const DecodeOptions(),
+          {
+            'a': {
+              'b': {'[c[d': 'v'}
+            }
+          },
+        ),
+        ('[abc=v', const DecodeOptions(), {'[abc': 'v'}),
+        ('[[]b=v', const DecodeOptions(), {'[[]b': 'v'}),
+        (
+          'a[b]c[d]e[f=v',
+          const DecodeOptions(depth: 5),
+          {
+            'a': {
+              'b': {
+                'd': {'[f': 'v'}
+              }
+            }
+          },
+        ),
+        (
+          'a[b]c[d]e[f=v',
+          const DecodeOptions(depth: 1),
+          {
+            'a': {
+              'b': {'[d]e[f': 'v'}
+            }
+          },
+        ),
+        ('a[bc=v', const DecodeOptions(depth: 0), {'a[bc': 'v'}),
+        (
+          'a.b[c=v',
+          const DecodeOptions(allowDots: true),
+          {
+            'a': {
+              'b': {'[c': 'v'}
+            }
+          },
+        ),
+        ('a]b=v', const DecodeOptions(), {'a]b': 'v'}),
+        (
+          'a[b]extra=v',
+          const DecodeOptions(),
+          {
+            'a': {'b': 'v'}
+          },
+        ),
+      ];
+
+      for (final (input, options, expected) in cases) {
+        test('$input at depth ${options.depth}', () {
+          expect(() => QS.decode(input, options), returnsNormally);
+          expect(QS.decode(input, options), expected);
+        });
+      }
+    });
+
     test('parses a simple list', () {
       expect(
         QS.decode('a=b&a=c'),
@@ -2345,15 +2473,13 @@ void main() {
       );
     });
 
-    test('duplicate scalar overflow promotes to a map in strict mode', () {
+    test('duplicate scalar overflow throws in strict mode', () {
       expect(
-        QS.decode(
+        () => QS.decode(
           'a=1&a=2',
           const DecodeOptions(listLimit: 1, throwOnLimitExceeded: true),
         ),
-        equals({
-          'a': {'0': '1', '1': '2'}
-        }),
+        throwsRangeError,
       );
     });
 
@@ -2457,6 +2583,182 @@ void main() {
           const DecodeOptions(listLimit: 3, throwOnLimitExceeded: true),
         ),
         throwsA(isA<RangeError>()),
+      );
+    });
+  });
+
+  group('qs 6.15.3 list limit parity', () {
+    const strictOne = DecodeOptions(
+      listLimit: 1,
+      throwOnLimitExceeded: true,
+    );
+
+    test('throws when cumulative comma groups exceed listLimit', () {
+      expect(
+        () => QS.decode(
+          'a=1,2,3&a=4,5,6',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsRangeError,
+      );
+      expect(
+        () => QS.decode(
+          'a=v,v,v,v,v&a=v,v,v,v,v&a=v,v,v,v,v',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsRangeError,
+      );
+    });
+
+    test('throws when duplicate keys grow past the boundary', () {
+      expect(() => QS.decode('a=x&a=y', strictOne), throwsRangeError);
+      expect(() => QS.decode('a[]=x&a[]=y', strictOne), throwsRangeError);
+    });
+
+    test('throws when mixed notation grows past the boundary', () {
+      expect(() => QS.decode('a=x&a[0]=y', strictOne), throwsRangeError);
+      expect(() => QS.decode('a[0]=x&a=y', strictOne), throwsRangeError);
+      expect(() => QS.decode('a[0]=x&a[]=y', strictOne), throwsRangeError);
+    });
+
+    test('mixed notation becomes an overflow map in non-strict mode', () {
+      const options = DecodeOptions(listLimit: 1);
+      const expected = {
+        'a': {'0': 'x', '1': 'y'}
+      };
+
+      expect(QS.decode('a=x&a[0]=y', options), expected);
+      expect(QS.decode('a[0]=x&a=y', options), expected);
+      expect(QS.decode('a[0]=x&a[]=y', options), expected);
+      expect(Utils.isOverflow(QS.decode('a[0]=x&a=y', options)['a']), isTrue);
+    });
+
+    test('cumulative comma groups become an overflow map in non-strict mode',
+        () {
+      final result = QS.decode(
+        'a=1,2,3&a=4,5,6',
+        const DecodeOptions(comma: true, listLimit: 5),
+      );
+
+      expect(result, {
+        'a': {'0': '1', '1': '2', '2': '3', '3': '4', '4': '5', '5': '6'}
+      });
+      expect(Utils.isOverflow(result['a']), isTrue);
+    });
+
+    test('throws before decoding an oversized flat comma value', () {
+      int decodedValues = 0;
+      final options = DecodeOptions(
+        comma: true,
+        listLimit: 1,
+        throwOnLimitExceeded: true,
+        decoder: (
+          String? value, {
+          Encoding? charset,
+          DecodeKind? kind,
+        }) {
+          if (kind == DecodeKind.value) decodedValues++;
+          return Utils.decode(value, charset: charset);
+        },
+      );
+
+      expect(() => QS.decode('a=1,2', options), throwsRangeError);
+      expect(decodedValues, 0);
+    });
+
+    test('throws for oversized nested flat comma values', () {
+      expect(
+        () => QS.decode(
+          'a[b]=1,2,3,4,5,6',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsRangeError,
+      );
+    });
+
+    test('keeps comma values at or below listLimit', () {
+      expect(
+        QS.decode(
+          'a=1,2,3&a=4',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        {
+          'a': ['1', '2', '3', '4']
+        },
+      );
+      expect(
+        QS.decode(
+          'a=1,2,3,4,5',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        {
+          'a': ['1', '2', '3', '4', '5']
+        },
+      );
+    });
+
+    test('counts bracketed comma groups as nested elements', () {
+      expect(
+        QS.decode(
+          'a[]=1,2,3&a[]=4,5,6',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        {
+          'a': [
+            ['1', '2', '3'],
+            ['4', '5', '6'],
+          ]
+        },
+      );
+      expect(
+        QS.decode(
+          'a[]=1,2,3,4,5,6',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 5,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        {
+          'a': [
+            ['1', '2', '3', '4', '5', '6']
+          ]
+        },
+      );
+      expect(
+        () => QS.decode(
+          'a[]=1,2,3',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 0,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsRangeError,
       );
     });
   });
@@ -2667,8 +2969,8 @@ void main() {
 
       final resultOne =
           QS.decode('a[]=b&a[0]=c', const DecodeOptions(listLimit: 1));
-      expect(resultOne['a'], ['b', 'c']);
-      expect(Utils.isOverflow(resultOne['a']), isFalse);
+      expect(resultOne['a'], {'0': 'b', '1': 'c'});
+      expect(Utils.isOverflow(resultOne['a']), isTrue);
     });
 
     test('mixed [0] and [] under tight listLimit', () {
@@ -2682,8 +2984,8 @@ void main() {
 
       final resultOne =
           QS.decode('a[0]=b&a[]=c', const DecodeOptions(listLimit: 1));
-      expect(resultOne['a'], ['b', 'c']);
-      expect(Utils.isOverflow(resultOne['a']), isFalse);
+      expect(resultOne['a'], {'0': 'b', '1': 'c'});
+      expect(Utils.isOverflow(resultOne['a']), isTrue);
     });
 
     test('mixed notation produces consistent overflow results', () {
