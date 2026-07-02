@@ -52,9 +52,8 @@ final class Utils {
   static int _getOverflowIndex(final Map obj) => _overflowIndex[obj] ?? -1;
 
   /// Updates the tracked max numeric index for an overflow map.
-  static void _setOverflowIndex(final Map obj, final int maxIndex) {
-    _overflowIndex[obj] = maxIndex;
-  }
+  static void _setOverflowIndex(final Map obj, final int maxIndex) =>
+      _overflowIndex[obj] = maxIndex;
 
   /// Returns the larger of the current max and the parsed numeric key (if any).
   static int _updateOverflowMax(final int current, final String key) {
@@ -66,14 +65,12 @@ final class Utils {
   }
 
   @internal
-  static Never throwListLimitExceeded(final int listLimit) {
-    throw RangeError(
-      listLimit < 0
-          ? 'List parsing is disabled (listLimit < 0).'
-          : 'List limit exceeded. Only $listLimit '
-              'element${listLimit == 1 ? '' : 's'} allowed in a list.',
-    );
-  }
+  static Never throwListLimitExceeded(final int listLimit) => throw RangeError(
+        listLimit < 0
+            ? 'List parsing is disabled (listLimit < 0).'
+            : 'List limit exceeded. Only $listLimit '
+                'element${listLimit == 1 ? '' : 's'} allowed in a list.',
+      );
 
   static dynamic _enforceListLimit(
     final List<dynamic> result,
