@@ -56,7 +56,7 @@ extension _$Decode on QS {
         while (commaIndex >= 0) {
           commaCount++;
           if (commaCount >= options.listLimit) {
-            throw RangeError(_listLimitExceededMessage(options.listLimit));
+            Utils.throwListLimitExceeded(options.listLimit);
           }
           commaIndex = val.indexOf(',', commaIndex + 1);
         }
@@ -68,18 +68,11 @@ extension _$Decode on QS {
     if (options.throwOnLimitExceeded &&
         isListGrowthPath &&
         currentListLength >= options.listLimit) {
-      throw RangeError(_listLimitExceededMessage(options.listLimit));
+      Utils.throwListLimitExceeded(options.listLimit);
     }
 
     return val;
   }
-
-  /// Helper to generate consistent error messages for list limit violations,
-  /// based on the configured `listLimit`.
-  static String _listLimitExceededMessage(final int listLimit) => listLimit < 0
-      ? 'List parsing is disabled (listLimit < 0).'
-      : 'List limit exceeded. Only $listLimit '
-          'element${listLimit == 1 ? '' : 's'} allowed in a list.';
 
   /// Applies comma-list limit handling after values have been decoded and
   /// after `[]` suffix wrapping, matching Node `qs` ordering.
@@ -91,7 +84,7 @@ extension _$Decode on QS {
       return val;
     }
     if (options.throwOnLimitExceeded) {
-      throw RangeError(_listLimitExceededMessage(options.listLimit));
+      Utils.throwListLimitExceeded(options.listLimit);
     }
     return Utils.combine(
       [],
@@ -348,17 +341,8 @@ extension _$Decode on QS {
       final bool existing = obj.containsKey(key);
       switch ((existing, options.duplicates)) {
         case (true, Duplicates.combine):
-          // Existing key + `combine` policy: merge old/new values.
-          obj[key] = Utils.combine(
-            obj[key],
-            val,
-            listLimit: options.listLimit,
-            throwOnLimitExceeded: options.throwOnLimitExceeded,
-          );
-          break;
         case (true, _) when bracketSuffix:
-          // `qs` always combines duplicate bracket-notation keys, even when
-          // the duplicates option is `first` or `last`.
+          // Combine by policy, and always combine bracket-notation duplicates.
           obj[key] = Utils.combine(
             obj[key],
             val,
@@ -501,7 +485,7 @@ extension _$Decode on QS {
           );
           obj[index] = leaf;
         } else if (isValidListIndex && options.throwOnLimitExceeded) {
-          throw RangeError(_listLimitExceededMessage(options.listLimit));
+          Utils.throwListLimitExceeded(options.listLimit);
         } else if (isValidListIndex) {
           obj[index.toString()] = leaf;
           Utils.markOverflow(obj, index);
