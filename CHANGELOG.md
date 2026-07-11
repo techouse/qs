@@ -1,3 +1,8 @@
+## 1.8.2
+
+* [CHORE] update `Equatable` from 2.0.7 to 2.1.0
+* [CHORE] replace `EquatableMixin` with `Equatable` across option and internal model classes
+
 ## 1.8.1
 
 * [FIX] match Node `qs` 6.15.3 cumulative list-limit enforcement across duplicate-key combinations and mixed list merges
