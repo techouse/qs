@@ -9,7 +9,7 @@ import 'package:equatable/equatable.dart';
 /// The type is immutable and intentionally trivial. Equality is structural via
 /// `Equatable`; all instances of [Undefined] compare equal, so you can freely
 /// create them with `const Undefined()`.
-final class Undefined with EquatableMixin {
+final class Undefined with Equatable {
   /// Creates a new sentinel instance. All instances are equal.
   const Undefined();
 

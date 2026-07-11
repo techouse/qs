@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart' show internal;
 
 @internal
-final class StructuredKeyScan with EquatableMixin {
+final class StructuredKeyScan with Equatable {
   const StructuredKeyScan({
     required this.hasAnyStructuredSyntax,
     required this.structuredRoots,

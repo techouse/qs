@@ -8,7 +8,7 @@ import 'package:qs_dart/src/models/encode_options.dart';
 
 /// Immutable configuration shared across encoder traversal frames.
 @internal
-final class EncodeConfig with EquatableMixin {
+final class EncodeConfig with Equatable {
   const EncodeConfig({
     required this.generateArrayPrefix,
     required this.commaRoundTrip,

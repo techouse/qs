@@ -53,7 +53,7 @@ typedef LegacyDecoder = dynamic Function(String? value, {Encoding? charset});
 ///
 /// Invariants are asserted in debug builds and validated at runtime via
 /// [validate] (used by decode entry points).
-final class DecodeOptions with EquatableMixin {
+final class DecodeOptions with Equatable {
   const DecodeOptions({
     bool? allowDots,
     Decoder? decoder,

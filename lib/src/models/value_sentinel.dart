@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 // Internal marker used for synthetic "value" entries (for example comma-list
 // joins) so traversal can distinguish sentinel payloads from normal keys.
 @internal
-final class ValueSentinel with EquatableMixin {
+final class ValueSentinel with Equatable {
   const ValueSentinel(this.value);
 
   final dynamic value;

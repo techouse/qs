@@ -28,7 +28,7 @@ typedef DateSerializer = String Function(DateTime date);
 typedef Sorter = int Function(dynamic a, dynamic b);
 
 /// Options that configure the output of [QS.encode].
-final class EncodeOptions with EquatableMixin {
+final class EncodeOptions with Equatable {
   const EncodeOptions({
     Encoder? encoder,
     DateSerializer? serializeDate,
