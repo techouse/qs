@@ -231,6 +231,7 @@ final class EncodeOptions with Equatable {
         encoder: encoder ?? _encoder,
       );
 
+  // This diagnostic representation has no stable formatting contract.
   // coverage:ignore-start
   @override
   String toString() => 'EncodeOptions(\n'
