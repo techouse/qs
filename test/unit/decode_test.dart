@@ -1370,6 +1370,17 @@ void main() {
       );
     });
 
+    test('zero-width RegExp delimiters progress at query boundaries', () {
+      expect(
+        QS.decode('&a=b', DecodeOptions(delimiter: RegExp(r'(?=&)'))),
+        equals({'a': 'b'}),
+      );
+      expect(
+        QS.decode('a=b&', DecodeOptions(delimiter: RegExp(r'&|(?=$)'))),
+        equals({'a': 'b'}),
+      );
+    });
+
     test('parses a string with a custom Pattern delimiter', () {
       expect(
         QS.decode(
@@ -2787,6 +2798,18 @@ void main() {
     test('checks nested bracket-push and map input', () {
       expect(() => QS.decode('a[b][]=1,2,3,4', strict), throwsRangeError);
       expect(() => QS.decode({'a': '1,2,3,4'}, strict), throwsRangeError);
+    });
+
+    test('enforces list limits on values expanded by a custom decoder', () {
+      final options = DecodeOptions(
+        comma: true,
+        listLimit: 1,
+        throwOnLimitExceeded: true,
+        decoder: (value, {charset, kind}) =>
+            kind == DecodeKind.value ? [value, 'expanded'] : value,
+      );
+
+      expect(() => QS.decode('a=x', options), throwsRangeError);
     });
 
     test('keeps in-limit groups nested and preserves lenient oversized groups',
