@@ -207,6 +207,8 @@ expect(
 );
 ```
 
+`parameterLimit` bounds the number of parameters, not how many values one parameter produces when `comma: true` is enabled. For untrusted input, also bound the input size; set [DecodeOptions.throwOnLimitExceeded] to `true` to reject comma groups exceeding [DecodeOptions.listLimit].
+
 To bypass the leading question mark, use [DecodeOptions.ignoreQueryPrefix]:
 
 ```dart
@@ -464,10 +466,8 @@ expect(
 );
 ```
 
-[decode] will also limit specifying indices in a [List] to a maximum index of **20**.
-Any [List] members with an index of greater than **20** will instead be converted to a [Map] with the index as the key.
-This is needed to handle cases when someone sent, for example, `a[999999999]` and it will take significant time to iterate 
-over this huge [List].
+[decode] treats numeric [List] indices below **20** as list positions by default.
+Larger indices become [Map] keys instead, avoiding huge sparse [List]s for inputs such as `a[999999999]`.
 
 ```dart
 expect(
@@ -492,8 +492,10 @@ expect(
 );
 ```
 
-[DecodeOptions.listLimit] is a maximum element count. With the default limit of
-20, `a[19]=b` can still become a [List], while `a[20]=b` falls back to a [Map].
+[DecodeOptions.listLimit] is a representation threshold, not a total element cap. With the default limit of
+20, `a[19]=b` can still become a [List], while `a[20]=b` falls back to a [Map] without discarding values.
+With `comma: true`, a single value can expand into more elements than the threshold. Set
+[DecodeOptions.throwOnLimitExceeded] to `true` to reject an oversized comma group, including one under `[]=`.
 
 To disable List parsing entirely, set [DecodeOptions.parseLists] to `false`.
 
@@ -805,6 +807,23 @@ expect(
 );
 ```
 
+Encoding is unbounded by default. To reject maps or lists that nest deeper than a specified level, set
+[EncodeOptions.depth]. Top-level values have depth 0; exceeding the limit throws a [RangeError]:
+
+```dart
+expect(
+  QS.encode(
+    {
+      'a': {
+        'b': {'c': 'd'}
+      }
+    },
+    const EncodeOptions(depth: 2),
+  ),
+  equals('a%5Bb%5D%5Bc%5D=d'),
+);
+```
+
 You may override this to use dot notation by setting the [EncodeOptions.allowDots] option to `true`:
 
 ```dart
@@ -840,6 +859,8 @@ expect(
   equals('name%252Eobj.first=John&name%252Eobj.last=Doe'),
 );
 ```
+
+This also encodes dotted top-level keys with primitive values: `QS.encode({'a.b': 'c'}, const EncodeOptions(encodeDotInKeys: true))` returns `a%252Eb=c`.
 
 **Caveat:** when both [EncodeOptions.encodeValuesOnly] and [EncodeOptions.encodeDotInKeys] are `true`, only dots in keys are encoded; values remain unchanged.
 
@@ -1003,7 +1024,6 @@ expect(
 Finally, you can use the [EncodeOptions.filter] option to restrict which keys will be included in the encoded output.
 If you pass a [Function], it will be called for each key to obtain the replacement value.
 Otherwise, if you pass a [List], it will be used to select properties and [List] indices to be encoded:
-
 ```dart
 expect(
   QS.encode(
@@ -1056,6 +1076,9 @@ expect(
   equals('a[0]=b&a[2]=d'),
 );
 ```
+
+A function filter runs before date serialization: dates returned unchanged or produced by the filter still use
+[EncodeOptions.serializeDate] (or the default ISO 8601 representation), including dates inside comma-format lists.
 
 ### Handling of `null` values
 
