@@ -179,6 +179,7 @@ final class QS {
       generateArrayPrefix: gen,
       commaRoundTrip: commaRoundTrip,
       commaCompactNulls: commaCompactNulls,
+      depth: options.depth,
       allowEmptyLists: options.allowEmptyLists,
       strictNullHandling: options.strictNullHandling,
       skipNulls: options.skipNulls,
@@ -205,7 +206,9 @@ final class QS {
         obj[key],
         undefined: !obj.containsKey(key),
         sideChannel: sideChannel,
-        prefix: key,
+        prefix: options.encodeDotInKeys && key.contains('.')
+            ? key.replaceAll('.', '%2E')
+            : key,
         rootConfig: rootConfig,
       );
 

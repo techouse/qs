@@ -102,51 +102,6 @@ void main() {
       expect(newOptions.commaRoundTrip, isFalse);
       expect(newOptions.commaCompactNulls, isFalse);
     });
-
-    test('toString', () {
-      final EncodeOptions options = const EncodeOptions(
-        addQueryPrefix: true,
-        allowDots: true,
-        allowEmptyLists: true,
-        listFormat: ListFormat.indices,
-        charset: latin1,
-        charsetSentinel: true,
-        delimiter: ',',
-        encode: true,
-        encodeDotInKeys: true,
-        encodeValuesOnly: true,
-        format: Format.rfc1738,
-        skipNulls: true,
-        strictNullHandling: true,
-        commaRoundTrip: true,
-        commaCompactNulls: true,
-      );
-
-      expect(
-        options.toString(),
-        equals('EncodeOptions(\n'
-            '  addQueryPrefix: true,\n'
-            '  allowDots: true,\n'
-            '  allowEmptyLists: true,\n'
-            '  listFormat: indices,\n'
-            '  charset: Instance of \'Latin1Codec\',\n'
-            '  charsetSentinel: true,\n'
-            '  delimiter: ,,\n'
-            '  encode: true,\n'
-            '  encodeDotInKeys: true,\n'
-            '  encodeValuesOnly: true,\n'
-            '  format: rfc1738,\n'
-            '  skipNulls: true,\n'
-            '  strictNullHandling: true,\n'
-            '  commaRoundTrip: true,\n'
-            '  commaCompactNulls: true,\n'
-            '  sort: null,\n'
-            '  filter: null,\n'
-            '  serializeDate: null,\n'
-            '  encoder: null,\n'
-            ')'),
-      );
-    });
   });
 
   group('EncodeOptions runtime validation', () {

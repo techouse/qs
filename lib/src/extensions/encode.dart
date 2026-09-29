@@ -128,6 +128,13 @@ extension _$Encode on QS {
 
       switch (frame.phase) {
         case EncodePhase.start:
+          if (config.depth != double.infinity &&
+              stack.length - 1 > config.depth) {
+            throw RangeError(
+              'Input depth exceeded depth option of ${config.depth}',
+            );
+          }
+
           dynamic obj = frame.object;
           String? pathText;
           String materializedPath() => pathText ??= frame.path.materialize();
@@ -146,7 +153,8 @@ extension _$Encode on QS {
           // After cycle detection on the original node identity, apply filter/date/comma transforms.
           if (config.filter is Function) {
             obj = config.filter.call(materializedPath(), obj);
-          } else if (obj is DateTime) {
+          }
+          if (obj is DateTime) {
             obj = switch (config.serializeDate) {
               null => obj.toIso8601String(),
               _ => config.serializeDate!(obj),
@@ -446,6 +454,7 @@ extension _$Encode on QS {
     required final EncodeConfig config,
   }) {
     if (undefined ||
+        config.depth != double.infinity ||
         config.encoder != null ||
         config.sort != null ||
         config.filter != null ||

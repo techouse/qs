@@ -98,6 +98,66 @@ void main() {
           result2, 'dates=2023-01-01T00:00:00.000Z,2023-01-01T00:00:00.000Z');
     });
 
+    test('serializes dates returned by filters', () {
+      final date = DateTime.utc(2023, 3, 7, 9, 2, 41, 260);
+      const iso = '2023-03-07T09%3A02%3A41.260Z';
+      dynamic identity(dynamic prefix, dynamic value) => value;
+
+      expect(
+        QS.encode(
+          {
+            'a': {'b': date}
+          },
+          EncodeOptions(filter: identity),
+        ),
+        'a%5Bb%5D=$iso',
+      );
+      expect(
+        QS.encode(
+          {'a': date},
+          EncodeOptions(
+            filter: identity,
+            serializeDate: (value) => value.millisecondsSinceEpoch.toString(),
+          ),
+        ),
+        'a=1678179761260',
+      );
+      expect(
+        QS.encode(
+          {'a': 'x'},
+          EncodeOptions(
+            filter: (prefix, value) => prefix == 'a' ? date : value,
+          ),
+        ),
+        'a=$iso',
+      );
+      expect(
+        QS.encode(
+          {'a': date},
+          EncodeOptions(
+            filter: (prefix, value) => value is DateTime ? 'kept' : value,
+          ),
+        ),
+        'a=kept',
+      );
+      expect(
+        QS.encode(
+          {'a': date, 'b': 1},
+          const EncodeOptions(filter: ['a']),
+        ),
+        'a=$iso',
+      );
+      expect(
+        QS.encode(
+          {
+            'a': [date, 'x']
+          },
+          EncodeOptions(filter: identity, listFormat: ListFormat.comma),
+        ),
+        'a=$iso%2Cx',
+      );
+    });
+
     test('filter callback can expand custom objects into maps', () {
       final customObj = CustomObject('test');
 
@@ -316,6 +376,103 @@ void main() {
         );
       },
     );
+
+    test('encodes literal dots in top-level primitive keys', () {
+      const options = EncodeOptions(encodeDotInKeys: true);
+      expect(
+        QS.encode({'a.b': 'c', 'd.e': 'f'}, options),
+        'a%252Eb=c&d%252Ee=f',
+      );
+      expect(QS.encode({'a.b.c': 'x'}, options), 'a%252Eb%252Ec=x');
+      expect(
+        QS.encode(
+          {'a.b': null},
+          const EncodeOptions(
+            encodeDotInKeys: true,
+            strictNullHandling: true,
+          ),
+        ),
+        'a%252Eb',
+      );
+      expect(
+        QS.encode(
+          {'a.b': 'c'},
+          const EncodeOptions(allowDots: false, encodeDotInKeys: true),
+        ),
+        'a%252Eb=c',
+      );
+      expect(
+        QS.encode(
+          {'a.b': 'c'},
+          const EncodeOptions(encodeDotInKeys: true, encode: false),
+        ),
+        'a%2Eb=c',
+      );
+      expect(
+        QS.encode(
+          {'a.b': 'c'},
+          const EncodeOptions(encodeDotInKeys: true, encodeValuesOnly: true),
+        ),
+        'a%2Eb=c',
+      );
+    });
+
+    test('bounds encode nesting only when depth is supplied', () {
+      expect(QS.encode({'a': 'b'}, const EncodeOptions(depth: 0)), 'a=b');
+      expect(
+        QS.encode(
+          {
+            'a': {
+              'b': {'c': 'd'}
+            }
+          },
+          const EncodeOptions(depth: 2),
+        ),
+        'a%5Bb%5D%5Bc%5D=d',
+      );
+      expect(
+        () => QS.encode(
+          {
+            'a': {
+              'b': {
+                'c': {'d': 'e'}
+              }
+            }
+          },
+          const EncodeOptions(depth: 2),
+        ),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            'Input depth exceeded depth option of 2',
+          ),
+        ),
+      );
+      expect(
+        () => QS.encode(
+          {
+            'a': {'b': 'c'}
+          },
+          const EncodeOptions(depth: 0),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+      expect(
+        () => QS.encode({'a': 'b'}, const EncodeOptions(depth: -1)),
+        throwsA(isA<RangeError>()),
+      );
+      expect(QS.encode({'a': 'b'}, const EncodeOptions(depth: 0.5)), 'a=b');
+      expect(
+        () => QS.encode(
+          {
+            'a': {'b': 'c'}
+          },
+          const EncodeOptions(depth: 0.5),
+        ),
+        throwsA(isA<RangeError>()),
+      );
+    });
 
     test(
       'should encode dot in key of map, and automatically set allowDots to `true` when encodeDotInKeys is true and allowDots in undefined',
