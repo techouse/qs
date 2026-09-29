@@ -288,6 +288,24 @@ void main() {
       final encoded = QS.encode(obj);
       expect(encoded, contains('leaf'));
     });
+
+    test('bounds deeply nested single-key maps with encoding disabled', () {
+      Map<String, dynamic> obj = {'leaf': 'x'};
+      for (var i = 0; i < 32; i++) {
+        obj = {'a': obj};
+      }
+
+      expect(
+        () => QS.encode(obj, const EncodeOptions(encode: false, depth: 10)),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            'Input depth exceeded depth option of 10',
+          ),
+        ),
+      );
+    });
   });
 }
 

@@ -14,6 +14,7 @@ final class EncodeConfig with Equatable {
     required this.commaRoundTrip,
     required this.commaCompactNulls,
     required this.allowEmptyLists,
+    required this.depth,
     required this.strictNullHandling,
     required this.skipNulls,
     required this.encodeDotInKeys,
@@ -34,6 +35,7 @@ final class EncodeConfig with Equatable {
   final bool commaRoundTrip;
   final bool commaCompactNulls;
   final bool allowEmptyLists;
+  final num depth;
   final bool strictNullHandling;
   final bool skipNulls;
   final bool encodeDotInKeys;
@@ -52,6 +54,7 @@ final class EncodeConfig with Equatable {
     final bool? commaRoundTrip,
     final bool? commaCompactNulls,
     final bool? allowEmptyLists,
+    final num? depth,
     final bool? strictNullHandling,
     final bool? skipNulls,
     final bool? encodeDotInKeys,
@@ -70,6 +73,7 @@ final class EncodeConfig with Equatable {
     final nextCommaRoundTrip = commaRoundTrip ?? this.commaRoundTrip;
     final nextCommaCompactNulls = commaCompactNulls ?? this.commaCompactNulls;
     final nextAllowEmptyLists = allowEmptyLists ?? this.allowEmptyLists;
+    final nextDepth = depth ?? this.depth;
     final nextStrictNullHandling =
         strictNullHandling ?? this.strictNullHandling;
     final nextSkipNulls = skipNulls ?? this.skipNulls;
@@ -92,6 +96,7 @@ final class EncodeConfig with Equatable {
         nextCommaRoundTrip == this.commaRoundTrip &&
         nextCommaCompactNulls == this.commaCompactNulls &&
         nextAllowEmptyLists == this.allowEmptyLists &&
+        nextDepth == this.depth &&
         nextStrictNullHandling == this.strictNullHandling &&
         nextSkipNulls == this.skipNulls &&
         nextEncodeDotInKeys == this.encodeDotInKeys &&
@@ -112,6 +117,7 @@ final class EncodeConfig with Equatable {
       commaRoundTrip: nextCommaRoundTrip,
       commaCompactNulls: nextCommaCompactNulls,
       allowEmptyLists: nextAllowEmptyLists,
+      depth: nextDepth,
       strictNullHandling: nextStrictNullHandling,
       skipNulls: nextSkipNulls,
       encodeDotInKeys: nextEncodeDotInKeys,
@@ -135,6 +141,7 @@ final class EncodeConfig with Equatable {
         commaRoundTrip,
         commaCompactNulls,
         allowEmptyLists,
+        depth,
         strictNullHandling,
         skipNulls,
         encodeDotInKeys,

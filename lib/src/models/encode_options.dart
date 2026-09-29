@@ -40,6 +40,7 @@ final class EncodeOptions with Equatable {
     this.charset = utf8,
     this.charsetSentinel = false,
     this.delimiter = '&',
+    this.depth = double.infinity,
     this.encode = true,
     this.encodeDotInKeys = false,
     this.encodeValuesOnly = false,
@@ -79,6 +80,10 @@ final class EncodeOptions with Equatable {
 
   /// The delimiter to use when joining key-value pairs in the encoded output.
   final String delimiter;
+
+  /// Maximum encode nesting depth, with the top-level value at depth 0.
+  /// Exceeding this limit throws [RangeError]. Defaults to unbounded.
+  final num depth;
 
   /// Set to `false` to disable encoding.
   final bool encode;
@@ -189,6 +194,7 @@ final class EncodeOptions with Equatable {
     final Encoding? charset,
     final bool? charsetSentinel,
     final String? delimiter,
+    final num? depth,
     final bool? encode,
     final bool? encodeDotInKeys,
     final bool? encodeValuesOnly,
@@ -210,6 +216,7 @@ final class EncodeOptions with Equatable {
         charset: charset ?? this.charset,
         charsetSentinel: charsetSentinel ?? this.charsetSentinel,
         delimiter: delimiter ?? this.delimiter,
+        depth: depth ?? this.depth,
         encode: encode ?? this.encode,
         encodeDotInKeys: encodeDotInKeys ?? this.encodeDotInKeys,
         encodeValuesOnly: encodeValuesOnly ?? this.encodeValuesOnly,
@@ -233,6 +240,7 @@ final class EncodeOptions with Equatable {
       '  charset: $charset,\n'
       '  charsetSentinel: $charsetSentinel,\n'
       '  delimiter: $delimiter,\n'
+      '  depth: $depth,\n'
       '  encode: $encode,\n'
       '  encodeDotInKeys: $encodeDotInKeys,\n'
       '  encodeValuesOnly: $encodeValuesOnly,\n'
@@ -256,6 +264,7 @@ final class EncodeOptions with Equatable {
         charset,
         charsetSentinel,
         delimiter,
+        depth,
         encode,
         encodeDotInKeys,
         encodeValuesOnly,
