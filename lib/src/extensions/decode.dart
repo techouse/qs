@@ -34,8 +34,8 @@ extension _$Decode on QS {
   ///
   /// The `currentListLength` is used to guard incremental growth when we are
   /// already building a list for a given key path.
-  /// `isFlatListValue` distinguishes flat comma lists (`a=1,2`, `a[b]=1,2`)
-  /// from nested `[]=` comma groups, which count as one outer list element.
+  /// Nested `[]=` comma groups count as one outer element, but their own
+  /// elements still obey the strict limit.
   ///
   /// **Negative `listLimit` semantics:** a negative value disables numeric-index parsing
   /// elsewhere (e.g. `[2]` segments become string keys). For comma‑splits specifically:
@@ -46,11 +46,10 @@ extension _$Decode on QS {
     final DecodeOptions options,
     final int currentListLength,
     final bool isListGrowthPath,
-    final bool isFlatListValue,
   ) {
     // Fast-path: split comma-separated scalars into a list when requested.
     if (val is String && val.isNotEmpty && options.comma && val.contains(',')) {
-      if (isFlatListValue && options.throwOnLimitExceeded) {
+      if (options.throwOnLimitExceeded) {
         int commaCount = 0;
         int commaIndex = val.indexOf(',');
         while (commaIndex >= 0) {
@@ -307,7 +306,6 @@ extension _$Decode on QS {
             options,
             currentListLength,
             listGrowthFromKey,
-            !bracketSuffix,
           ),
           (final dynamic v) =>
               options.decodeValue(v as String?, charset: charset),
@@ -425,7 +423,6 @@ extension _$Decode on QS {
             options,
             currentListLength,
             isListGrowthPath,
-            false,
           );
 
     for (int i = chain.length - 1; i >= 0; --i) {
