@@ -162,6 +162,19 @@ void main() {
         equals({'foo': 'baz'}),
       );
 
+      /// Bracket notation still combines values when [DecodeOptions.duplicates]
+      /// selects only the last scalar value:
+      expect(
+        QS.decode(
+          'a=1&a=2&b[]=1&b[]=2',
+          const DecodeOptions(duplicates: Duplicates.last),
+        ),
+        equals({
+          'a': '2',
+          'b': ['1', '2'],
+        }),
+      );
+
       /// If you have to deal with legacy browsers or services, there's also support
       /// for decoding percent-encoded octets as latin1 (iso-8859-1):
       expect(
@@ -251,10 +264,9 @@ void main() {
         }),
       );
 
-      /// QS will also limit specifying indices in a [List] to a maximum index of `20`.
-      /// Any [List] members with an index of greater than `20` will instead be converted to a [Map] with the index as the key.
-      /// This is needed to handle cases when someone sent, for example, `a[999999999]` and it will take significant time to iterate
-      /// over this huge [List].
+      /// [DecodeOptions.listLimit] controls which numeric indices become [List]
+      /// positions, not the total number of elements. Larger indices become [Map] keys
+      /// instead, avoiding huge sparse lists such as `a[999999999]`.
       expect(
         QS.decode('a[100]=b'),
         equals({
@@ -264,9 +276,9 @@ void main() {
 
       /// Override this limit via the [DecodeOptions.listLimit] option:
       expect(
-        QS.decode('a[1]=b', const DecodeOptions(listLimit: 0)),
+        QS.decode('a[0]=b', const DecodeOptions(listLimit: 0)),
         equals({
-          'a': {'1': 'b'},
+          'a': {'0': 'b'},
         }),
       );
 
@@ -283,6 +295,28 @@ void main() {
         QS.decode('a[0]=b&a[b]=c'),
         equals({
           'a': {'0': 'b', 'b': 'c'},
+        }),
+      );
+
+      /// A [Map] and a scalar at the same key become a [List] by default:
+      expect(
+        QS.decode('a[b]=c&a=d'),
+        equals({
+          'a': [
+            {'b': 'c'},
+            'd',
+          ],
+        }),
+      );
+
+      /// Disable [DecodeOptions.strictMerge] for the legacy scalar-key merge:
+      expect(
+        QS.decode(
+          'a[b]=c&a=d',
+          const DecodeOptions(strictMerge: false),
+        ),
+        equals({
+          'a': {'b': 'c', 'd': true},
         }),
       );
 
@@ -304,6 +338,31 @@ void main() {
           'a': ['b', 'c'],
         }),
       );
+
+      /// With [DecodeOptions.comma], an `[]=` group stays nested. In strict
+      /// mode, its comma-separated elements must also fit [DecodeOptions.listLimit]:
+      expect(
+        QS.decode(
+          'a[]=b,c,d',
+          const DecodeOptions(comma: true, listLimit: 2),
+        ),
+        equals({
+          'a': [
+            ['b', 'c', 'd']
+          ],
+        }),
+      );
+      expect(
+        () => QS.decode(
+          'a[]=b,c,d',
+          const DecodeOptions(
+            comma: true,
+            listLimit: 2,
+            throwOnLimitExceeded: true,
+          ),
+        ),
+        throwsRangeError,
+      );
     });
 
     test('Primitive/Scalar values', () {
@@ -324,6 +383,27 @@ void main() {
         'a': {'b': 'c'},
       }),
       equals('a%5Bb%5D=c'),
+    );
+
+    /// Encoding is unbounded by default. [EncodeOptions.depth] counts top-level
+    /// values at depth 0 and throws when a nested value exceeds the limit:
+    expect(
+      QS.encode(
+        {
+          'a': {'b': 'c'}
+        },
+        const EncodeOptions(depth: 1),
+      ),
+      equals('a%5Bb%5D=c'),
+    );
+    expect(
+      () => QS.encode(
+        {
+          'a': {'b': 'c'}
+        },
+        const EncodeOptions(depth: 0),
+      ),
+      throwsRangeError,
     );
 
     /// This encoding can be disabled by setting the [EncodeOptions.encode] option to `false`:
@@ -442,6 +522,12 @@ void main() {
       equals('name%252Eobj.first=John&name%252Eobj.last=Doe'),
     );
 
+    /// Literal dots in top-level primitive keys are encoded too:
+    expect(
+      QS.encode({'a.b': 'c'}, const EncodeOptions(encodeDotInKeys: true)),
+      equals('a%252Eb=c'),
+    );
+
     /// You may allow empty [List] values by setting the [EncodeOptions.allowEmptyLists]
     /// option to `true`:
     expect(
@@ -510,6 +596,21 @@ void main() {
         ),
       ),
       equals('a=7'),
+    );
+
+    /// A function filter can also produce a [DateTime]; date serialization
+    /// runs after the filter:
+    expect(
+      QS.encode(
+        {'a': 7},
+        EncodeOptions(
+          encode: false,
+          filter: (prefix, value) => prefix == 'a'
+              ? DateTime.fromMillisecondsSinceEpoch(value as int).toUtc()
+              : value,
+        ),
+      ),
+      equals('a=1970-01-01T00:00:00.007Z'),
     );
 
     /// Control parameter sort order with [EncodeOptions.sort]:
@@ -649,7 +750,7 @@ void main() {
       QS.decode(
         '%61=%82%b1%82%f1%82%c9%82%bf%82%cd%81%49',
         DecodeOptions(
-          decoder: (str, {Encoding? charset}) {
+          decoder: (str, {Encoding? charset, DecodeKind? kind}) {
             if (str == null) {
               return null;
             }

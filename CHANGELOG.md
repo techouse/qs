@@ -1,3 +1,10 @@
+## Unreleased
+
+* [FEAT] add an opt-in `EncodeOptions.depth` limit for Node `qs` 6.16.0 stringify parity
+* [FIX] encode dotted top-level keys with primitive values when `encodeDotInKeys` is enabled
+* [FIX] serialize filtered `DateTime` values, including dates in comma-format lists
+* [FIX] enforce strict list limits on comma groups under `[]=` before splitting
+
 ## 1.8.3
 
 * [CHORE] upgrade GitHub Actions `setup-node` from v6 to v7
