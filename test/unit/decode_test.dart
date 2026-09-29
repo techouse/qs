@@ -2735,21 +2735,6 @@ void main() {
         },
       );
       expect(
-        QS.decode(
-          'a[]=1,2,3,4,5,6',
-          const DecodeOptions(
-            comma: true,
-            listLimit: 5,
-            throwOnLimitExceeded: true,
-          ),
-        ),
-        {
-          'a': [
-            ['1', '2', '3', '4', '5', '6']
-          ]
-        },
-      );
-      expect(
         () => QS.decode(
           'a[]=1,2,3',
           const DecodeOptions(
@@ -2759,6 +2744,71 @@ void main() {
           ),
         ),
         throwsRangeError,
+      );
+    });
+  });
+
+  group('qs 6.16.0 strict comma group limits', () {
+    const strict = DecodeOptions(
+      comma: true,
+      listLimit: 3,
+      throwOnLimitExceeded: true,
+    );
+
+    test('rejects oversized bracket-push groups before value decoding', () {
+      int decodedValues = 0;
+      final options = DecodeOptions(
+        comma: true,
+        listLimit: 3,
+        throwOnLimitExceeded: true,
+        decoder: (
+          String? value, {
+          Encoding? charset,
+          DecodeKind? kind,
+        }) {
+          if (kind == DecodeKind.value) decodedValues++;
+          return Utils.decode(value, charset: charset);
+        },
+      );
+
+      expect(
+        () => QS.decode('a[]=1,2,3,4', options),
+        throwsA(
+          isA<RangeError>().having(
+            (e) => e.message,
+            'message',
+            'List limit exceeded. Only 3 elements allowed in a list.',
+          ),
+        ),
+      );
+      expect(decodedValues, 0);
+    });
+
+    test('checks nested bracket-push and map input', () {
+      expect(() => QS.decode('a[b][]=1,2,3,4', strict), throwsRangeError);
+      expect(() => QS.decode({'a': '1,2,3,4'}, strict), throwsRangeError);
+    });
+
+    test('keeps in-limit groups nested and preserves lenient oversized groups',
+        () {
+      expect(
+        QS.decode('a[]=1,2,3', strict),
+        {
+          'a': [
+            ['1', '2', '3']
+          ]
+        },
+      );
+      expect(
+        QS.decode(
+          'a[]=1,2,3,4',
+          const DecodeOptions(comma: true, listLimit: 3),
+        ),
+        {
+          'a': [
+            ['1', '2', '3', '4']
+          ]
+        },
       );
     });
   });
