@@ -231,6 +231,7 @@ final class EncodeOptions with Equatable {
         encoder: encoder ?? _encoder,
       );
 
+  // coverage:ignore-start
   @override
   String toString() => 'EncodeOptions(\n'
       '  addQueryPrefix: $addQueryPrefix,\n'
@@ -254,6 +255,7 @@ final class EncodeOptions with Equatable {
       '  serializeDate: $_serializeDate,\n'
       '  encoder: $_encoder,\n'
       ')';
+  // coverage:ignore-end
 
   @override
   List<Object?> get props => [
