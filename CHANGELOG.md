@@ -1,4 +1,4 @@
-## Unreleased
+## 1.9.0
 
 * [FEAT] add an opt-in `EncodeOptions.depth` limit for Node `qs` 6.16.0 stringify parity
 * [FIX] encode dotted top-level keys with primitive values when `encodeDotInKeys` is enabled
