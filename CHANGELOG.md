@@ -1,3 +1,8 @@
+## 1.8.3
+
+* [CHORE] upgrade GitHub Actions `setup-node` from v6 to v7
+* [CHORE] widen `Equatable` dependency compatibility to include v3 while retaining v2 support
+
 ## 1.8.2
 
 * [CHORE] update `Equatable` from 2.0.7 to 2.1.0
